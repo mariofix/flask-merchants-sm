@@ -1,0 +1,370 @@
+{% extends "base-pos.html" %}
+
+{% block page_header -%}
+<div class="page-header d-print-none text-white">
+  <div class="container-xl">
+    <div class="row g-2 align-items-center">
+      <div class="col">
+        <!-- Page pre-title -->
+        <h1 class="page-title">Punto de Venta Casino</h1>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock page_header -%}
+
+{% block page_body %}
+<div class="container-xl">
+  <div class="row row-deck row-cards">
+    <div class="col-sm-12 col-lg-12">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Lector POS Casino</h3>
+          <div class="card-actions">
+            <button type="button" class="btn btn-2" data-bs-toggle="modal" data-bs-target="#nfcModal">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-alarm-smoke">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M18 8l-.8 3a1.25 1.25 0 0 1 -1.2 1h-8a1.25 1.25 0 0 1 -1.2 -1l-.8 -3" />
+                <path d="M3 4m0 1a1 1 0 0 1 1 -1h16a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1z" />
+                <path d="M12 16c.643 .288 1.017 .756 1 1.25c.017 .494 -.357 .962 -1 1.25s-1.017 .756 -1 1.25c-.017 .494 .357 .962 1 1.25" />
+                <path d="M7 16c.643 .288 1.017 .756 1 1.25c.017 .494 -.357 .962 -1 1.25s-1.017 .756 -1 1.25c-.017 .494 .357 .962 1 1.25" />
+                <path d="M17 16c.643 .288 1.017 .756 1 1.25c.017 .494 -.357 .962 -1 1.25s-1.017 .756 -1 1.25c-.017 .494 .357 .962 1 1.25" />
+              </svg>
+              Leer Brazalete
+            </button>
+            <button type="button" class="btn btn-2" data-bs-toggle="modal" data-bs-target="#qrModal">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-qrcode">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M4 4m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
+                <path d="M7 17l0 .01" />
+                <path d="M14 4m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
+                <path d="M7 7l0 .01" />
+                <path d="M4 14m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
+                <path d="M17 7l0 .01" />
+                <path d="M14 14l3 0" />
+                <path d="M20 14l0 .01" />
+                <path d="M14 14l0 3" />
+                <path d="M14 20l3 0" />
+                <path d="M17 17l3 0" />
+                <path d="M20 17l0 3" />
+              </svg>
+              Leer QR
+            </button>
+          </div>
+        </div>
+        <div class="collapse" id="collapseExample">
+          <div class="card-body">
+            <div class="col-12">
+              <div class="row row-cards">
+                <div class="col-sm-6 col-lg-3">
+                  <div class="card card-sm">
+                    <div class="card-body">
+                      <div class="row align-items-center">
+                        <div class="col-auto">
+                          <span class="bg-primary text-white avatar"><!-- Download SVG icon from http://tabler.io/icons/icon/currency-dollar -->
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" class="icon icon-1">
+                              <path d="M16.7 8a3 3 0 0 0 -2.7 -2h-4a3 3 0 0 0 0 6h4a3 3 0 0 1 0 6h-4a3 3 0 0 1 -2.7 -2" />
+                              <path d="M12 3v3m0 12v3" />
+                            </svg></span>
+                        </div>
+                        <div class="col">
+                          <div class="font-weight-medium">Juan Carlos Bodoque</div>
+                          <div class="text-secondary">6-A</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                  <div class="card card-sm">
+                    <div class="card-body">
+                      <div class="row align-items-center">
+                        <div class="col-auto">
+                          <span class="bg-green text-white avatar"><!-- Download SVG icon from http://tabler.io/icons/icon/shopping-cart -->
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" class="icon icon-1">
+                              <path d="M6 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+                              <path d="M17 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+                              <path d="M17 17h-11v-14h-2" />
+                              <path d="M6 5l14 1l-1 7h-13" />
+                            </svg></span>
+                        </div>
+                        <div class="col">
+                          <div class="font-weight-medium">9 almuerzos disponibles.</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                  <div class="card card-sm">
+                    <div class="card-body">
+                      <div class="row align-items-center">
+                        <div class="col-auto">
+                          <span class="bg-success text-white avatar"><!-- Download SVG icon from http://tabler.io/icons/icon/brand-x -->
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
+                              <path d="M5 12l5 5l10 -10" />
+                            </svg></span>
+                        </div>
+                        <div class="col">
+                          <div class="font-weight-medium">Habilitado</div>
+                          <div class="text-secondary">No ha canjeado hoy</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                  <div class="card card-sm">
+                    <div class="card-body">
+                      <div class="row align-items-center">
+                        <div class="col-auto">
+                          <a href="" data-bs-toggle="modal" data-bs-target="#confirmaAlmuerzoModal" role="button" class="btn btn-success btn-lg w-100">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
+                              <path d="M5 12l5 5l10 -10" />
+                            </svg>Canjear Almuerzo</a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-12 col-lg-8">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Ultimas Compras</h3>
+        </div>
+        <div class="card-table table-responsive">
+          <table class="table table-vcenter">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Curso</th>
+                <th>Hora</th>
+                <th>Via</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tr>
+              <td>Juanin Juan Harry</td>
+              <td class="text-secondary">7B</td>
+              <td class="text-secondary">13:01</td>
+              <td class="text-secondary">Tag</td>
+              <td class="text-end">
+                <a href="{{ url_for('apoderado.ficha', id=67)}}" class="btn btn-info btn-sm">Detalles</a>
+
+              </td>
+            </tr>
+            <tr>
+              <td>Mario Hugo</td>
+              <td class="text-secondary">6A</td>
+              <td class="text-secondary">13:00</td>
+              <td class="text-secondary">Tag</td>
+              <td class="text-end">
+                <a href="{{ url_for('apoderado.ficha', id=67)}}" class="btn btn-info btn-sm">Detalles</a>
+
+              </td>
+            </tr>
+            <tr>
+              <td>Mico el Micofono</td>
+              <td class="text-secondary">6B</td>
+              <td class="text-secondary">13:00</td>
+              <td class="text-secondary">Manual</td>
+              <td class="text-end">
+                <a href="{{ url_for('apoderado.ficha', id=67)}}" class="btn btn-info btn-sm">Detalles</a>
+
+              </td>
+            </tr>
+            <tr>
+              <td>Freddy Turbina</td>
+              <td class="text-secondary">7A</td>
+              <td class="text-secondary">13:00</td>
+              <td class="text-secondary">Tag</td>
+              <td class="text-end">
+                <a href="{{ url_for('apoderado.ficha', id=67)}}" class="btn btn-info btn-sm">Detalles</a>
+
+              </td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Ingreso Manual</h3>
+        </div>
+        <div class="card-body">
+          <div class="row mb-2">
+            <div class="col-12">
+              <select class="form-select" id="lista-alumnos" placeholder="Buscar alumno...">
+                <option></option>
+                <option value="1" class="text-pink">Juanin Juan Harry</option>
+                <option value="2">Mario Hugo</option>
+                <option value="3">Mico el Micofono</option>
+                <option value="4">Freddy Turbina</option>
+                <option value="5">Balon Von Bola</option>
+                <option value="6">Calcetin con Rombos Man</option>
+                <option value="7">Titere 1</option>
+                <option value="8">Titere 2</option>
+                <option value="9">Juan Carlos Bodoque</option>
+
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <div class="d-flex">
+            <a href="#" class="btn btn-link">Limpiar</a>
+            <a href="#" class="btn btn-success ms-auto">Canjear Almuerzo</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock page_body -%}
+
+
+{% block page_scripts -%}
+<div class="modal" id="nfcModal" tabindex="-1">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Lector NFC</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        Este Lector solo está disponible en android, si tiene iPhone porfavor use el lector QR.<br>
+        Acá podria is solo un check (así como aparece en el formulario fonotarot cuando falla la compra) o bien podria mostrar la informacion del brazatele.<br>
+        Al presionar confirmar lectura, se tomará el dato leido y actualizará la pagina con la informacion encontrada.
+        <div class="alert alert-lime" role="alert">
+          <div class="font-weight-medium">Acerca el brazalete del alumno a la parte posterior de su celular.</div>
+        </div>
+
+        <div class="alert alert-primary" role="alert">
+          <div class="font-weight-medium">Brazalete encontrado: <strong>00:45:df:23:a2</strong></div>
+        </div>
+
+        <div class="alert alert-danger" role="alert">
+          <div class="font-weight-medium">No se encontró un brazalete.</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" onclick="dismissAndCollapse()" data-bs-dismiss="modal">Confirmar Lectura</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="qrModal" tabindex="-1">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Lector QR</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        Este lector QR está disponible para los dispositivos con camara que no tienen NFC.<br>
+        Al presionar confirmar lectura, se tomará el dato leido y actualizará la pagina con la informacion encontrada.
+        <div class="alert alert-lime" role="alert">
+          <div class="font-weight-medium">Acerca el brazalete a la camara del celular, la imagen debe ser nítida.</div>
+        </div>
+
+        <div class="alert alert-primary" role="alert">
+          <div class="font-weight-medium">Brazalete encontrado: <strong>00:45:df:23:a2</strong></div>
+        </div>
+
+        <div class="alert alert-danger" role="alert">
+          <div class="font-weight-medium">No se encontró un brazalete.</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" onclick="dismissAndCollapse()" data-bs-dismiss="modal">Confirmar Lectura</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="confirmaAlmuerzoModal" tabindex="-1">
+  <div class="modal-dialog modal-sm" role="document">
+    <div class="modal-content">
+      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      <div class="modal-status bg-success"></div>
+      <div class="modal-body text-center py-4">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon mb-2 text-green icon-lg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+          <circle cx="12" cy="12" r="9" />
+          <path d="M9 12l2 2l4 -4" />
+        </svg>
+        <h3>¿Canjear Almuerzo?</h3>
+        <div class="text-secondary">
+          <strong>Saldo Actual:</strong> 9 almuerzos.<br>
+          <strong>Saldo después del canje:</strong> 8 almuerzos.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <div class="w-100">
+          <div class="row">
+            <div class="col">
+              <a href="#" class="btn w-100" data-bs-dismiss="modal"> Cancelar </a>
+            </div>
+            <div class="col">
+              <a href="{{ url_for('pos.casino') }}" class="btn btn-success w-100"> Canjear Almuerzo </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function dismissAndCollapse() {
+    // Animated collapse show
+    setTimeout(() => {
+      const collapseEl = document.getElementById('collapseExample');
+
+      // Start collapsed
+      collapseEl.classList.remove('collapse');
+      collapseEl.classList.add('collapsing');
+      collapseEl.style.height = '0px';
+
+      // Trigger reflow
+      collapseEl.offsetHeight;
+
+      // Expand to full height
+      collapseEl.style.height = collapseEl.scrollHeight + 'px';
+
+      // Clean up after transition
+      collapseEl.addEventListener('transitionend', function handler() {
+        collapseEl.classList.remove('collapsing');
+        collapseEl.classList.add('collapse', 'show');
+        collapseEl.style.height = '';
+        collapseEl.removeEventListener('transitionend', handler);
+      }, { once: true });
+    }, 300);
+  }
+</script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    var el;
+    window.TomSelect &&
+      new TomSelect((el = document.getElementById("lista-alumnos")), {
+        maxItems: 1,
+        closeAfterSelect: true,
+        copyClassesToDropdown: true,
+
+        sortField: {
+          field: "text",
+          direction: "asc",
+        },
+      });
+  });
+</script>
+{% endblock page_scripts -%}

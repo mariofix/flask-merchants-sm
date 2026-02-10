@@ -1,0 +1,485 @@
+<!doctype html>
+<html {% block html_attribs %}{% endblock html_attribs %}>
+  {%- block html %}
+
+  <head>
+    {%- block head %}
+    <title>{% block title %}Storefront{{ title|default }}{% endblock title %}</title>
+
+    {%- block metas %}
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    {%- endblock metas %}
+
+    {% block favicon %}
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='apple-touch-icon.png', v=app_version)}}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png', v=app_version)}}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='favicon-16x16.png', v=app_version)}}">
+    <link rel="manifest" href="{{ url_for('static', filename='site.webmanifest', v=app_version)}}">
+    {% endblock favicon %}
+
+    <link href="{{ url_for('static', filename='tabler/css/tabler.css', v=app_version)}}" rel="stylesheet" />
+    <link href="{{ url_for('static', filename='tabler/css/tabler-themes.css', v=app_version)}}" rel="stylesheet" />
+    <link href="{{ url_for('static', filename='tabler/css/tabler-payments.css', v=app_version)}}" rel="stylesheet" />
+
+    <style>
+      @import url("https://rsms.me/inter/inter.css");
+    </style>
+
+
+    {%- block head_styles %}
+    {%- endblock head_styles %}
+
+    {%- block head_scripts %}
+    {%- endblock head_scripts %}
+
+    {%- endblock head %}
+  </head>
+
+  <!-- <body class="layout-fluid"> -->
+
+  <body>
+    <a href="#content" class="visually-hidden skip-link">Skip to main content</a>
+    <!-- BEGIN GLOBAL THEME SCRIPT -->
+    <script src="{{ url_for('static', filename='tabler/js/tabler-theme.js', v=app_version)}}"></script>
+    <!-- END GLOBAL THEME SCRIPT -->
+    <div class="page">
+
+
+      <!--  BEGIN NAVBAR  -->
+      {% include "menu/apoderado.html" %}
+      <!--  END NAVBAR  -->
+
+      <div class="page-wrapper">
+
+        <!-- BEGIN PAGE HEADER -->
+        {% block page_header -%}
+        {% endblock page_header -%}
+        <!-- END PAGE HEADER -->
+
+        <!-- BEGIN PAGE BODY -->
+        <main id="content" class="page-body">
+          {% block page_body -%}
+          {% endblock page_body -%}
+        </main>
+        <!-- END PAGE BODY -->
+
+        <!-- BEGIN FOOTER -->
+        <!--  BEGIN FOOTER  -->
+        <footer class="footer footer-transparent d-print-none">
+          <div class="container-xl">
+            <div class="row text-center align-items-center flex-row-reverse">
+              <div class="col-lg-auto ms-lg-auto">
+                <nav aria-label="Footer">
+                  <ul class="list-inline list-inline-dots mb-0">
+                    <li class="list-inline-item">
+                      <a href="#" class="link-secondary" data-bs-toggle="modal" data-bs-target="#modal-contacto" aria-label="Información de Contacto">
+                        <!-- Download SVG icon from http://tabler.io/icons/icon/heart -->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-help-square-rounded text-red">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path d="M12 3c7.2 0 9 1.8 9 9s-1.8 9 -9 9s-9 -1.8 -9 -9s1.8 -9 9 -9z" />
+                          <path d="M12 16v.01" />
+                          <path d="M12 13a2 2 0 0 0 .914 -3.782a1.98 1.98 0 0 0 -2.414 .483" />
+                        </svg>
+                        Contactanos
+                      </a>
+                    </li>
+                  </ul>
+                </nav>
+              </div>
+              <div class="col-12 col-lg-auto mt-3 mt-lg-0">
+                <ul class="list-inline list-inline-dots mb-0">
+                  <li class="list-inline-item">
+                    <a href="." class="link-secondary">Politica de Privacidad</a>
+                  </li>
+                  <li class="list-inline-item">
+                    <a href="." class="link-secondary">Condiciones de Uso </a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </footer>
+        <!--  END FOOTER  -->
+        <!-- END FOOTER -->
+      </div>
+    </div>
+    <!-- BEGIN PAGE MODALS -->
+    <div class="modal modal-blur fade" id="modal-contacto" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Contactanos</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <div class="col-md-12">
+                <div class="card">
+                  <div class="card-body">
+                    <div class="row g-2 align-items-center">
+                      <div class="col-auto">
+                        <span class="avatar avatar-lg bg-lime-lt">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-brand-whatsapp">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M3 21l1.65 -3.8a9 9 0 1 1 3.4 2.9l-5.05 .9" />
+                            <path d="M9 10a.5 .5 0 0 0 1 0v-1a.5 .5 0 0 0 -1 0v1a5 5 0 0 0 5 5h1a.5 .5 0 0 0 0 -1h-1a.5 .5 0 0 0 0 1" />
+                          </svg>
+                        </span>
+                      </div>
+                      <div class="col">
+                        <h4 class="card-title m-0">
+                          <a href="#">Whatsapp</a>
+                        </h4>
+                        <div class="text-secondary">07:00 - 17:00 Hrs</div>
+                        <div class="small mt-1"><span class="badge bg-danger"></span> Desconectado</div>
+                      </div>
+                      <div class="col-auto">
+                        <a href="https://wa.me/56963349072" class="btn btn-green"> Abrir Whatsapp </a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+            <div class="row">
+              <div class="col-md-12">
+                <div class="card">
+                  <div class="card-body">
+                    <div class="row g-2 align-items-center">
+                      <div class="col-auto">
+                        <span class="avatar avatar-lg">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-message-dots">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M12 11v.01" />
+                            <path d="M8 11v.01" />
+                            <path d="M16 11v.01" />
+                            <path d="M18 4a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-5l-5 3v-3h-2a3 3 0 0 1 -3 -3v-8a3 3 0 0 1 3 -3z" />
+                          </svg>
+                        </span>
+                      </div>
+                      <div class="col">
+                        <h4 class="card-title m-0">
+                          <a href="soporte@correo.cl">soporte@correo.cl</a>
+                        </h4>
+                        <div class="text-secondary">24 Hrs</div>
+                        <div class="small mt-1"><span class="badge bg-green"></span> Online</div>
+                      </div>
+                      <div class="col-auto">
+                        <a href="mailto:soporte@correo.cl" class="btn"> Redactar </a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- END PAGE MODALS -->
+    <div class="settings">
+      <a href="#" class="btn btn-floating btn-icon btn-primary" data-bs-toggle="offcanvas" data-bs-target="#offcanvasSettings" aria-controls="offcanvasSettings" aria-label="Theme Settings">
+        <!-- Download SVG icon from http://tabler.io/icons/icon/brush -->
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" class="icon icon-1">
+          <path d="M3 21v-4a4 4 0 1 1 4 4h-4" />
+          <path d="M21 3a16 16 0 0 0 -12.8 10.2" />
+          <path d="M21 3a16 16 0 0 1 -10.2 12.8" />
+          <path d="M10.6 9a9 9 0 0 1 4.4 4.4" />
+        </svg>
+      </a>
+      <form class="offcanvas offcanvas-start offcanvas-narrow" tabindex="-1" id="offcanvasSettings" role="dialog" aria-modal="true" aria-labelledby="offcanvasSettingsTitle">
+        <div class="offcanvas-header">
+          <h2 class="offcanvas-title" id="offcanvasSettingsTitle">Theme Settings</h2>
+          <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body d-flex flex-column">
+          <div>
+            <div class="mb-4">
+              <label class="form-label">Color mode</label>
+              <p class="form-hint">Choose the color mode for your app.</p>
+              <label class="form-check">
+                <div class="form-selectgroup-item">
+                  <input type="radio" name="theme" value="light" class="form-check-input" checked />
+                  <div class="form-check-label">Light</div>
+                </div>
+              </label>
+              <label class="form-check">
+                <div class="form-selectgroup-item">
+                  <input type="radio" name="theme" value="dark" class="form-check-input" />
+                  <div class="form-check-label">Dark</div>
+                </div>
+              </label>
+            </div>
+            <div class="mb-4">
+              <label class="form-label">Color scheme</label>
+              <p class="form-hint">The perfect color mode for your app.</p>
+              <div class="row g-2">
+                <div class="col-auto">
+                  <label class="form-colorinput">
+                    <input name="theme-primary" type="radio" value="blue" class="form-colorinput-input" />
+                    <span class="form-colorinput-color bg-blue"></span>
+                  </label>
+                </div>
+                <div class="col-auto">
+                  <label class="form-colorinput">
+                    <input name="theme-primary" type="radio" value="azure" class="form-colorinput-input" />
+                    <span class="form-colorinput-color bg-azure"></span>
+                  </label>
+                </div>
+                <div class="col-auto">
+                  <label class="form-colorinput">
+                    <input name="theme-primary" type="radio" value="indigo" class="form-colorinput-input" />
+                    <span class="form-colorinput-color bg-indigo"></span>
+                  </label>
+                </div>
+                <div class="col-auto">
+                  <label class="form-colorinput">
+                    <input name="theme-primary" type="radio" value="purple" class="form-colorinput-input" />
+                    <span class="form-colorinput-color bg-purple"></span>
+                  </label>
+                </div>
+                <div class="col-auto">
+                  <label class="form-colorinput">
+                    <input name="theme-primary" type="radio" value="pink" class="form-colorinput-input" />
+                    <span class="form-colorinput-color bg-pink"></span>
+                  </label>
+                </div>
+                <div class="col-auto">
+                  <label class="form-colorinput">
+                    <input name="theme-primary" type="radio" value="red" class="form-colorinput-input" />
+                    <span class="form-colorinput-color bg-red"></span>
+                  </label>
+                </div>
+                <div class="col-auto">
+                  <label class="form-colorinput">
+                    <input name="theme-primary" type="radio" value="orange" class="form-colorinput-input" />
+                    <span class="form-colorinput-color bg-orange"></span>
+                  </label>
+                </div>
+                <div class="col-auto">
+                  <label class="form-colorinput">
+                    <input name="theme-primary" type="radio" value="yellow" class="form-colorinput-input" />
+                    <span class="form-colorinput-color bg-yellow"></span>
+                  </label>
+                </div>
+                <div class="col-auto">
+                  <label class="form-colorinput">
+                    <input name="theme-primary" type="radio" value="lime" class="form-colorinput-input" />
+                    <span class="form-colorinput-color bg-lime"></span>
+                  </label>
+                </div>
+                <div class="col-auto">
+                  <label class="form-colorinput">
+                    <input name="theme-primary" type="radio" value="green" class="form-colorinput-input" />
+                    <span class="form-colorinput-color bg-green"></span>
+                  </label>
+                </div>
+                <div class="col-auto">
+                  <label class="form-colorinput">
+                    <input name="theme-primary" type="radio" value="teal" class="form-colorinput-input" />
+                    <span class="form-colorinput-color bg-teal"></span>
+                  </label>
+                </div>
+                <div class="col-auto">
+                  <label class="form-colorinput">
+                    <input name="theme-primary" type="radio" value="cyan" class="form-colorinput-input" />
+                    <span class="form-colorinput-color bg-cyan"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div class="mb-4">
+              <label class="form-label">Font family</label>
+              <p class="form-hint">Choose the font family that fits your app.</p>
+              <div>
+                <label class="form-check">
+                  <div class="form-selectgroup-item">
+                    <input type="radio" name="theme-font" value="sans-serif" class="form-check-input" checked />
+                    <div class="form-check-label">Sans-serif</div>
+                  </div>
+                </label>
+                <label class="form-check">
+                  <div class="form-selectgroup-item">
+                    <input type="radio" name="theme-font" value="serif" class="form-check-input" />
+                    <div class="form-check-label">Serif</div>
+                  </div>
+                </label>
+                <label class="form-check">
+                  <div class="form-selectgroup-item">
+                    <input type="radio" name="theme-font" value="monospace" class="form-check-input" />
+                    <div class="form-check-label">Monospace</div>
+                  </div>
+                </label>
+                <label class="form-check">
+                  <div class="form-selectgroup-item">
+                    <input type="radio" name="theme-font" value="comic" class="form-check-input" />
+                    <div class="form-check-label">Comic</div>
+                  </div>
+                </label>
+              </div>
+            </div>
+            <div class="mb-4">
+              <label class="form-label">Theme base</label>
+              <p class="form-hint">Choose the gray shade for your app.</p>
+              <div>
+                <label class="form-check">
+                  <div class="form-selectgroup-item">
+                    <input type="radio" name="theme-base" value="slate" class="form-check-input" />
+                    <div class="form-check-label">Slate</div>
+                  </div>
+                </label>
+                <label class="form-check">
+                  <div class="form-selectgroup-item">
+                    <input type="radio" name="theme-base" value="gray" class="form-check-input" checked />
+                    <div class="form-check-label">Gray</div>
+                  </div>
+                </label>
+                <label class="form-check">
+                  <div class="form-selectgroup-item">
+                    <input type="radio" name="theme-base" value="zinc" class="form-check-input" />
+                    <div class="form-check-label">Zinc</div>
+                  </div>
+                </label>
+                <label class="form-check">
+                  <div class="form-selectgroup-item">
+                    <input type="radio" name="theme-base" value="neutral" class="form-check-input" />
+                    <div class="form-check-label">Neutral</div>
+                  </div>
+                </label>
+                <label class="form-check">
+                  <div class="form-selectgroup-item">
+                    <input type="radio" name="theme-base" value="stone" class="form-check-input" />
+                    <div class="form-check-label">Stone</div>
+                  </div>
+                </label>
+              </div>
+            </div>
+            <div class="mb-4">
+              <label class="form-label">Corner Radius</label>
+              <p class="form-hint">Choose the border radius factor for your app.</p>
+              <div>
+                <label class="form-check">
+                  <div class="form-selectgroup-item">
+                    <input type="radio" name="theme-radius" value="0" class="form-check-input" />
+                    <div class="form-check-label">0</div>
+                  </div>
+                </label>
+                <label class="form-check">
+                  <div class="form-selectgroup-item">
+                    <input type="radio" name="theme-radius" value="0.5" class="form-check-input" />
+                    <div class="form-check-label">0.5</div>
+                  </div>
+                </label>
+                <label class="form-check">
+                  <div class="form-selectgroup-item">
+                    <input type="radio" name="theme-radius" value="1" class="form-check-input" checked />
+                    <div class="form-check-label">1</div>
+                  </div>
+                </label>
+                <label class="form-check">
+                  <div class="form-selectgroup-item">
+                    <input type="radio" name="theme-radius" value="1.5" class="form-check-input" />
+                    <div class="form-check-label">1.5</div>
+                  </div>
+                </label>
+                <label class="form-check">
+                  <div class="form-selectgroup-item">
+                    <input type="radio" name="theme-radius" value="2" class="form-check-input" />
+                    <div class="form-check-label">2</div>
+                  </div>
+                </label>
+              </div>
+            </div>
+          </div>
+          <div class="mt-auto space-y">
+            <button type="button" class="btn w-100" id="reset-changes">
+              <!-- Download SVG icon from http://tabler.io/icons/icon/rotate -->
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" class="icon icon-1">
+                <path d="M19.95 11a8 8 0 1 0 -.5 4m.5 5v-5h-5" />
+              </svg>
+              Reset changes
+            </button>
+            <a href="#" class="btn btn-primary w-100" data-bs-dismiss="offcanvas"> Save </a>
+          </div>
+        </div>
+      </form>
+    </div>
+    <!-- BEGIN PAGE LIBRARIES -->
+    <script src="{{ url_for('static', filename='tabler/libs/apexcharts/apexcharts.min.js', v=app_version)}}" defer></script>
+
+    <!-- END PAGE LIBRARIES -->
+    <!-- BEGIN GLOBAL MANDATORY SCRIPTS -->
+    <script src="{{ url_for('static', filename='tabler/js/tabler.min.js', v=app_version)}}" defer></script>
+    <!-- END GLOBAL MANDATORY SCRIPTS -->
+    <!-- BEGIN DEMO SCRIPTS -->
+    <script src="{{ url_for('static', filename='tabler/preview/js/demo.min.js', v=app_version)}}" defer></script>
+    <!-- END DEMO SCRIPTS -->
+    <script>
+      /*
+  This script handles the theme settings offcanvas functionality
+  It saves the selected settings to localStorage and applies them to the document
+  It also updates the URL with the selected settings as query parameters
+  It also has a reset button to clear all settings and revert to default
+  This is just a demo script to show how to implement theme settings. You can modify it as needed.
+  */
+      document.addEventListener("DOMContentLoaded", function () {
+        var themeConfig = {
+          theme: "light",
+          "theme-base": "gray",
+          "theme-font": "sans-serif",
+          "theme-primary": "blue",
+          "theme-radius": "1",
+        };
+        var url = new URL(window.location);
+        var form = document.getElementById("offcanvasSettings");
+        var resetButton = document.getElementById("reset-changes");
+        var checkItems = function () {
+          for (var key in themeConfig) {
+            var value = window.localStorage["tabler-" + key] || themeConfig[key];
+            if (!!value) {
+              var radios = form.querySelectorAll(`[name="${key}"]`);
+              if (!!radios) {
+                radios.forEach((radio) => {
+                  radio.checked = radio.value === value;
+                });
+              }
+            }
+          }
+        };
+        form.addEventListener("change", function (event) {
+          var target = event.target,
+            name = target.name,
+            value = target.value;
+          for (var key in themeConfig) {
+            if (name === key) {
+              document.documentElement.setAttribute("data-bs-" + key, value);
+              window.localStorage.setItem("tabler-" + key, value);
+              url.searchParams.set(key, value);
+            }
+          }
+          window.history.pushState({}, "", url);
+        });
+        resetButton.addEventListener("click", function () {
+          for (var key in themeConfig) {
+            var value = themeConfig[key];
+            document.documentElement.removeAttribute("data-bs-" + key);
+            window.localStorage.removeItem("tabler-" + key);
+            url.searchParams.delete(key);
+          }
+          checkItems();
+          window.history.pushState({}, "", url);
+        });
+        checkItems();
+      });
+    </script>
+
+    {% block page_scripts -%}
+    {% endblock page_scripts -%}
+    <!-- END PAGE SCRIPTS -->
+  </body>
+  {%- endblock html %}
+
+</html>

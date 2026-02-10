@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block page_header -%}
+<div class="page-header d-print-none text-white">
+  <div class="container-xl">
+    <div class="row g-2 align-items-center">
+      <div class="col">
+        <!-- Page pre-title -->
+        <h1 class="page-title">Abonar Saldo</h1>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock page_header -%}
+
+{% block page_body %}
+<main id="content" class="page-body">
+  <div class="container-xl">
+    <div class="row row-cards">
+      <div class="col">
+        <div class="row row-cards">
+          <div class="col-12">
+            <form class="card h-100" action="{{ url_for('apoderado.abonar') }}" method="post">
+              <div class="card-header">
+                <h3 class="card-title">Abonar</h3>
+              </div>
+              <div class="card-body">
+
+                <div class="mb-3 row">
+                  <label class="col-3 col-form-label required">Monto</label>
+                  <div class="col">
+                    <input type="number" class="form-control" min="2000" max="100000" placeholder="Monto a Abonar" />
+                    <small class="form-hint">Mínimo: <strong>$2.000</strong> - Máximo: <strong>$100.000</strong></small>
+                  </div>
+                </div>
+
+                <div class="mb-3 row">
+                  <label class="col-3 col-form-label required">Forma de Pago</label>
+                  <div class="col">
+                    <div class="form-selectgroup form-selectgroup-boxes d-flex flex-column">
+                      <label class="form-selectgroup-item flex-fill">
+                        <input type="radio" name="form-payment" value="khipu" class="form-selectgroup-input" />
+                        <div class="form-selectgroup-label d-flex align-items-center p-3">
+                          <div class="me-3">
+                            <span class="form-selectgroup-check"></span>
+                          </div>
+                          <div>
+                            <span class="payment payment-provider-khalti payment-xs me-2"></span>
+                            Transferencia Bancaria via <strong>Khipu</strong>
+                          </div>
+                        </div>
+                      </label>
+                      <label class="form-selectgroup-item flex-fill">
+                        <input type="radio" name="form-payment" value="flow" class="form-selectgroup-input" />
+                        <div class="form-selectgroup-label d-flex align-items-center p-3">
+                          <div class="me-3">
+                            <span class="form-selectgroup-check"></span>
+                          </div>
+                          <div>
+                            <span class="payment payment-provider-mastercard payment-xs me-2"></span>
+                            Tarjetas via <strong>Flow</strong>
+                          </div>
+                        </div>
+                      </label>
+                      <label class="form-selectgroup-item flex-fill">
+                        <input type="radio" name="form-payment" value="Webpay" class="form-selectgroup-input" checked />
+                        <div class="form-selectgroup-label d-flex align-items-center p-3">
+                          <div class="me-3">
+                            <span class="form-selectgroup-check"></span>
+                          </div>
+                          <div>
+                            <span class="payment payment-provider-payconiq payment-xs me-2"></span>
+                            Tarjetas y Billeteras Electrónicas via <strong>Webpay</strong>
+                          </div>
+                        </div>
+                      </label>
+                      <label class="form-selectgroup-item flex-fill">
+                        <input type="radio" name="form-payment" value="efectivo" class="form-selectgroup-input" />
+                        <div class="form-selectgroup-label d-flex align-items-center p-3">
+                          <div class="me-3">
+                            <span class="form-selectgroup-check"></span>
+                          </div>
+                          <div>
+                            <span class="payment payment-provider-cash-app payment-xs me-2"></span>
+                            Efectivo <strong>En el colegio</strong>
+                          </div>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="card-footer">
+                <div class="text-end">
+                  <button type="submit" class="btn btn-success">Abonar</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+{% endblock page_body %}

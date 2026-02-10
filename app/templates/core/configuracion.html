@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block page_header -%}
+<div class="page-header d-print-none text-white">
+  <div class="container-xl">
+    <div class="row g-2 align-items-center">
+      <div class="col">
+        <!-- Page pre-title -->
+        <h1 class="page-title">Configuración</h1>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock page_header -%}
+
+{% block page_body %}
+
+<div class="container-xl">
+  <!-- BEGIN PAGE BODY -->
+  <div class="card">
+    <div class="row g-0">
+      <div class="col-12 col-md-3 border-end">
+        <div class="card-body">
+          <h4 class="subheader">Ajustes</h4>
+          <nav class="list-group list-group-transparent" data-bs-toggle="tabs">
+            <a href="#tab-generales" class="list-group-item list-group-item-action d-flex align-items-center active" data-bs-toggle="tab">Generales</a>
+            <a href="#tab-seguridad" class="list-group-item list-group-item-action d-flex align-items-center" data-bs-toggle="tab">Seguridad</a>
+            <a href="#tab-limites" class="list-group-item list-group-item-action d-flex align-items-center" data-bs-toggle="tab">Limites</a>
+            <a href="#tab-restricciones" class="list-group-item list-group-item-action d-flex align-items-center" data-bs-toggle="tab">Restricciones</a>
+          </nav>
+          <h4 class="subheader mt-4">Alumnos</h4>
+          <nav class="list-group list-group-transparent">
+            <a href="/apoderado/ficha-alumno/67" class="list-group-item list-group-item-action">Juan Carlos Bodoque</a>
+          </nav>
+        </div>
+      </div>
+      <div class="col-12 col-md-9 d-flex flex-column">
+        <div class="card-body">
+          <div class="tab-content">
+            <div class="tab-pane active show" id="tab-generales">
+              <h2 class="mb-4">Generales</h2>
+              <h3 class="card-title mt-4">Nombre</h3>
+              <div class="row g-3">
+                <div class="col-md">
+                  <label class="form-label visually-hidden" for="nombre">Nombre</label>
+                  <input type="text" class="form-control" id="nombre" name="nombre" />
+                </div>
+              </div>
+              <h3 class="card-title mt-4">Telefono</h3>
+              <p class="card-subtitle">De preferencia celular, usamos whatsapp.</p>
+              <div class="row g-3">
+                <div class="col-md">
+                  <label class="form-label visually-hidden" for="phone">Teléfono</label>
+                  <input type="text" class="form-control" id="phone" name="phone" />
+                </div>
+              </div>
+              <h3 class="card-title mt-4">Correo Electrónico</h3>
+              <p class="card-subtitle">Es importante mantener este dato actualizado.</p>
+              <div>
+                <div class="row g-2">
+                  <div class="col-auto">
+                    <label for="email" class="form-label visually-hidden">Email</label>
+                    <input type="text" class="form-control w-auto" id="email" name="email" />
+                  </div>
+                  <div class="col-auto">
+                    <a href="#" class="btn btn-1"> Cambiar </a>
+                  </div>
+                </div>
+              </div>
+              <h3 class="card-title mt-4">Comprobantes de Abono</h3>
+              <p class="card-subtitle">Recibir un correo con el comprobante de abono.</p>
+              <div>
+                <label class="form-check form-switch form-switch-lg">
+                  <input class="form-check-input" type="checkbox" />
+                  <span class="form-check-label form-check-label-on">Quiero recibir el comprobante de esta plataforma.</span>
+                  <span class="form-check-label form-check-label-off">Recibiré el comprobante de la pasarela de pago.</span>
+                </label>
+              </div>
+            </div>
+            <div class="tab-pane" id="tab-seguridad">
+              <h2 class="mb-4">Seguridad</h2>
+              Parametros de seguridad de uso de la billetera digital.
+              <ul>
+                <li>Notificaciones de compra.</li>
+                <li>Envio resumen diario de compras realizadas.</li>
+              </ul>
+            </div>
+            <div class="tab-pane" id="tab-limites">
+              <h2 class="mb-4">Limites</h2>
+              Define los limites de uso de la billetera: monto maximo diario, monto maximo semanal, monto maimo unitario, aviso de saldo bajo, etc.
+            </div>
+            <div class="tab-pane" id="tab-restricciones">
+              <h2 class="mb-4">Restricciones</h2>
+              Restricciones de compra: Productos especificos, categorias, con ingredientes en particular.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- END PAGE BODY -->
+</div>
+{% endblock page_body %}

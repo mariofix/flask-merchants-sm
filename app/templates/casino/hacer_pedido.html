@@ -1,0 +1,139 @@
+{% extends 'admin/master.html' %}
+
+{% block body %}
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-md-8 offset-md-2">
+      <h2>Menú del día: {{ menu.dia.strftime('%A %d de %B') }}</h2>
+
+      {% if menu.descripcion %}
+      <p class="text-muted">{{ menu.descripcion }}</p>
+      {% endif %}
+
+      {% if menu.precio %}
+      <h4 class="text-primary">${{ menu.precio }}</h4>
+      {% endif %}
+
+      <hr>
+
+      <form method="POST" class="needs-validation" novalidate>
+
+        <!-- Entrada -->
+        {% if opciones_agrupadas.get('entrada') %}
+        <div class="mb-4">
+          <h5>Entrada</h5>
+          {% for opcion in opciones_agrupadas['entrada'] %}
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="entrada" id="entrada_{{ opcion.id }}" value="{{ opcion.id }}" required>
+            <label class="form-check-label" for="entrada_{{ opcion.id }}">
+              {{ opcion.plato.nombre }}
+              {% if opcion.plato.es_vegetariano %}
+              <span class="badge bg-success">Vegetariano</span>
+              {% endif %}
+              {% if not opcion.plato.contiene_gluten %}
+              <span class="badge bg-info">Sin Gluten</span>
+              {% endif %}
+            </label>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Fondo -->
+        {% if opciones_agrupadas.get('fondo') %}
+        <div class="mb-4">
+          <h5>Fondo</h5>
+          {% for opcion in opciones_agrupadas['fondo'] %}
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="fondo" id="fondo_{{ opcion.id }}" value="{{ opcion.id }}" required>
+            <label class="form-check-label" for="fondo_{{ opcion.id }}">
+              {{ opcion.plato.nombre }}
+              {% if opcion.plato.es_vegetariano %}
+              <span class="badge bg-success">Vegetariano</span>
+              {% endif %}
+            </label>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Postre -->
+        {% if opciones_agrupadas.get('postre') %}
+        <div class="mb-4">
+          <h5>Postre</h5>
+          {% for opcion in opciones_agrupadas['postre'] %}
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="postre" id="postre_{{ opcion.id }}" value="{{ opcion.id }}" required>
+            <label class="form-check-label" for="postre_{{ opcion.id }}">
+              {{ opcion.plato.nombre }}
+            </label>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Opción Vegetariana -->
+        {% if opciones_agrupadas.get('vegetariano') %}
+        <div class="mb-4">
+          <h5>Opción Vegetariana (Opcional)</h5>
+          {% for opcion in opciones_agrupadas['vegetariano'] %}
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="vegetariano" id="veg_{{ opcion.id }}" value="{{ opcion.id }}">
+            <label class="form-check-label" for="veg_{{ opcion.id }}">
+              {{ opcion.plato.nombre }}
+            </label>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Notas -->
+        <div class="mb-4">
+          <label for="notas" class="form-label">Notas especiales</label>
+          <textarea class="form-control" id="notas" name="notas" rows="2" placeholder="Ej: Sin cebolla, término medio, etc."></textarea>
+        </div>
+
+        <!-- Tipo de pago -->
+        <div class="mb-4">
+          <label for="tipo_pago" class="form-label">Forma de pago</label>
+          <select class="form-select" id="tipo_pago" name="tipo_pago" required>
+            <option value="descuento_planilla" selected>Descuento de planilla</option>
+            <option value="efectivo">Efectivo</option>
+            <option value="transferencia">Transferencia</option>
+            <option value="tarjeta">Tarjeta</option>
+          </select>
+        </div>
+
+        <div class="d-grid gap-2">
+          {% if orden_existente %}
+          <button type="submit" class="btn btn-warning btn-lg">
+            Actualizar Pedido
+          </button>
+          {% else %}
+          <button type="submit" class="btn btn-primary btn-lg">
+            Confirmar Pedido
+          </button>
+          {% endif %}
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Validación básica
+  (function () {
+    'use strict';
+    var forms = document.querySelectorAll('.needs-validation');
+    Array.prototype.slice.call(forms).forEach(function (form) {
+      form.addEventListener('submit', function (event) {
+        if (!form.checkValidity()) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+      }, false);
+    });
+  })();
+</script>
+{% endblock %}

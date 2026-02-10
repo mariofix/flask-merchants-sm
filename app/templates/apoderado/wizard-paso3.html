@@ -1,0 +1,79 @@
+{% extends "base-bare.html" %}
+
+{% block page_body %}
+<div class="container py-4">
+  <div class="card card-md">
+    <div class="hr-text hr-text-center hr-text-spaceless">Configuraciones y Notificaciones</div>
+    <div class="card-body">
+      <form>
+        <div class="space-y">
+          <div>
+            <label class="form-check form-switch form-switch-lg">
+              <input class="form-check-input" type="checkbox" />
+              <span class="form-check-label form-check-label-on">Quiero recibir todos los comprobantes de pago/transferencia.</span>
+              <span class="form-check-label form-check-label-off">No quiero recibir los comprobantes de pago/transferencia, los que me entrega el banco son suficientes.</span>
+            </label>
+          </div>
+          <div>
+            <label class="form-check form-switch form-switch-lg">
+              <input class="form-check-input" type="checkbox" checked />
+              <span class="form-check-label form-check-label-on">Quiero recibir una notificación cuando se haga una compra en el casino o kiosko.</span>
+              <span class="form-check-label form-check-label-off">No quiero recibir notificaciones de compra.</span>
+            </label>
+          </div>
+          <div>
+            <label class="form-check form-switch form-switch-lg">
+              <input class="form-check-input" type="checkbox" />
+              <span class="form-check-label form-check-label-on">Quiero recibir un correo electrónico con el <strong>Informe Semanal de Gastos</strong> cada viernes.</span>
+              <span class="form-check-label form-check-label-off">No quiero mas correos, revisaré el <strong>Informe Semanal de Gastos</strong> desde la web.</span>
+            </label>
+          </div>
+          <div>
+            <label class="form-check form-switch form-switch-lg">
+              <input class="form-check-input" type="checkbox" />
+              <span class="form-check-label form-check-label-on">Quiero que mis alumnos puedan compartir el tag con otros alumnos.</span>
+              <span class="form-check-label form-check-label-off">El tag es personal e intransferible, no permitir el uso compartido.</span>
+            </label>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Copiar notificaciones</label>
+            <div>
+              <input type="email" class="form-control" aria-describedby="emailHelp" placeholder="Correo Alternativo" />
+              <small class="form-hint">Este correo recibirá las mismas notificaiones seteadas más arriba.</small>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Monto máximo diario</label>
+            <div>
+              <input type="number" class="form-control" placeholder="monto máximo diario" />
+              <small class="form-hint">Los alumnos no podrán gastar diariamente más de lo indicado, exceptuando el menú de almuerzo.</small>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Monto máximo semanal</label>
+            <div>
+              <input type="number" class="form-control" placeholder="monto máximo diario" />
+              <small class="form-hint">Los alumnos no podrán gastar semanalmente más de lo indicado, exceptuando el menú de almuerzo.</small>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="row align-items-center mt-3">
+    <div class="col-4">
+      <div class="progress progress-1">
+        <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 99%" role="progressbar" aria-valuenow="99" aria-valuemin="0" aria-valuemax="100" aria-label="99% Complete">
+          <span class="visually-hidden">99% Complete</span>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="btn-list justify-content-end">
+        <a href="https://google.cl" class="btn btn-link link-secondary btn-2"> Continuar más tarde </a>
+        <a href="{{ url_for('apoderado.wizp4') }}" class="btn btn-primary btn-2"> Guardar y Finalizar </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock page_body %}

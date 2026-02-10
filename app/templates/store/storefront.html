@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="{% block html_lang %}en{% endblock html_lang %}" class="h-100">
+
+  <head>
+    {% block head %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ config.STORE_NAME }}{% endblock title %}</title>
+    {% block meta_content %}
+    <meta name="description" content="">
+    <meta name="keywords" content="">
+    <meta name="robots" content="index, follow">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="author" content="flask-merchants">
+    <link rel="canonical" href="" />
+    <meta property="og:title" content="Storefront">
+    <meta property="og:site_name" content="Storefront">
+    <meta property="og:url" content="" />
+    <meta property="og:description" content="">
+    <meta property="og:type" content="website">
+    {% endblock meta_content %}
+    {% block favicon %}
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='apple-touch-icon.png', v=app_version)}}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png', v=app_version)}}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='favicon-16x16.png', v=app_version)}}">
+    <link rel="manifest" href="{{ url_for('static', filename='site.webmanifest', v=app_version)}}">
+    {% endblock favicon %}
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css?family=Oxygen:400,700" rel="stylesheet">
+    <style>
+      body {
+        background-color: #f7f7f7;
+        color: #676767;
+        font-family: 'Oxygen', 'Helvetica Neue', Arial, sans-serif;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+
+      main {
+        flex: 1 0 auto;
+      }
+
+      .navbar-brand img {
+        max-width: 137px;
+        height: auto;
+      }
+
+      .social-icon {
+        font-size: 1.5rem;
+        color: #4d4d4d;
+        margin: 0 8px;
+        transition: color 0.3s ease;
+      }
+
+      .social-icon:hover {
+        color: #ff6f6f;
+      }
+
+      .welcome-section {
+        background-color: #f7f7f7;
+        padding: 3rem 0;
+      }
+
+      .product-card {
+        border: 1px solid #e5e5e5;
+        border-radius: 5px;
+        overflow: hidden;
+        height: 100%;
+        background-color: var(--bs-white);
+      }
+
+      .product-img {
+        width: 100%;
+        height: 210px;
+        object-fit: cover;
+      }
+
+      .btn-custom {
+        background-color: #ff6f6f;
+        color: white;
+        border: none;
+        padding: 0.8rem 2rem;
+        transition: background-color 0.3s ease;
+      }
+
+      .btn-custom:hover {
+        background-color: #ff5555;
+        color: var(--bs-white);
+      }
+
+      .navbar {
+        background-color: var(--bs-white);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .nav-link {
+        color: #676767;
+        font-weight: 500;
+      }
+
+      .nav-link:hover {
+        color: #ff6f6f;
+      }
+
+      .header-lg,
+      .header-md,
+      .header-sm {
+        font-size: 32px;
+        font-weight: 700;
+        line-height: normal;
+        padding: 35px 0 0;
+        color: #4d4d4d;
+      }
+
+      .header-md {
+        font-size: 24px;
+      }
+
+      .header-sm {
+        padding: 5px 0;
+        font-size: 18px;
+        line-height: 1.3;
+      }
+
+      /* Hero Carousel */
+      .hero-carousel .carousel-item {
+        height: 80vh;
+        background-size: cover;
+        background-position: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+      }
+
+      .hero-content {
+        background: rgba(0, 0, 0, 0.4);
+        color: white;
+        padding: 2rem;
+        border-radius: 0.5rem;
+      }
+
+      /* Sticky footer */
+      footer {
+        background: var(--bs-tertiary-bg);
+        padding: 1rem 0;
+        position: sticky;
+        bottom: 0;
+        width: 100%;
+        border-top: 1px solid var(--bs-dark-bg-subtle);
+      }
+
+      @media (max-width: 768px) {
+        .navbar-brand img {
+          max-width: 100px;
+        }
+
+        .social-icon {
+          font-size: 1.25rem;
+        }
+      }
+    </style>
+    {% block post_css %}
+    {% endblock post_css %}
+    {% endblock head %}
+  </head>
+
+  <body class="d-flex flex-column h-100">
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg sticky-top">
+      <div class="container">
+        <a class="navbar-brand" href="{{ url_for('storefront.landing') }}">
+          <i class="{{ config.STORE_BRAND_ICON }}"></i>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav me-auto">
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('storefront.landing') }}">Storefront</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#">Products</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#">About</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#">Contact</a>
+            </li>
+          </ul>
+          <div class="d-flex">
+            {% for social, link in config.STORE_SOCIALS.items() %}
+            <a href="{{ link }}" class="social-icon"><i class="bi bi-{{ social }}"></i></a>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    {% block content %}
+    <main>
+      <!-- Welcome Section -->
+      <section class="hero-section">
+        <!-- Hero Carousel -->
+        <div id="heroCarousel" class="carousel slide hero-carousel" data-bs-ride="carousel">
+          <div class="carousel-inner">
+            <div class="carousel-item active" style="background-image: url('https://images.unsplash.com/photo-1627764574768-539effd9af35?q=90&w=1200&auto=format&fit=crop');">
+              <div class="hero-content">
+                <h1>Welcome to Our Store</h1>
+                <p>Find the best products at unbeatable prices</p>
+                <a href="#products" class="btn btn-primary">Shop Now</a>
+              </div>
+            </div>
+            <div class="carousel-item" style="background-image: url('https://images.unsplash.com/photo-1627764574958-fb54cd7d7448?q=90&w=1200&auto=format&fit=crop');">
+              <div class="hero-content">
+                <h1>Quality Guaranteed</h1>
+                <p>Only the best for our customers</p>
+                <a href="#products" class="btn btn-primary">Browse</a>
+              </div>
+            </div>
+            <div class="carousel-item" style="background-image: url('https://images.unsplash.com/photo-1601369930135-fc6148ef6196?q=90&w=1200&auto=format&fit=crop');">
+              <div class="hero-content">
+                <h1>Exclusive Deals</h1>
+                <p>Save big on selected items</p>
+                <a href="#products" class="btn btn-primary">View Deals</a>
+              </div>
+            </div>
+          </div>
+          <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon"></span>
+          </button>
+          <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon"></span>
+          </button>
+        </div>
+
+      </section>
+
+      <!-- Welcome Section -->
+      <section class="welcome-section">
+        <div class="container text-center">
+          <h1 class="display-5 mb-4 header-lg">Welcome to {{ config.STORE_NAME }}</h1>
+          <p class="lead mb-4">Thank you for signing up with awesome co! We hope you enjoy your time with us. Check out some of our newest offers below or the button to view your new account.</p>
+          <button class="btn btn-custom">My Account</button>
+        </div>
+      </section>
+
+      <section class="py-5 bg-white border-top border-bottom">
+        <div class="container">
+          <h2 class="text-center mb-5 header-md">Our subscription options</h2>
+          <div class="row g-4 mb-3 text-center">
+            <div class="col">
+              <div class="card mb-4 rounded-3 shadow-sm">
+                <div class="card-header py-3">
+                  <h4 class="my-0 fw-normal">Level 1</h4>
+                </div>
+                <div class="card-body">
+                  <h1 class="card-title pricing-card-title">$10.000<small class="text-body-secondary fw-light">/mo</small></h1>
+                  <ul class="list-unstyled mt-3 mb-4">
+                    <li>Feature</li>
+                    <li>Feature</li>
+                  </ul>
+                  <button type="button" class="w-100 btn btn-lg btn-custom">Pay now</button>
+                </div>
+              </div>
+            </div>
+            <div class="col">
+              <div class="card mb-4 rounded-3 shadow-sm">
+                <div class="card-header py-3">
+                  <h4 class="my-0 fw-normal">Level 2</h4>
+                </div>
+                <div class="card-body">
+                  <h1 class="card-title pricing-card-title">$25.000<small class="text-body-secondary fw-light">/mo</small></h1>
+                  <ul class="list-unstyled mt-3 mb-4">
+                    <li>Feature</li>
+                    <li>Feature</li>
+                  </ul>
+                  <button type="button" class="w-100 btn btn-lg btn-custom">Pay now</button>
+                </div>
+              </div>
+            </div>
+            <div class="col">
+              <div class="card mb-4 rounded-3 shadow-sm">
+                <div class="card-header py-3">
+                  <h4 class="my-0 fw-normal">Level 3</h4>
+                </div>
+                <div class="card-body">
+                  <h1 class="card-title pricing-card-title">$43.000<small class="text-body-secondary fw-light">/mo</small></h1>
+                  <ul class="list-unstyled mt-3 mb-4">
+                    <li>Feature</li>
+                    <li>Feature</li>
+                  </ul>
+                  <button type="button" class="w-100 btn btn-lg btn-custom">Pay now</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="welcome-section">
+        <div class="container text-center">
+          <h1 class="display-5 mb-4 header-lg">Get Help</h1>
+          <p class="lead mb-4">We are here to answer your questions.</p>
+          <button class="btn btn-custom">Contact Sales Agent</button>
+        </div>
+      </section>
+      <!-- Products Section -->
+      <section class="py-5 bg-white border-top border-bottom">
+        <div class="container">
+          <h2 class="text-center mb-5 header-md">Check out our newest sales!</h2>
+          <div class="row g-4">
+            <!-- Product 1 -->
+            <div class="col-md-4">
+              <div class="product-card">
+                <img src="https://images.unsplash.com/photo-1558467778-9552e5bbe3ff?q=80&w=1024&auto=format&fit=crop" alt="Pink Shoes" class="product-img">
+                <div class="p-3">
+                  <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div class="pt-1">
+                      <h3 class="h5">Pink Shoes</h3>
+                      <p class="mb-0">The hottest summer sneakers are in now!</p>
+                    </div>
+                    <span class="fw-bold">$29.99</span>
+                  </div>
+                  <button class="btn btn-custom w-100">View Now!</button>
+                </div>
+              </div>
+            </div>
+            <!-- Product 1 -->
+            <div class="col-md-4">
+              <div class="product-card">
+                <img src="https://images.unsplash.com/photo-1558467778-9552e5bbe3ff?q=80&w=1024&auto=format&fit=crop" alt="Pink Shoes" class="product-img">
+                <div class="p-3">
+                  <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div class="pt-1">
+                      <h3 class="h5">Pink Shoes</h3>
+                      <p class="mb-0">The hottest summer sneakers are in now!</p>
+                    </div>
+                    <span class="fw-bold">$29.99</span>
+                  </div>
+                  <button class="btn btn-custom w-100">View Now!</button>
+                </div>
+              </div>
+            </div>
+            <!-- Product 2 -->
+            <div class="col-md-4">
+              <div class="product-card">
+                <img src="https://images.unsplash.com/photo-1558467778-9552e5bbe3ff?q=80&w=1024&auto=format&fit=crop" alt="Pink Shoes" class="product-img">
+                <div class="p-3">
+                  <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div class="pt-1">
+                      <h3 class="h5">Pink Shoes</h3>
+                      <p class="mb-0">The hottest summer sneakers are in now!</p>
+                    </div>
+                    <span class="fw-bold">$29.99</span>
+                  </div>
+                  <button class="btn btn-custom w-100">View Now!</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        </div>
+      </section>
+    </main>
+    {% endblock content %}
+
+    <!-- Footer -->
+    {% block footer %}
+    <footer>
+      <div class="container">
+        <span class="text-body-secondary">{{ config.STORE_NAME.lower() }}-{{app_version}}</span> -
+        <a href="#">Source Code</a>
+      </div>
+    </footer>
+    {% endblock footer %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js" integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q" crossorigin="anonymous"></script>
+    {% block post_js %}
+    {% endblock post_js %}
+  </body>
+
+</html>

@@ -1,0 +1,233 @@
+{% extends "base-pos.html" %}
+
+{% block head_styles %}
+<style>
+  .section {
+    background-color: #ffffff;
+    padding: 50px 30px;
+    border: 1.5px solid #b2b2b2;
+    border-radius: 0.25em;
+    box-shadow: 0 20px 25px rgba(0, 0, 0, 0.25);
+  }
+
+  #my-qr-reader {
+    padding: 20px !important;
+    border: 1.5px solid #b2b2b2 !important;
+    border-radius: 8px;
+  }
+
+  #my-qr-reader img[alt="Info icon"] {
+    display: none;
+  }
+
+  #my-qr-reader img[alt="Camera based scan"] {
+    width: 100px !important;
+    height: 100px !important;
+  }
+
+  .button {
+    padding: 10px 20px;
+    border: 1px solid #b2b2b2;
+    outline: none;
+    border-radius: 0.25em;
+    color: white;
+    font-size: 15px;
+    cursor: pointer;
+    margin-top: 15px;
+    margin-bottom: 10px;
+    background-color: #008000ad;
+    transition: 0.3s background-color;
+  }
+
+  .button:hover {
+    background-color: #008000;
+  }
+
+  #html5-qrcode-anchor-scan-type-change {
+    text-decoration: none !important;
+    color: #1d9bf0;
+    width: 250px;
+  }
+
+  video {
+    width: 100% !important;
+    border: 1px solid #b2b2b2 !important;
+    border-radius: 0.25em;
+  }
+</style>
+{% endblock head_styles %}
+
+{% block page_header -%}
+<div class="page-header d-print-none text-white">
+  <div class="container-xl">
+    <div class="row g-2 align-items-center">
+      <div class="col">
+        <!-- Page pre-title -->
+        <h1 class="page-title">Reporte Línea 2</h1>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock page_header -%}
+
+{% block page_body %}
+<div class="container-xl">
+  <div class="row row-deck row-cards">
+    <div class="col-sm-12 col-lg-12">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Lectores Linea 2</h3>
+
+        </div>
+
+        <div class="card-body">
+          <div id="my-qr-reader" style="width: 250px;">
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="col-md-12 col-lg-8">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Ranking Operadores Linea 2</h3>
+        </div>
+        <div class="card-table table-responsive">
+          <table class="table table-vcenter">
+            <thead>
+              <tr>
+                <th>Posicion</th>
+                <th>Nombre</th>
+                <th>ID</th>
+
+                <th>Cajas 5m</th>
+                <th>Cajas 15m</th>
+                <th>Cajas 30m</th>
+
+              </tr>
+            </thead>
+            <tr>
+              <td>1</td>
+              <td>Juanin Juan Harry</td>
+              <td>276454</td>
+
+              <td class="text-secondary">4</td>
+              <td class="text-secondary">15</td>
+              <td class="text-secondary">39</td>
+
+            </tr>
+            <tr>
+              <td>2</td>
+              <td>Mario Hugo</td>
+              <td>276454</td>
+
+              <td class="text-secondary">4</td>
+              <td class="text-secondary">15</td>
+              <td class="text-secondary">39</td>
+
+            </tr>
+            <tr>
+              <td>3</td>
+              <td>Mico el Micofono</td>
+              <td>276454</td>
+
+              <td class="text-secondary">4</td>
+              <td class="text-secondary">15</td>
+              <td class="text-secondary">39</td>
+
+            </tr>
+            <tr>
+              <td>4</td>
+              <td>Freddy Turbina</td>
+              <td>427685</td>
+
+              <td class="text-secondary">4</td>
+              <td class="text-secondary">15</td>
+              <td class="text-secondary">39</td>
+            </tr>
+            <tr>
+              <td>5</td>
+              <td>Guaripolo</td>
+              <td>345783</td>
+
+              <td class="text-secondary">4</td>
+              <td class="text-secondary">15</td>
+              <td class="text-secondary">39</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Ultimas lecturas Linea 2</h3>
+        </div>
+        <div class="card-body">
+          <ul id="lista-lecturas">
+            <li>Caja: 100434565 - Operador: 276454</li>
+            <li>Caja: 100434568 - Operador: 427685</li>
+            <li>Caja: 100434566 - Operador: 345783</li>
+            <li>Caja: 100434563 - Operador: 276454</li>
+            <li>Caja: 100434569 - Operador: 276454</li>
+            <li>Caja: 100434567 - Operador: 345783</li>
+            <li>Caja: 100434564 - Operador: 276454</li>
+            <li>Caja: 100434562 - Operador: 345783</li>
+            <li>Caja: 100434560 - Operador: 276454</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock page_body -%}
+
+
+{% block page_scripts -%}
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+<script>
+  // script.js file
+
+  function read(id) {
+    let xhr = new XMLHttpRequest();
+    let number = Math.random() * 10000
+    let url = '{{ url_for('pos.nueva_lectura') }}/' + id + "?q=" + number;
+    xhr.open("GET", url, true);
+
+    xhr.onreadystatechange = function () {
+      if (this.readyState == 4 && this.status == 200) {
+        console.log(this.responseText);
+      }
+    }
+    xhr.send();
+  }
+
+  function domReady(fn) {
+    if (
+      document.readyState === "complete" ||
+      document.readyState === "interactive"
+    ) {
+      setTimeout(fn, 1000);
+    } else {
+      document.addEventListener("DOMContentLoaded", fn);
+    }
+  }
+
+  domReady(function () {
+
+    // If found you qr code
+    function onScanSuccess(decodeText, decodeResult) {
+      //alert("You Qr is : " + decodeText, decodeResult);
+      read(decodeText)
+    }
+
+    let htmlscanner = new Html5QrcodeScanner(
+      "my-qr-reader",
+      { fps: 15, qrbos: 250, supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA] }
+    );
+    htmlscanner.render(onScanSuccess);
+  });
+</script>
+{% endblock page_scripts -%}

@@ -1,0 +1,131 @@
+{% extends "base-bare.html" %}
+
+{% block page_body %}
+<div class="container py-4">
+  <div class="card card-md">
+    <div class="card-header">
+      <h3 class="card-title">Registro Completado!</h3>
+    </div>
+    <div class="card-body">
+      <div class="datagrid">
+        <div class="datagrid-item">
+          <div class="datagrid-title">Apoderado</div>
+          <div class="datagrid-content">Tulio Triviño</div>
+        </div>
+        <div class="datagrid-item">
+          <div class="datagrid-title">Correo Apoderado</div>
+          <div class="datagrid-content">tulio@trivino.cl</div>
+        </div>
+        <div class="datagrid-item">
+          <div class="datagrid-title">Teléfono Apoderado</div>
+          <div class="datagrid-content">+56987654321</div>
+        </div>
+        <div class="datagrid-item">
+          <div class="datagrid-title">Cantidad de Alumnos</div>
+          <div class="datagrid-content">2</div>
+        </div>
+
+        <div class="datagrid-item">
+          <div class="datagrid-title">Nombre Alumno 1</div>
+          <div class="datagrid-content">Patana Triviño</div>
+        </div>
+        <div class="datagrid-item">
+          <div class="datagrid-title">Edad Alumno 1</div>
+          <div class="datagrid-content">13 años, 10 meses</div>
+        </div>
+        <div class="datagrid-item">
+          <div class="datagrid-title">Curso Alumno 1</div>
+          <div class="datagrid-content">
+            <span class="status status-green"> I-B </span>
+          </div>
+        </div>
+        <div class="datagrid-item">
+          <div class="datagrid-title"></div>
+          <div class="datagrid-content"></div>
+        </div>
+
+        <div class="datagrid-item">
+          <div class="datagrid-title">Nombre Alumno 2</div>
+          <div class="datagrid-content">Morticia Triviño</div>
+        </div>
+        <div class="datagrid-item">
+          <div class="datagrid-title">Edad Alumno 2</div>
+          <div class="datagrid-content">10 años, 3 meses</div>
+        </div>
+        <div class="datagrid-item">
+          <div class="datagrid-title">Curso Alumno 2</div>
+          <div class="datagrid-content">
+            <span class="status status-green"> 6-A </span>
+          </div>
+        </div>
+        <div class="datagrid-item">
+          <div class="datagrid-title"></div>
+          <div class="datagrid-content"></div>
+        </div>
+
+        <div class="datagrid-item">
+          <div class="datagrid-title">Notificación de abono/transferencia</div>
+          <div class="datagrid-content">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" class="icon text-danger icon-2">
+              <path d="M18 6l-12 12" />
+              <path d="M6 6l12 12" />
+            </svg>
+            No
+          </div>
+        </div>
+        <div class="datagrid-item">
+          <div class="datagrid-title">Notificación de compra</div>
+          <div class="datagrid-content">
+            <!-- Download SVG icon from http://tabler.io/icons/icon/check -->
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" class="icon text-green icon-2">
+              <path d="M5 12l5 5l10 -10" />
+            </svg>
+            Si
+          </div>
+        </div>
+        <div class="datagrid-item">
+          <div class="datagrid-title">Tag Compartido</div>
+          <div class="datagrid-content">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" class="icon text-danger icon-2">
+              <path d="M18 6l-12 12" />
+              <path d="M6 6l12 12" />
+            </svg>
+
+            No
+          </div>
+        </div>
+        <div class="datagrid-item">
+          <div class="datagrid-title">Informe Semanal</div>
+          <div class="datagrid-content">
+            <!-- Download SVG icon from http://tabler.io/icons/icon/check -->
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" class="icon text-green icon-2">
+              <path d="M5 12l5 5l10 -10" />
+            </svg>
+            Si
+          </div>
+        </div>
+        <div class="datagrid-item">
+          <div class="datagrid-title">Limite diario</div>
+          <div class="datagrid-content">
+            <input type="text" class="form-control form-control-flush" placeholder="$1.800" />
+          </div>
+        </div>
+        <div class="datagrid-item">
+          <div class="datagrid-title">Limite semanal</div>
+          <div class="datagrid-content">
+            <input type="text" class="form-control form-control-flush" placeholder="$7.500" />
+          </div>
+        </div>
+        <div class="datagrid-item">
+          <div class="datagrid-title">Copia Notificaiones</div>
+          <div class="datagrid-content">vespertina@triviño.cl</div>
+        </div>
+      </div>
+      <hr>
+      <a href="{{ url_for('apoderado.index') }}" class="btn btn-primary btn-2"> Ir al Inicio </a>
+      <p>Si desea agregar más alumnos puede hacerlo en <span class="status status-info"> Perfil de Apoderado </span>.</p>
+      <p>Por favor revisa tu correo electrónico en donde recibirás tu contraseña temporal para <a href="{{ url_for('security.login') }}">ingresar al sistema</a>.</p>
+    </div>
+  </div>
+</div>
+{% endblock page_body %}

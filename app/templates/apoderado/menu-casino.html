@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block page_header -%}
+<div class="page-header d-print-none text-white">
+  <div class="container-xl">
+    <div class="row g-2 align-items-center">
+      <div class="col">
+        <!-- Page pre-title -->
+        <h1 class="page-title">Menu Semanal</h1>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock page_header -%}
+
+{% block page_body %}
+<main id="content" class="page-body">
+  <div class="container-xl">
+    <div class="card">
+      <div class="card-body">
+        <div id="calendar-default"></div>
+      </div>
+      <div class="card-footer text-end"><button type="button" class="btn btn-primary btn-lg" id="btn-pedido">Hacer Pedido</button></div>
+    </div>
+  </div>
+</main>
+<!-- BEGIN MODAL -->
+<div class="modal modal-blur fade rounded bg-surface-backdrop" id="modal-dia" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-3 modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Arma el menú</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" onclick="closeModalDia()"></button>
+      </div>
+      <div class="modal-body" id="contenido-modal">
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn me-auto" onclick="closeModalDia()" data-bs-dismiss="modal">Cerrar</button>
+        <button type="button" class="btn btn-primary" onclick="handleEventMenu()">Agregar al menú</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- END MODAL -->
+{% endblock page_body %}
+
+{% block page_scripts -%}
+
+
+<script src="{{ url_for('static', filename='tabler/libs/fullcalendar/index.global.js', v=app_version)}}"></script>
+<script>
+  var calendarEl = document.getElementById("calendar-default");
+  calendar = null
+  function obtieneMenu(dia) {
+    const baseUrl = "{{ url_for('core.consulta', dia=today) }}";
+
+    fetch(`${baseUrl}/${dia}`)
+      .then(response => {
+        if (!response.ok) throw new Error('Error en la consulta');
+        return response.text();
+      })
+      .then(html => {
+        document.getElementById('contenido-modal').innerHTML = html;
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('contenido-modal').innerHTML =
+          '<div class="alert alert-warning">No hay menús disponibles para ' + dia + '</div>';
+      });
+  }
+
+  function closeModalDia() {
+    const modalEl = document.getElementById('modal-dia');
+
+
+    // jQuery fallback if Tabler uses it
+    if (typeof $ !== 'undefined') {
+      $('#modal-dia').modal('hide');
+    } else {
+      // Manual trigger
+      modalEl.classList.remove('show');
+      modalEl.style.display = 'none';
+    }
+  }
+  document.addEventListener("DOMContentLoaded", function () {
+
+
+    calendar = new FullCalendar.Calendar(calendarEl, {
+      locale: 'es',
+      initialView: "dayGridMonth",
+      firstDay: 1,
+      buttonText: { today: "Volver a Hoy", },
+      timeZone: "America/Santiago",
+      validRange: {
+        start: '2026-03-02',
+        end: '2026-12-25'
+      },
+      businessHours: {
+        daysOfWeek: [1, 2, 3, 4, 5],
+      },
+
+      editable: false,
+      selectable: true,
+      select(info) {
+
+        obtieneMenu(info.startStr);
+        const modalEl = document.getElementById('modal-dia');
+
+
+        // jQuery fallback if Tabler uses it
+        if (typeof $ !== 'undefined') {
+          $('#modal-dia').modal('show');
+        } else {
+          // Manual trigger
+          modalEl.classList.add('show');
+          modalEl.style.display = 'block';
+        }
+
+        /*
+        calendar.addEvent({
+          title: 'Compra manual',
+          start: info.startStr,
+          allDay: true,
+        })
+        */
+
+
+      },
+      eventClick(info) {
+        if (confirm('¿Eliminar compra?')) {
+          info.event.remove()
+        }
+      },
+    });
+    calendar.render();
+  });
+
+  function handleEventMenu() {
+    var form = document.getElementById("formulario_menu");
+    var selectedMenu = form.querySelector('input[name="form-menu"]:checked');
+    var dia = form.querySelector('input[name="dia"]').value;
+    var info = form.querySelector('textarea[name="info"]').value;
+
+
+    if (selectedMenu) {
+      calendar.addEvent({
+        title: selectedMenu.value,
+        allDay: true,
+        start: dia,
+        extendedProps: {
+          slug: selectedMenu.value,
+          note: info,
+        }
+      });
+      console.log("Menu:", selectedMenu.value);
+      console.log("Info:", info);
+    }
+    closeModalDia();
+  }
+  function collectCalendarData() {
+    return calendar.getEvents().map(e => ({
+      date: e.startStr,
+      slug: e.extendedProps.slug,
+      note: e.extendedProps.note || ''
+    }))
+  }
+  document.getElementById('btn-pedido').addEventListener('click', () => {
+    submitCalendar('{{ url_for('pos.ordenweb') }}', '{{ csrf_token() }}')
+  })
+
+  function submitCalendar(url, csrfToken) {
+    const payload = collectCalendarData()
+
+    fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken
+      },
+      body: JSON.stringify({ purchases: payload })
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.redirect_url) {
+          window.location.href = data.redirect_url
+        }
+      })
+  }
+
+
+</script>
+{% endblock page_scripts -%}

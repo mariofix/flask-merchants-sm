@@ -1,0 +1,65 @@
+{% extends 'admin/master.html' %}
+
+{% block body %}
+<div class="container mt-4">
+  <h2>Mis Órdenes</h2>
+
+  {% if not ordenes %}
+  <div class="alert alert-info">No tienes órdenes registradas</div>
+  {% else %}
+
+  <div class="table-responsive">
+    <table class="table table-hover">
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Fecha</th>
+          <th>Menú</th>
+          <th>Total</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for orden in ordenes %}
+        <tr>
+          <td><strong>{{ orden.codigo }}</strong></td>
+          <td>{{ orden.fecha_orden.strftime('%d/%m/%Y %H:%M') }}</td>
+          <td>
+            {% for sel in orden.selecciones %}
+            <small class="d-block">{{ sel.tipo_curso.value }}: {{ sel.plato_nombre }}</small>
+            {% endfor %}
+          </td>
+          <td>${{ orden.precio_total }}</td>
+          <td>
+            {% if orden.estado.value == 'pendiente' %}
+            <span class="badge bg-warning">Pendiente</span>
+            {% elif orden.estado.value == 'confirmada' %}
+            <span class="badge bg-info">Confirmada</span>
+            {% elif orden.estado.value == 'en_preparacion' %}
+            <span class="badge bg-primary">En Preparación</span>
+            {% elif orden.estado.value == 'lista' %}
+            <span class="badge bg-success">Lista</span>
+            {% elif orden.estado.value == 'entregada' %}
+            <span class="badge bg-secondary">Entregada</span>
+            {% elif orden.estado.value == 'cancelada' %}
+            <span class="badge bg-danger">Cancelada</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if orden.estado.value in ['pendiente', 'confirmada'] %}
+            <form method="POST" action="{{ url_for('misordenes.cancelar', orden_id=orden.id) }}" style="display:inline;">
+              <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Cancelar pedido?')">
+                Cancelar
+              </button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

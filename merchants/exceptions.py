@@ -1,0 +1,2 @@
+class MerchantsException(Exception):
+    pass

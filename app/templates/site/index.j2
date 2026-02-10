@@ -1,0 +1,538 @@
+{% extends "base-sitio.j2" %}
+
+{% block title %}Sabor Mirandiano{% endblock title%}
+
+
+{% block page_body %}
+<!-- BEGIN PAGE BODY -->
+<main id="content">
+  <!--- https://unsplash.com/photos/steamed-rice-and-meat-dish-EdzsUFqHbaY?utm_source=unsplash&utm_medium=referral&utm_content=creditShareLink -->
+  <header class="img-bg" style="background-image: url({{ url_for('static', filename='/img/site-cover.jpg', v=app_version)}})">
+    <div class="hero position-relative bg-primary py-12" style="--tblr-bg-opacity: 0.9">
+      <div class="container-narrow">
+        <h1 class="hero-title text-white">Tenemos sorpresas para tí y tu familia</h1>
+        <p class="hero-description mb-5 text-white text-opacity-50">
+          Es hora de modernizarnos, asi que desde ahora podrás comprar y reservar los almuerzos de tus hijos directamente en nuestro sitio, tus hijos podrán de manera segura, rapida, y eficiente comer en el colegio sin más preocupaciones o cuentas por pagar.
+        </p>
+        <div class="row gx-lg-5 justify-content-center">
+          <div class="col-xl-6 col-lg-8 text-center">
+            <form novalidate="" class="row row-cols-1 row-cols-md-auto g-3 align-items-center">
+              <div class="col flex-grow-1">
+                <input id="inputSearch" type="text" placeholder="Busca nuestros productos..." class="form-control form-control-solid" aria-label="Busca nuestros productos" />
+              </div>
+              <div class="col"><button type="submit" class="btn btn-teal fw-500">Buscar</button></div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+  <section class="section section-white">
+    <svg class="section-divider" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 145 36" preserveAspectRatio="none">
+      <path d="M 145 36 m -145 -18 s 32.36 18 72.27 18 s 72.73 -18 72.73 -18 v 18 h -145 z"></path>
+    </svg>
+    <div class="container">
+      <div class="row g-lg-6">
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Lunes, 1 de Marzo del 2026</h3>
+            </div>
+            <div class="card-body">
+              <div id="carousel-captions" class="carousel slide" data-bs-ride="carousel">
+                <div class="carousel-inner">
+                  <div class="carousel-item active">
+                    <img class="d-block w-100" alt="" src="{{ url_for('static', filename='img/lasagna.jpg', v=app_version)}}" />
+                    <div class="carousel-caption-background d-none d-md-block"></div>
+                    <div class="carousel-caption d-none d-md-block">
+                      <h3>Lasaña Boloñesa</h3>
+                      <p>Tomate y Pepino - Mousse de Frambuesa</p>
+                    </div>
+                  </div>
+                  <div class="carousel-item">
+                    <img class="d-block w-100" alt="" src="{{ url_for('static', filename='img/lasagna-veg.jpg', v=app_version)}}" />
+                    <div class="carousel-caption-background d-none d-md-block"></div>
+                    <div class="carousel-caption d-none d-md-block">
+                      <h3>Lasaña de Verduras</h3>
+                      <p>Tomate y Pepino - Mousse de Frambuesa</p>
+                    </div>
+                  </div>
+                  <div class="carousel-item">
+                    <img class="d-block w-100" alt="" src="{{ url_for('static', filename='img/lasagna.jpg', v=app_version)}}" />
+                    <div class="carousel-caption-background d-none d-md-block"></div>
+                    <div class="carousel-caption d-none d-md-block">
+                      <h3>Lasaña Boloñesa</h3>
+                      <p>Tomate y Pepino - Mousse de Frambuesa</p>
+                    </div>
+                  </div>
+                  <div class="carousel-item">
+                    <img class="d-block w-100" alt="" src="{{ url_for('static', filename='img/lasagna-veg.jpg', v=app_version)}}" />
+                    <div class="carousel-caption-background d-none d-md-block"></div>
+                    <div class="carousel-caption d-none d-md-block">
+                      <h3>Lasaña de Verduras</h3>
+                      <p>Tomate y Pepino - Mousse de Frambuesa</p>
+                    </div>
+                  </div>
+                </div>
+                <a class="carousel-control-prev" href="#carousel-captions" role="button" data-bs-slide="prev">
+                  <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                  <span class="visually-hidden">Previous</span>
+                </a>
+                <a class="carousel-control-next" href="#carousel-captions" role="button" data-bs-slide="next">
+                  <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                  <span class="visually-hidden">Next</span>
+                </a>
+              </div>
+            </div>
+            <div class="card-footer"><a href="{{ url_for('apoderado_cliente.menu_casino') }}" class="btn btn-primary w-100">Armar Menú</a></div>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Martes, 2 de Marzo del 2026</h3>
+            </div>
+            <div class="card-body">
+              <div id="carousel-captions" class="carousel slide" data-bs-ride="carousel">
+                <div class="carousel-inner">
+                  <div class="carousel-item active">
+                    <img class="d-block w-100" alt="" src="{{ url_for('static', filename='img/mar-car.jpg', v=app_version)}}" />
+                    <div class="carousel-caption-background d-none d-md-block"></div>
+                    <div class="carousel-caption d-none d-md-block">
+                      <h3>Carne Mechada con Puré de Papas</h3>
+                      <p>Choclo, Lechucha, Zanahoria - Jalea</p>
+                    </div>
+                  </div>
+                  <div class="carousel-item">
+                    <img class="d-block w-100" alt="" src="{{ url_for('static', filename='img/mar-veg.jpg', v=app_version)}}" />
+                    <div class="carousel-caption-background d-none d-md-block"></div>
+                    <div class="carousel-caption d-none d-md-block">
+                      <h3>Croquetas de Verdura</h3>
+                      <p>Choclo, Lechucha, Zanahoria - Jalea</p>
+                    </div>
+                  </div>
+                  <div class="carousel-item">
+                    <img class="d-block w-100" alt="" src="{{ url_for('static', filename='img/mar-car.jpg', v=app_version)}}" />
+                    <div class="carousel-caption-background d-none d-md-block"></div>
+                    <div class="carousel-caption d-none d-md-block">
+                      <h3>Carne Mechada con Puré de Papas</h3>
+                      <p>Choclo, Lechucha, Zanahoria - Jalea</p>
+                    </div>
+                  </div>
+                  <div class="carousel-item">
+                    <img class="d-block w-100" alt="" src="{{ url_for('static', filename='img/mar-veg.jpg', v=app_version)}}" />
+                    <div class="carousel-caption-background d-none d-md-block"></div>
+                    <div class="carousel-caption d-none d-md-block">
+                      <h3>Croquetas de Verdura</h3>
+                      <p>Choclo, Lechucha, Zanahoria - Jalea</p>
+                    </div>
+                  </div>
+                </div>
+                <a class="carousel-control-prev" href="#carousel-captions" role="button" data-bs-slide="prev">
+                  <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                  <span class="visually-hidden">Previous</span>
+                </a>
+                <a class="carousel-control-next" href="#carousel-captions" role="button" data-bs-slide="next">
+                  <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                  <span class="visually-hidden">Next</span>
+                </a>
+              </div>
+            </div>
+            <div class="card-footer"><a href="{{ url_for('apoderado_cliente.menu_casino') }}" class="btn btn-primary w-100">Armar Menú</a></div>
+          </div>
+        </div>
+      </div>
+
+
+      <div class="row g-2 align-items-center m-3">
+        <div class="col">
+          <h2 class="page-title">Martes 2/12</h2>
+        </div>
+      </div>
+      <div class="row g-lg-6">
+        <div class="col-md-6 col-lg-4">
+          <div class="card">
+            <a href="#">
+              <div class="img-bg ratio ratio-4x3 card-img-top" style="background-image: url({{ url_for('static', filename='img/mar-car.jpg', v=app_version)}})"></div>
+            </a>
+            <div class="card-body">
+              <div class="h1 mb-2 fw-bold">Carne Mechada con Puré de Papas</div>
+              <div>
+                <div class="text-secondary">Choclo, Lechucha, Zanahoria</div>
+                <div class="d-flex mb-4 text-secondary">
+                  <div class="d-block d-flex align-items-center me-3">
+                    Jalea
+                  </div>
+                </div>
+                <a href="{{ url_for('apoderado_cliente.menu_casino') }}" class="btn btn-primary py-2 px-3">Armar Menu</a>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="card">
+            <a href="#">
+              <div class="img-bg ratio ratio-4x3 card-img-top" style="background-image: url({{ url_for('static', filename='img/mar-veg.jpg', v=app_version)}})"></div>
+            </a>
+            <div class="card-body">
+              <div class="h1 mb-2 fw-bold">Croquetas de Verdura</div>
+              <div>
+                <div class="text-secondary">Choclo, Lechucha, Zanahoria</div>
+                <div class="d-flex mb-4 text-secondary">
+                  <div class="d-block d-flex align-items-center me-3">
+                    Jalea
+                  </div>
+                </div>
+                <a href="{{ url_for('apoderado_cliente.menu_casino') }}" class="btn btn-primary py-2 px-3">Armar Menu</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+
+
+    </div>
+  </section>
+</main>
+<!-- END PAGE BODY -->
+<!-- BEGIN FOOTER -->
+<footer class="footer">
+  <div class="container">
+    <div class="py-3">
+      <div class="row g-lg-4">
+        <div class="col-lg-7">
+          <div class="row g-lg-4">
+            <div class="col-md">
+              <div class="subheader mb-3">Sabor Mirandiano</div>
+              <ul class="list-unstyled list-separated gap-2">
+                <li><a class="link-secondary" href="">Casino</a></li>
+                <li>
+                  <a class="link-secondary" href="">Cafetería</a>
+                </li>
+                <li>
+                  <a class="link-secondary" href="">Ayuda</a>
+                </li>
+                <li><a class="link-secondary" href="">Sobre Nosotros</a></li>
+              </ul>
+            </div>
+            <div class="col-md">
+              <div class="subheader mb-3">Soporte</div>
+              <ul class="list-unstyled list-separated gap-2">
+                <li><a class="link-secondary" href="">Contacto</a></li>
+              </ul>
+            </div>
+
+          </div>
+        </div>
+        <div class="col-lg-4 ml-auto">
+          <div class="text-secondary">
+            Sabor Mirandiano es parte de la familia del Colegio Francisco de Miranda.
+          </div>
+        </div>
+      </div>
+      <div class="row g-lg-4 justify-content-between mt-0 mt-md-2">
+        <div class="col-sm-7 col-md-6 col-lg-4">
+
+        </div>
+        <div class="col-sm-5 col-md-6 col-lg-3 text-sm-end">
+          <h5 class="subheader">Hablemos!</h5>
+          <ul class="list-inline mb-0 mt-3">
+            {# <li class="list-inline-item">
+              <a class="btn btn-icon btn-facebook" href="#"><!-- Download SVG icon from http://tabler.io/icons/icon/brand-facebook -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" class="icon icon-1">
+                  <path d="M7 10v4h3v7h4v-7h3l1 -4h-4v-2a1 1 0 0 1 1 -1h3v-4h-3a5 5 0 0 0 -5 5v2h-3" />
+                </svg></a>
+            </li> #}
+            <li class="list-inline-item">
+              <a class="btn btn-icon btn-instagram" href="https://www.instagram.com/sabormirandiano/"><!-- Download SVG icon from http://tabler.io/icons/icon/brand-instagram -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" class="icon icon-1">
+                  <path d="M4 8a4 4 0 0 1 4 -4h8a4 4 0 0 1 4 4v8a4 4 0 0 1 -4 4h-8a4 4 0 0 1 -4 -4z" />
+                  <path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />
+                  <path d="M16.5 7.5v.01" />
+                </svg></a>
+            </li>
+            {# <li class="list-inline-item">
+              <a class="btn btn-icon btn-twitter" href="#"><!-- Download SVG icon from http://tabler.io/icons/icon/brand-twitter -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" class="icon icon-1">
+                  <path d="M22 4.01c-1 .49 -1.98 .689 -3 .99c-1.121 -1.265 -2.783 -1.335 -4.38 -.737s-2.643 2.06 -2.62 3.737v1c-3.245 .083 -6.135 -1.395 -8 -4c0 0 -4.182 7.433 4 11c-1.872 1.247 -3.739 2.088 -6 2c3.308 1.803 6.913 2.423 10.034 1.517c3.58 -1.04 6.522 -3.723 7.651 -7.742a13.84 13.84 0 0 0 .497 -3.753c0 -.249 1.51 -2.772 1.818 -4.013z" />
+                </svg></a>
+            </li>
+            <li class="list-inline-item">
+              <a class="btn btn-icon btn-linkedin" href="#"><!-- Download SVG icon from http://tabler.io/icons/icon/brand-linkedin -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" class="icon icon-1">
+                  <path d="M8 11v5" />
+                  <path d="M8 8v.01" />
+                  <path d="M12 16v-5" />
+                  <path d="M16 16v-3a2 2 0 1 0 -4 0" />
+                  <path d="M3 7a4 4 0 0 1 4 -4h10a4 4 0 0 1 4 4v10a4 4 0 0 1 -4 4h-10a4 4 0 0 1 -4 -4z" />
+                </svg></a>
+            </li> #}
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+<footer class="footer">
+  <div class="container">
+    <div class="py-3 border-top-light text-center text-lg-start">
+      <div class="row g-lg-4">
+        <div class="col-lg-auto text-lg-end order-lg-last">
+          <div class="row justify-center">
+            <div class="col-auto">©<a href="https://www.instagram.com/sabormirandiano/" class="link-secondary" target="_blank" rel="noopener noreferrer">sabormirandiano</a></div>
+            <div class="col-auto">
+              <ul class="list-inline list-inline-dots">
+                <li class="list-inline-item">
+                  <a class="link-secondary" href="/terms-of-service">Términos y Condiciones</a>
+                </li>
+                <li class="list-inline-item">
+                  <a class="link-secondary" href="/privacy-policy">Política de Privacidad</a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg">
+          Hecho con
+          <!-- Download SVG icon from http://tabler.io/icons/icon/heart -->
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" class="icon text-red icon-inline icon-4">
+            <path d="M19.5 12.572l-7.5 7.428l-7.5 -7.428a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572" />
+          </svg>
+          en Chile.
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+<!-- END FOOTER -->
+<div class="settings">
+  <a href="#" class="btn btn-floating btn-icon btn-primary" data-bs-toggle="offcanvas" data-bs-target="#offcanvasSettings" aria-controls="offcanvasSettings" aria-label="Theme Settings">
+    <!-- Download SVG icon from http://tabler.io/icons/icon/brush -->
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" class="icon icon-1">
+      <path d="M3 21v-4a4 4 0 1 1 4 4h-4" />
+      <path d="M21 3a16 16 0 0 0 -12.8 10.2" />
+      <path d="M21 3a16 16 0 0 1 -10.2 12.8" />
+      <path d="M10.6 9a9 9 0 0 1 4.4 4.4" />
+    </svg>
+  </a>
+  <form class="offcanvas offcanvas-start offcanvas-narrow" tabindex="-1" id="offcanvasSettings" role="dialog" aria-modal="true" aria-labelledby="offcanvasSettingsTitle">
+    <div class="offcanvas-header">
+      <h2 class="offcanvas-title" id="offcanvasSettingsTitle">Theme Settings</h2>
+      <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body d-flex flex-column">
+      <div>
+        <div class="mb-4">
+          <label class="form-label">Color mode</label>
+          <p class="form-hint">Choose the color mode for your app.</p>
+          <label class="form-check">
+            <div class="form-selectgroup-item">
+              <input type="radio" name="theme" value="light" class="form-check-input" checked />
+              <div class="form-check-label">Light</div>
+            </div>
+          </label>
+          <label class="form-check">
+            <div class="form-selectgroup-item">
+              <input type="radio" name="theme" value="dark" class="form-check-input" />
+              <div class="form-check-label">Dark</div>
+            </div>
+          </label>
+        </div>
+        <div class="mb-4">
+          <label class="form-label">Color scheme</label>
+          <p class="form-hint">The perfect color mode for your app.</p>
+          <div class="row g-2">
+            <div class="col-auto">
+              <label class="form-colorinput">
+                <input name="theme-primary" type="radio" value="blue" class="form-colorinput-input" />
+                <span class="form-colorinput-color bg-blue"></span>
+              </label>
+            </div>
+            <div class="col-auto">
+              <label class="form-colorinput">
+                <input name="theme-primary" type="radio" value="azure" class="form-colorinput-input" />
+                <span class="form-colorinput-color bg-azure"></span>
+              </label>
+            </div>
+            <div class="col-auto">
+              <label class="form-colorinput">
+                <input name="theme-primary" type="radio" value="indigo" class="form-colorinput-input" />
+                <span class="form-colorinput-color bg-indigo"></span>
+              </label>
+            </div>
+            <div class="col-auto">
+              <label class="form-colorinput">
+                <input name="theme-primary" type="radio" value="purple" class="form-colorinput-input" />
+                <span class="form-colorinput-color bg-purple"></span>
+              </label>
+            </div>
+            <div class="col-auto">
+              <label class="form-colorinput">
+                <input name="theme-primary" type="radio" value="pink" class="form-colorinput-input" />
+                <span class="form-colorinput-color bg-pink"></span>
+              </label>
+            </div>
+            <div class="col-auto">
+              <label class="form-colorinput">
+                <input name="theme-primary" type="radio" value="red" class="form-colorinput-input" />
+                <span class="form-colorinput-color bg-red"></span>
+              </label>
+            </div>
+            <div class="col-auto">
+              <label class="form-colorinput">
+                <input name="theme-primary" type="radio" value="orange" class="form-colorinput-input" />
+                <span class="form-colorinput-color bg-orange"></span>
+              </label>
+            </div>
+            <div class="col-auto">
+              <label class="form-colorinput">
+                <input name="theme-primary" type="radio" value="yellow" class="form-colorinput-input" />
+                <span class="form-colorinput-color bg-yellow"></span>
+              </label>
+            </div>
+            <div class="col-auto">
+              <label class="form-colorinput">
+                <input name="theme-primary" type="radio" value="lime" class="form-colorinput-input" />
+                <span class="form-colorinput-color bg-lime"></span>
+              </label>
+            </div>
+            <div class="col-auto">
+              <label class="form-colorinput">
+                <input name="theme-primary" type="radio" value="green" class="form-colorinput-input" />
+                <span class="form-colorinput-color bg-green"></span>
+              </label>
+            </div>
+            <div class="col-auto">
+              <label class="form-colorinput">
+                <input name="theme-primary" type="radio" value="teal" class="form-colorinput-input" />
+                <span class="form-colorinput-color bg-teal"></span>
+              </label>
+            </div>
+            <div class="col-auto">
+              <label class="form-colorinput">
+                <input name="theme-primary" type="radio" value="cyan" class="form-colorinput-input" />
+                <span class="form-colorinput-color bg-cyan"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="mb-4">
+          <label class="form-label">Font family</label>
+          <p class="form-hint">Choose the font family that fits your app.</p>
+          <div>
+            <label class="form-check">
+              <div class="form-selectgroup-item">
+                <input type="radio" name="theme-font" value="sans-serif" class="form-check-input" checked />
+                <div class="form-check-label">Sans-serif</div>
+              </div>
+            </label>
+            <label class="form-check">
+              <div class="form-selectgroup-item">
+                <input type="radio" name="theme-font" value="serif" class="form-check-input" />
+                <div class="form-check-label">Serif</div>
+              </div>
+            </label>
+            <label class="form-check">
+              <div class="form-selectgroup-item">
+                <input type="radio" name="theme-font" value="monospace" class="form-check-input" />
+                <div class="form-check-label">Monospace</div>
+              </div>
+            </label>
+            <label class="form-check">
+              <div class="form-selectgroup-item">
+                <input type="radio" name="theme-font" value="comic" class="form-check-input" />
+                <div class="form-check-label">Comic</div>
+              </div>
+            </label>
+          </div>
+        </div>
+        <div class="mb-4">
+          <label class="form-label">Theme base</label>
+          <p class="form-hint">Choose the gray shade for your app.</p>
+          <div>
+            <label class="form-check">
+              <div class="form-selectgroup-item">
+                <input type="radio" name="theme-base" value="slate" class="form-check-input" />
+                <div class="form-check-label">Slate</div>
+              </div>
+            </label>
+            <label class="form-check">
+              <div class="form-selectgroup-item">
+                <input type="radio" name="theme-base" value="gray" class="form-check-input" checked />
+                <div class="form-check-label">Gray</div>
+              </div>
+            </label>
+            <label class="form-check">
+              <div class="form-selectgroup-item">
+                <input type="radio" name="theme-base" value="zinc" class="form-check-input" />
+                <div class="form-check-label">Zinc</div>
+              </div>
+            </label>
+            <label class="form-check">
+              <div class="form-selectgroup-item">
+                <input type="radio" name="theme-base" value="neutral" class="form-check-input" />
+                <div class="form-check-label">Neutral</div>
+              </div>
+            </label>
+            <label class="form-check">
+              <div class="form-selectgroup-item">
+                <input type="radio" name="theme-base" value="stone" class="form-check-input" />
+                <div class="form-check-label">Stone</div>
+              </div>
+            </label>
+          </div>
+        </div>
+        <div class="mb-4">
+          <label class="form-label">Corner Radius</label>
+          <p class="form-hint">Choose the border radius factor for your app.</p>
+          <div>
+            <label class="form-check">
+              <div class="form-selectgroup-item">
+                <input type="radio" name="theme-radius" value="0" class="form-check-input" />
+                <div class="form-check-label">0</div>
+              </div>
+            </label>
+            <label class="form-check">
+              <div class="form-selectgroup-item">
+                <input type="radio" name="theme-radius" value="0.5" class="form-check-input" />
+                <div class="form-check-label">0.5</div>
+              </div>
+            </label>
+            <label class="form-check">
+              <div class="form-selectgroup-item">
+                <input type="radio" name="theme-radius" value="1" class="form-check-input" checked />
+                <div class="form-check-label">1</div>
+              </div>
+            </label>
+            <label class="form-check">
+              <div class="form-selectgroup-item">
+                <input type="radio" name="theme-radius" value="1.5" class="form-check-input" />
+                <div class="form-check-label">1.5</div>
+              </div>
+            </label>
+            <label class="form-check">
+              <div class="form-selectgroup-item">
+                <input type="radio" name="theme-radius" value="2" class="form-check-input" />
+                <div class="form-check-label">2</div>
+              </div>
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="mt-auto space-y">
+        <button type="button" class="btn w-100" id="reset-changes">
+          <!-- Download SVG icon from http://tabler.io/icons/icon/rotate -->
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" class="icon icon-1">
+            <path d="M19.95 11a8 8 0 1 0 -.5 4m.5 5v-5h-5" />
+          </svg>
+          Reset changes
+        </button>
+        <a href="#" class="btn btn-primary w-100" data-bs-dismiss="offcanvas"> Save </a>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock page_body %}

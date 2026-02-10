@@ -1,0 +1,423 @@
+{% extends "base-pos.html" %}
+
+{% block page_header -%}
+<div class="page-header d-print-none text-white">
+  <div class="container-xl">
+    <div class="row g-2 align-items-center">
+      <div class="col">
+        <!-- Page pre-title -->
+        <h1 class="page-title">Punto de Venta</h1>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock page_header -%}
+
+{% block page_body %}
+<div class="container-xl">
+  <div class="row row-deck row-cards">
+    <div class="col-12">
+      <div class="row row-cards">
+        <div class="col-sm-6 col-lg-3">
+          <div class="card card-sm">
+            <div class="card-body">
+              <div class="row align-items-center">
+                <div class="col-auto">
+                  <span class="bg-primary text-white avatar"><!-- Download SVG icon from http://tabler.io/icons/icon/currency-dollar -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" class="icon icon-1">
+                      <path d="M16.7 8a3 3 0 0 0 -2.7 -2h-4a3 3 0 0 0 0 6h4a3 3 0 0 1 0 6h-4a3 3 0 0 1 -2.7 -2" />
+                      <path d="M12 3v3m0 12v3" />
+                    </svg></span>
+                </div>
+                <div class="col">
+                  <div class="font-weight-medium">2 Compras</div>
+                  <div class="text-secondary">Total $1.300.-</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+          <div class="card card-sm">
+            <div class="card-body">
+              <div class="row align-items-center">
+                <div class="col-auto">
+                  <span class="bg-green text-white avatar"><!-- Download SVG icon from http://tabler.io/icons/icon/shopping-cart -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" class="icon icon-1">
+                      <path d="M6 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+                      <path d="M17 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+                      <path d="M17 17h-11v-14h-2" />
+                      <path d="M6 5l14 1l-1 7h-13" />
+                    </svg></span>
+                </div>
+                <div class="col">
+                  <div class="font-weight-medium">9 Almuerzos</div>
+                  <div class="text-secondary">Para 18 días.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+          <div class="card card-sm">
+            <div class="card-body">
+              <div class="row align-items-center">
+                <div class="col-auto">
+                  <span class="bg-x text-white avatar"><!-- Download SVG icon from http://tabler.io/icons/icon/brand-x -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" class="icon icon-1">
+                      <path d="M4 4l11.733 16h4.267l-11.733 -16z" />
+                      <path d="M4 20l6.768 -6.768m2.46 -2.46l6.772 -6.772" />
+                    </svg></span>
+                </div>
+                <div class="col">
+                  <div class="font-weight-medium">623 Shares</div>
+                  <div class="text-secondary">16 today</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+          <div class="card card-sm">
+            <div class="card-body">
+              <div class="row align-items-center">
+                <div class="col-auto">
+                  <span class="bg-facebook text-white avatar"><!-- Download SVG icon from http://tabler.io/icons/icon/brand-facebook -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" class="icon icon-1">
+                      <path d="M7 10v4h3v7h4v-7h3l1 -4h-4v-2a1 1 0 0 1 1 -1h3v-4h-3a5 5 0 0 0 -5 5v2h-3" />
+                    </svg></span>
+                </div>
+                <div class="col">
+                  <div class="font-weight-medium">$93.500</div>
+                  <div class="text-secondary">En abonos por canjear</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-12">
+      <div class="row row-cards">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-body">
+              <p class="mb-3">Productos más comprado en <strong>Cafeteria </strong> los ultimos 3 meses:</p>
+              <div class="progress progress-separated mb-3">
+                <div class="progress-bar bg-primary" role="progressbar" style="width: 63%" aria-label="Té Variedades"></div>
+                <div class="progress-bar bg-cyan" role="progressbar" style="width: 25%" aria-label="Factura Unidad"></div>
+                <div class="progress-bar bg-success" role="progressbar" style="width: 12%" aria-label="Jugo Natural"></div>
+              </div>
+              <div class="row">
+                <div class="col-auto d-flex align-items-center pe-2">
+                  <span class="legend me-2 bg-primary"></span>
+                  <span>Té Variedades</span>
+                  <span class="d-none d-md-inline d-lg-none d-xxl-inline ms-2 text-secondary">$ 186.000.-</span>
+                </div>
+                <div class="col-auto d-flex align-items-center px-2">
+                  <span class="legend me-2 bg-cyan"></span>
+                  <span>Factura Unidad</span>
+                  <span class="d-none d-md-inline d-lg-none d-xxl-inline ms-2 text-secondary">$ 88.300.-</span>
+                </div>
+                <div class="col-auto d-flex align-items-center px-2">
+                  <span class="legend me-2 bg-success"></span>
+                  <span>Jugo Natural</span>
+                  <span class="d-none d-md-inline d-lg-none d-xxl-inline ms-2 text-secondary">$ 45.500.-</span>
+                </div>
+              </div>
+              <hr>
+              <p class="mb-3">Productos más comprado en <strong>Snacks </strong> los ultimos 3 meses:</p>
+              <div class="progress progress-separated mb-3">
+                <div class="progress-bar bg-primary" role="progressbar" style="width: 54%" aria-label="Galleta Avena"></div>
+                <div class="progress-bar bg-cyan" role="progressbar" style="width: 32%" aria-label="Muffin Variedades"></div>
+                <div class="progress-bar bg-success" role="progressbar" style="width: 14%" aria-label="Leche cajita"></div>
+              </div>
+              <div class="row">
+                <div class="col-auto d-flex align-items-center pe-2">
+                  <span class="legend me-2 bg-primary"></span>
+                  <span>Galleta Avena</span>
+                  <span class="d-none d-md-inline d-lg-none d-xxl-inline ms-2 text-secondary">$ 67.300.-</span>
+                </div>
+                <div class="col-auto d-flex align-items-center px-2">
+                  <span class="legend me-2 bg-cyan"></span>
+                  <span>Muffin Variedades</span>
+                  <span class="d-none d-md-inline d-lg-none d-xxl-inline ms-2 text-secondary">$ 37.900.-</span>
+                </div>
+                <div class="col-auto d-flex align-items-center px-2">
+                  <span class="legend me-2 bg-success"></span>
+                  <span>Leche Cajita</span>
+                  <span class="d-none d-md-inline d-lg-none d-xxl-inline ms-2 text-secondary">$ 18.100.-</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-12">
+      <div class="card">
+        <div class="card-header border-0">
+          <div class="card-title">Compras de Hoy</div>
+        </div>
+        <div class="position-relative">
+          <div class="position-absolute top-0 left-0 px-3 mt-1 w-75">
+            <div class="row g-2">
+              <div class="col-auto">
+                <div class="chart-sparkline chart-sparkline-square" id="sparkline-activity"></div>
+              </div>
+              <div class="col">
+                <div>Subtotal: $9.850.-</div>
+                <div class="text-secondary">
+                  <!-- Download SVG icon from http://tabler.io/icons/icon/trending-up -->
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" class="icon icon-inline text-green icon-3">
+                    <path d="M3 17l6 -6l4 4l8 -8" />
+                    <path d="M14 7l7 0l0 7" />
+                  </svg>
+                  +5% más que mes pasado
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="chart-development-activity" class="position-relative"></div>
+        </div>
+        <div class="card-table table-responsive">
+          <table class="table table-vcenter">
+            <thead>
+              <tr>
+                <th>Alumno</th>
+                <th>Producto</th>
+                <th>Valor</th>
+                <th>Fecha @ Hora</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="w-1">
+                  <span class="avatar avatar-sm avatar-1">JCB</span>
+                </td>
+                <td class="td-truncate">
+                  <div class="text-truncate">Yogu Yogu Mora</div>
+                </td>
+                <td class="text-nowrap text-secondary">$ 800</td>
+                <td class="text-nowrap text-secondary">28 Nov 2025 @ 09:03</td>
+              </tr>
+              <tr>
+                <td class="w-1">
+                  <span class="avatar avatar-sm avatar-2">JCB</span>
+                </td>
+                <td class="td-truncate">
+                  <div class="text-truncate">Galleta Avena/Manzana</div>
+                </td>
+                <td class="text-nowrap text-secondary">$ 900</td>
+                <td class="text-nowrap text-secondary">28 Nov 2025 @ 08:47</td>
+              </tr>
+              <tr>
+                <td class="w-1">
+                  <span class="avatar avatar-sm avatar-2">TT</span>
+                </td>
+                <td class="td-truncate">
+                  <div class="text-truncate">Abono Web</div>
+                </td>
+                <td class="text-nowrap text-secondary">$12.000</td>
+                <td class="text-nowrap text-secondary">27 Nov 2025 @ 08:12</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-12 col-lg-8">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Alumnos</h3>
+        </div>
+        <div class="card-table table-responsive">
+          <table class="table table-vcenter">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Compras dia</th>
+                <th>Compras Semana</th>
+                <th>Compras Mes</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tr>
+              <td>Juan Carlos Bodoque</td>
+              <td class="text-secondary">$1.300.-</td>
+              <td class="text-secondary">$3.200.-</td>
+              <td class="text-secondary">$19.850.-</td>
+              <td class="text-end">
+                <a href="{{ url_for('apoderado.ficha', id=67)}}" class="btn btn-info btn-sm">Detalles</a>
+                <a href="." class="btn btn-danger btn-sm">Bloqueo</a>
+                <a href="." class="btn btn-warning btn-sm">Restricciones</a>
+              </td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Restricciones de Compra</h3>
+        </div>
+        <table class="table card-table table-vcenter">
+          <thead>
+            <tr>
+              <th>Alumno</th>
+              <th>Tipo</th>
+              <th>Nombre</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="w-1">
+                <span class="avatar avatar-sm" style="background-image: url({{ url_for('static', filename='tabler/static/avatars/000m.jpg', v=app_version)}})"> </span>
+              </td>
+              <td>Producto</td>
+              <td>Galleta Avena Chips</td>
+              <td>Alergeno</td>
+            </tr>
+            <tr>
+              <td class="w-1">
+                <span class="avatar avatar-sm" style="background-image: url({{ url_for('static', filename='tabler/static/avatars/000m.jpg', v=app_version)}})"> </span>
+              </td>
+              <td>Categoria</td>
+              <td>Cafeteria</td>
+              <td>Prohibido por Apoderado</td>
+            </tr>
+
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock page_body -%}
+
+
+{% block page_scripts -%}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    window.ApexCharts &&
+      new ApexCharts(document.getElementById("sparkline-activity"), {
+        chart: {
+          type: "radialBar",
+          fontFamily: "inherit",
+          height: 40,
+          width: 40,
+          animations: {
+            enabled: false,
+          },
+          sparkline: {
+            enabled: true,
+          },
+        },
+        tooltip: {
+          enabled: false,
+        },
+        plotOptions: {
+          radialBar: {
+            hollow: {
+              margin: 0,
+              size: "69%",
+            },
+            track: {
+              margin: 0,
+            },
+            dataLabels: {
+              show: false,
+            },
+          },
+        },
+        colors: ["var(--tblr-primary)"],
+        series: [35],
+      }).render();
+  });
+</script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    window.ApexCharts &&
+      new ApexCharts(document.getElementById("chart-development-activity"), {
+        chart: {
+          type: "area",
+          fontFamily: "inherit",
+          height: 192,
+          sparkline: {
+            enabled: false,
+          },
+          animations: {
+            enabled: false,
+          },
+        },
+        dataLabels: {
+          enabled: true,
+        },
+        fill: {
+          colors: ["color-mix(in srgb, transparent, var(--tblr-primary) 16%)", "color-mix(in srgb, transparent, var(--tblr-primary) 16%)"],
+          type: "solid",
+        },
+        stroke: {
+          width: 2,
+          lineCap: "round",
+          curve: "smooth",
+        },
+        series: [
+          {
+            name: "Compras",
+            data: [1300, 1100, 1300, 1250, 900, 1050, 1530, 760, 1300, 1250, 1190, 1100, 950, 1200],
+          },
+        ],
+        tooltip: {
+          theme: "dark",
+        },
+        grid: {
+          strokeDashArray: 4,
+        },
+        xaxis: {
+          labels: {
+            padding: 0,
+          },
+          tooltip: {
+            enabled: false,
+          },
+          axisBorder: {
+            show: false,
+          },
+          type: "datetime",
+        },
+        yaxis: {
+          labels: {
+            padding: 4,
+          },
+        },
+        labels: [
+          "2020-06-20",
+          "2020-06-21",
+          "2020-06-22",
+          "2020-06-23",
+          "2020-06-24",
+          "2020-06-25",
+          "2020-06-26",
+          "2020-06-27",
+          "2020-06-28",
+          "2020-06-29",
+          "2020-06-30",
+          "2020-07-01",
+          "2020-07-02",
+          "2020-07-03",
+        ],
+        colors: ["color-mix(in srgb, transparent, var(--tblr-primary) 100%)"],
+        legend: {
+          show: true,
+        },
+        point: {
+          show: true,
+        },
+      }).render();
+  });
+</script>
+{% endblock page_scripts -%}

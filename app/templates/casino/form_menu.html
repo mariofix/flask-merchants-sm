@@ -1,0 +1,62 @@
+<form id="formulario_menu">
+  <input type="hidden" name="dia" value="{{ dia }}">
+  <div class="mb-3 row">
+    <label class="col-3 col-form-label required">Platos</label>
+    <div class="col">
+      <div class="form-selectgroup form-selectgroup-boxes d-flex flex-column">
+        {% for m in menues %}
+        <label class="form-selectgroup-item flex-fill">
+          <input type="radio" name="form-menu" value="{{ m.slug }}" class="form-selectgroup-input" />
+          <div class="form-selectgroup-label d-flex align-items-center p-3">
+            <div class="me-3">
+              <span class="form-selectgroup-check"></span>
+            </div>
+            <div>
+              <div class="card-body ps-0">
+                <div class="row">
+                  <div class="col">
+                    <h3 class="mb-0"><a href="#">{{ m.descripcion }}</a></h3>
+                  </div>
+                  <div class="col-auto fs-3 text-green">${{ m.precio }}</div>
+                </div>
+                <div class="row">
+                  <div class="col-md">
+                    <div class="mt-3 list mb-0 text-secondary d-sm-block d-none">
+                      <div class="list-item">
+                        <!-- Download SVG icon from http://tabler.io/icons/icon/building-community -->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-seedling">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path d="M12 10a6 6 0 0 0 -6 -6h-3v2a6 6 0 0 0 6 6h3" />
+                          <path d="M12 14a6 6 0 0 1 6 -6h3v1a6 6 0 0 1 -6 6h-3" />
+                          <path d="M12 20l0 -10" />
+                        </svg>
+                        {{ m.entradas[0] }}
+                      </div>
+                      <div class="list-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-cherry">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path d="M4 16.5a3.5 3.5 0 1 0 7 0a3.5 3.5 0 1 0 -7 0" />
+                          <path d="M14 18a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" />
+                          <path d="M9 13c.366 -2 1.866 -3.873 4.5 -5.6" />
+                          <path d="M17 15c-1.333 -2.333 -2.333 -5.333 -1 -9" />
+                          <path d="M5 6c3.667 -2.667 7.333 -2.667 11 0c-3.667 2.667 -7.333 2.667 -11 0" />
+                        </svg>
+                        {{ m.postres[0] }}
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+          </div>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  <div>
+    <label class="form-label">Información adicional</label>
+    <textarea class="form-control" name="info"></textarea>
+  </div>
+</form>
