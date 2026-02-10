@@ -1,0 +1,116 @@
+services:
+  flask:
+    image: ghcr.io/mariofix/flask-merchants:latest
+    ports:
+      - "8080:80"
+    environment:
+      FLASK_ENV: production
+      SECRET_KEY: supersecretkey
+      LOG_LEVEL: info
+    volumes:
+      - ./logs:/app/logs:rw
+      - /dev/shm:/dev/shm
+    restart: unless-stopped
+    stop_grace_period: 30s
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost/healthcheck"]
+    #   interval: 30s
+    #   timeout: 3s
+    #   retries: 3
+    #   start_period: 40s
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: '1'
+    #       memory: 256M
+    # logging:
+    #   driver: "json-file"
+    #   options:
+    #     max-size: "10m"
+    #     max-file: "3"
+    # security_opt:
+    #   - no-new-privileges:true
+
+
+  # celery-worker:
+  #   image: myapp:latest  # Reuse the same image
+  #   command: >
+  #     celery -A app.celery worker
+  #     --loglevel=info
+  #     --concurrency=1
+  #   environment:
+  #     FLASK_ENV: production
+  #     DATABASE_URL: ${DATABASE_URL}
+  #     REDIS_URL: ${REDIS_URL}
+  #     SECRET_KEY: ${SECRET_KEY}
+  #     LOG_LEVEL: ${LOG_LEVEL:-info}
+  #     C_FORCE_ROOT: "false"
+  #   volumes:
+  #     - ./logs:/app/logs:rw
+  #     - /dev/shm:/dev/shm
+  #   restart: unless-stopped
+  #   stop_grace_period: 60s
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "celery -A app.celery inspect ping -d celery@$$HOSTNAME"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #     start_period: 40s
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         cpus: '1'
+  #         memory: 512M
+  #       reservations:
+  #         cpus: '1'
+  #         memory: 490M
+  #     replicas: 1  # Scale workers as needed
+  #   logging:
+  #     driver: "json-file"
+  #     options:
+  #       max-size: "10m"
+  #       max-file: "3"
+  #   security_opt:
+  #     - no-new-privileges:true
+  #   cap_drop:
+  #     - ALL
+  #   read_only: true
+  #   tmpfs:
+  #     - /tmp:noexec,nosuid,size=200m
+
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: >
+      redis-server
+      --appendonly yes
+      --appendfsync everysec
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  redis-data:
+    driver: local
