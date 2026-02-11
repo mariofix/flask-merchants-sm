@@ -106,9 +106,18 @@ class Apoderado(db.Model, Timestamp):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     nombre: Mapped[str | None] = mapped_column(String(255), nullable=False)
-
+    alumnos_registro: Mapped[int] = mapped_column(default=0, nullable=True)
     usuario_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
     usuario: Mapped["User"] = relationship(back_populates="apoderado")
+
+    comprobantes_transferencia: Mapped[bool] = mapped_column(default=False)
+    notificacion_compra: Mapped[bool] = mapped_column(default=True)
+    informe_semanal: Mapped[bool] = mapped_column(default=False)
+    tag_compartido: Mapped[bool] = mapped_column(default=False)
+    copia_notificaciones: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
+    maximo_diario: Mapped[int] = mapped_column(default=None, nullable=True)
+    maximo_semanal: Mapped[int] = mapped_column(default=None, nullable=True)
 
     alumnos: Mapped[list["Alumno"]] = relationship(back_populates="apoderado")
 
@@ -165,7 +174,9 @@ class MenuDiario(db.Model, Timestamp):
     slug: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
 
     opciones: Mapped[list["OpcionMenuDia"]] = relationship(
-        back_populates="menu", cascade="all, delete-orphan", order_by="OpcionMenuDia.tipo_curso, OpcionMenuDia.orden"
+        back_populates="menu",
+        cascade="all, delete-orphan",
+        order_by="OpcionMenuDia.tipo_curso, OpcionMenuDia.orden",
     )
 
     precio: Mapped[Decimal | None] = mapped_column(Numeric(10, 0), nullable=True)

@@ -87,7 +87,14 @@ class PaymentAdmin(ModelView):
     can_view_details = True
     can_set_page_size = True
 
-    column_list = ["merchants_token", "integration_slug", "currency", "amount", "status", "creation"]
+    column_list = [
+        "merchants_token",
+        "integration_slug",
+        "currency",
+        "amount",
+        "status",
+        "creation",
+    ]
     form_overrides = {
         "integration_payload": fields.TextAreaField,
         "integration_response": fields.TextAreaField,

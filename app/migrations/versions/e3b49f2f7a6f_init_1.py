@@ -34,7 +34,9 @@ def downgrade():
         sa.Column("created", sa.DATETIME(), nullable=False),
         sa.Column("updated", sa.DATETIME(), nullable=False),
         sa.ForeignKeyConstraint(
-            ["plato_id"], ["casino_plato.id"], name=op.f("fk_casino_foto_plato_plato_id_casino_plato")
+            ["plato_id"],
+            ["casino_plato.id"],
+            name=op.f("fk_casino_foto_plato_plato_id_casino_plato"),
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_casino_foto_plato")),
         sa.UniqueConstraint("slug", name=op.f("uq_casino_foto_plato_slug")),

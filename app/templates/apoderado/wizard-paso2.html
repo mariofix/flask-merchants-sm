@@ -1,99 +1,83 @@
 {% extends "base-bare.html" %}
 
 {% block page_body %}
-<div class="container py-4">
-  <div class="card card-md">
-    <div class="hr-text hr-text-center hr-text-spaceless">Datos Alumnos</div>
-    <div class="card-body">
-      <form>
+<form class="space-y needs-validation" novalidate action="{{ url_for('.wizp2') }}" method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="container py-4">
+    <div class="card card-md">
+      <div class="card-body text-center py-4 p-sm-5">
+        <h1 class="mt-5">Datos de tus Alumnos!</h1>
+        <p class="text-secondary">
+          Necesitamos algunos datos para poder entregar una buena atención.
+        </p>
+      </div>
+
+      {% for a in range(apoderado.alumnos_registro)%}
+      <div class="card-body">
+
         <div class="space-y">
           <div>
-            <h4>Alumno 1</h4>
+            <h4>Alumno {{ a+1 }}</h4>
           </div>
           <div class="row row-cols-2 g-4">
             <div>
               <label class="form-label"> Nombre </label>
-              <input type="text" placeholder="Ingrese nombre y apellido" class="form-control" />
+              <input type="text" name="nombre_alumno_{{a+1}}" placeholder="Ingrese nombre y apellido" class="form-control" required />
             </div>
             <div>
               <label class="form-label"> Curso </label>
               <div>
-                <select class="form-select">
-                  <option>1-A</option>
-                  <option>2-A</option>
-                  <option>3-A</option>
-                  <option>4-A</option>
-                  <option>5-A</option>
-                  <option>6-A</option>
-                  <option>7-A</option>
-                  <option>8-A</option>
-                  <option>I-A</option>
-                  <option>II-A</option>
-                  <option>III-A</option>
-                  <option>IV-A</option>
+                <select class="form-select" required name="curso_alumno_{{a+1}}">
+                  <option value="">Seleccione un curso... </option>
+                  {% for c in cursos %}
+                  <option value="{{c}}">{{c}}</option>
+                  {% endfor %}
+
                 </select>
               </div>
             </div>
             <div>
               <label class="form-label"> Edad </label>
-              <input type="number" placeholder="Edad" class="form-control" max="19" min="4" />
-            </div>
-          </div>
-
-          <div class="hr"></div>
-
-          <div>
-            <h4>Alumno 2</h4>
-          </div>
-          <div class="row row-cols-2 g-4">
-            <div>
-              <label class="form-label"> Nombre </label>
-              <input type="text" placeholder="Ingrese nombre y apellido" class="form-control" />
-            </div>
-            <div>
-              <label class="form-label"> Curso </label>
-              <div>
-                <select class="form-select">
-                  <option>1-A</option>
-                  <option>2-A</option>
-                  <option>3-A</option>
-                  <option>4-A</option>
-                  <option>5-A</option>
-                  <option>6-A</option>
-                  <option>7-A</option>
-                  <option>8-A</option>
-                  <option>I-A</option>
-                  <option>II-A</option>
-                  <option>III-A</option>
-                  <option>IV-A</option>
-                </select>
-              </div>
-            </div>
-            <div>
-              <label class="form-label"> Edad </label>
-              <input type="number" placeholder="Edad" class="form-control" max="19" min="4" />
+              <input type="number" placeholder="Edad" name="edad_alumno_{{a+1}}" class="form-control" max="19" min="4" required />
             </div>
           </div>
 
 
         </div>
-      </form>
+
+      </div>
+      {% endfor %}
     </div>
-  </div>
-  <div class="row align-items-center mt-3">
-    <div class="col-4">
-      <div class="progress progress-1">
-        <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 67%" role="progressbar" aria-valuenow="66" aria-valuemin="0" aria-valuemax="100" aria-label="66% Complete">
-          <span class="visually-hidden">66% Complete</span>
+    <div class="row align-items-center mt-3">
+      <div class="col-4">
+        <div class="progress progress-1">
+          <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 67%" role="progressbar" aria-valuenow="66" aria-valuemin="0" aria-valuemax="100" aria-label="66% Complete">
+            <span class="visually-hidden">66% Complete</span>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="btn-list justify-content-end">
+          {# <a href="https://google.cl" class="btn btn-link link-secondary btn-2"> Continuar más tarde </a> #}
+          <button type="submit" class="btn btn-primary btn-2">Continuar</button>
         </div>
       </div>
     </div>
-    <div class="col">
-      <div class="btn-list justify-content-end">
-        <a href="https://google.cl" class="btn btn-link link-secondary btn-2"> Continuar más tarde </a>
-        <a href="{{ url_for('apoderado_cliente.wizp3') }}" class="btn btn-primary btn-2"> Continuar </a>
-      </div>
-    </div>
   </div>
-</div>
+</form>
 {% endblock page_body %}
+
+{% block page_scripts %}
+<script>
+  const form_p1 = document.querySelector('.needs-validation');
+
+  form_p1.addEventListener('submit', (e) => {
+    if (!form_p1.checkValidity()) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    form_p1.classList.add('was-validated');
+  }, false);
+</script>
+{% endblock page_scripts%}

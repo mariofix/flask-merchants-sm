@@ -1,7 +1,7 @@
 [project]
-name = "fonocasino"
-version = "2026.2.1"
-description = "fonocasino"
+name = "sabormirandiano"
+version = "2026.2.2"
+description = "SaborMirandiano"
 authors = [{ name = "Mario Hernandez", email = "mariofix@proton.me" }]
 license = { text = "MIT" }
 readme = "README.md"
@@ -43,7 +43,7 @@ build-backend = "poetry.core.masonry.api"
 
 
 [tool.coverage.run]
-source = ["flask_merchants", "merchants", "store"]
+source = ["flask_merchants", "merchants", "app"]
 omit = ["tests/*", "*/__init__.py", "*/migrations/*"]
 branch = true
 
@@ -60,7 +60,7 @@ show_missing = true
 fail_under = 0
 
 [tool.pytest.ini_options]
-addopts = "-v --cov=flask_merchants --cov=merchants --cov=store --cov-report=xml --cov-report=term"
+addopts = "-v --cov=flask_merchants --cov=merchants --cov=app --cov-report=xml --cov-report=term"
 testpaths = ["tests"]
 python_files = ["test*.py"]
 

@@ -66,7 +66,15 @@ def upgrade():
         sa.Column("currency", sa.String(length=3), nullable=False),
         sa.Column(
             "status",
-            sa.Enum("created", "processing", "declined", "cancelled", "refunded", "paid", name="paymentstatus"),
+            sa.Enum(
+                "created",
+                "processing",
+                "declined",
+                "cancelled",
+                "refunded",
+                "paid",
+                name="paymentstatus",
+            ),
             nullable=False,
         ),
         sa.Column("integration_slug", sa.String(length=255), nullable=False),
@@ -74,18 +82,30 @@ def upgrade():
         sa.Column("integration_payload", sa.JSON(), nullable=True),
         sa.Column("integration_response", sa.JSON(), nullable=True),
         sa.Column(
-            "creation", sa.DateTime(timezone=True), server_default=sa.text("(CURRENT_TIMESTAMP)"), nullable=False
+            "creation",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("(CURRENT_TIMESTAMP)"),
+            nullable=False,
         ),
         sa.Column(
-            "last_update", sa.DateTime(timezone=True), server_default=sa.text("(CURRENT_TIMESTAMP)"), nullable=False
+            "last_update",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("(CURRENT_TIMESTAMP)"),
+            nullable=False,
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_merchants_payment")),
         sa.UniqueConstraint("merchants_token", name=op.f("uq_merchants_payment_merchants_token")),
     )
     with op.batch_alter_table("merchants_payment", schema=None) as batch_op:
-        batch_op.create_index(batch_op.f("ix_merchants_payment_integration_slug"), ["integration_slug"], unique=False)
         batch_op.create_index(
-            batch_op.f("ix_merchants_payment_integration_transaction"), ["integration_transaction"], unique=False
+            batch_op.f("ix_merchants_payment_integration_slug"),
+            ["integration_slug"],
+            unique=False,
+        )
+        batch_op.create_index(
+            batch_op.f("ix_merchants_payment_integration_transaction"),
+            ["integration_transaction"],
+            unique=False,
         )
         batch_op.create_index(batch_op.f("ix_merchants_payment_status"), ["status"], unique=False)
 
@@ -95,7 +115,12 @@ def upgrade():
         sa.Column("name", sa.String(length=80), nullable=False),
         sa.Column("description", sa.String(length=255), nullable=True),
         sa.Column("permissions", flask_security.datastore.AsaList(), nullable=True),
-        sa.Column("update_datetime", sa.DateTime(), server_default=sa.text("(CURRENT_TIMESTAMP)"), nullable=False),
+        sa.Column(
+            "update_datetime",
+            sa.DateTime(),
+            server_default=sa.text("(CURRENT_TIMESTAMP)"),
+            nullable=False,
+        ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_role")),
         sa.UniqueConstraint("name", name=op.f("uq_role_name")),
     )
@@ -120,8 +145,18 @@ def upgrade():
         sa.Column("tf_primary_method", sa.String(length=64), nullable=True),
         sa.Column("tf_totp_secret", sa.String(length=255), nullable=True),
         sa.Column("tf_phone_number", sa.String(length=128), nullable=True),
-        sa.Column("create_datetime", sa.DateTime(), server_default=sa.text("(CURRENT_TIMESTAMP)"), nullable=False),
-        sa.Column("update_datetime", sa.DateTime(), server_default=sa.text("(CURRENT_TIMESTAMP)"), nullable=False),
+        sa.Column(
+            "create_datetime",
+            sa.DateTime(),
+            server_default=sa.text("(CURRENT_TIMESTAMP)"),
+            nullable=False,
+        ),
+        sa.Column(
+            "update_datetime",
+            sa.DateTime(),
+            server_default=sa.text("(CURRENT_TIMESTAMP)"),
+            nullable=False,
+        ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_user")),
         sa.UniqueConstraint("email", name=op.f("uq_user_email")),
         sa.UniqueConstraint("fs_uniquifier", name=op.f("uq_user_fs_uniquifier")),
@@ -136,7 +171,11 @@ def upgrade():
         sa.Column("usuario_id", sa.Integer(), nullable=False),
         sa.Column("created", sa.DateTime(), nullable=False),
         sa.Column("updated", sa.DateTime(), nullable=False),
-        sa.ForeignKeyConstraint(["usuario_id"], ["user.id"], name=op.f("fk_casino_apoderado_usuario_id_user")),
+        sa.ForeignKeyConstraint(
+            ["usuario_id"],
+            ["user.id"],
+            name=op.f("fk_casino_apoderado_usuario_id_user"),
+        ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_casino_apoderado")),
     )
     op.create_table(
@@ -149,7 +188,9 @@ def upgrade():
         sa.Column("created", sa.DateTime(), nullable=False),
         sa.Column("updated", sa.DateTime(), nullable=False),
         sa.ForeignKeyConstraint(
-            ["plato_id"], ["casino_plato.id"], name=op.f("fk_casino_foto_plato_plato_id_casino_plato")
+            ["plato_id"],
+            ["casino_plato.id"],
+            name=op.f("fk_casino_foto_plato_plato_id_casino_plato"),
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_casino_foto_plato")),
         sa.UniqueConstraint("slug", name=op.f("uq_casino_foto_plato_slug")),
@@ -160,16 +201,22 @@ def upgrade():
         sa.Column("menu_id", sa.Integer(), nullable=False),
         sa.Column("plato_id", sa.Integer(), nullable=False),
         sa.Column(
-            "tipo_curso", sa.Enum("ENTRADA", "FONDO", "POSTRE", "VEGETARIANO", name="tipocurso"), nullable=False
+            "tipo_curso",
+            sa.Enum("ENTRADA", "FONDO", "POSTRE", "VEGETARIANO", name="tipocurso"),
+            nullable=False,
         ),
         sa.Column("orden", sa.Integer(), nullable=False),
         sa.Column("created", sa.DateTime(), nullable=False),
         sa.Column("updated", sa.DateTime(), nullable=False),
         sa.ForeignKeyConstraint(
-            ["menu_id"], ["casino_menu_dia.id"], name=op.f("fk_casino_opcion_menu_dia_menu_id_casino_menu_dia")
+            ["menu_id"],
+            ["casino_menu_dia.id"],
+            name=op.f("fk_casino_opcion_menu_dia_menu_id_casino_menu_dia"),
         ),
         sa.ForeignKeyConstraint(
-            ["plato_id"], ["casino_plato.id"], name=op.f("fk_casino_opcion_menu_dia_plato_id_casino_plato")
+            ["plato_id"],
+            ["casino_plato.id"],
+            name=op.f("fk_casino_opcion_menu_dia_plato_id_casino_plato"),
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_casino_opcion_menu_dia")),
     )
@@ -192,7 +239,9 @@ def upgrade():
         sa.Column("created", sa.DateTime(), nullable=False),
         sa.Column("updated", sa.DateTime(), nullable=False),
         sa.ForeignKeyConstraint(
-            ["apoderado_id"], ["casino_apoderado.id"], name=op.f("fk_alumno_apoderado_id_casino_apoderado")
+            ["apoderado_id"],
+            ["casino_apoderado.id"],
+            name=op.f("fk_alumno_apoderado_id_casino_apoderado"),
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_alumno")),
         sa.UniqueConstraint("slug", name=op.f("uq_alumno_slug")),

@@ -18,11 +18,16 @@ from .routes import core_bp
 from .tasks import MyMailUtil
 from .version import __version__
 
+
 load_dotenv()
 
 
 def create_app():
-    app = Flask("Merchants_Store", template_folder="app/templates", static_folder="app/static")
+    app = Flask(
+        "merchants-sabormirandiano",
+        template_folder="app/templates",
+        static_folder="app/static",
+    )
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
     # Configure App, env takes precedence
@@ -41,7 +46,7 @@ def create_app():
     # Setup Flask-Security
     user_datastore = SQLAlchemyUserDatastore(db, User, Role)
     security = Security(app, user_datastore, mail_util_cls=MyMailUtil)
-
+    app.extensions["user_datastore"] = user_datastore
     # Flask-Mailman
     mail.init_app(app)
 

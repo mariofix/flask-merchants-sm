@@ -23,7 +23,10 @@ def upgrade():
         batch_op.drop_column("menu_id")
 
     with op.batch_alter_table("casino_seleccion_orden", schema=None) as batch_op:
-        batch_op.drop_constraint(batch_op.f("fk_casino_seleccion_orden_orden_id_casino_orden"), type_="foreignkey")
+        batch_op.drop_constraint(
+            batch_op.f("fk_casino_seleccion_orden_orden_id_casino_orden"),
+            type_="foreignkey",
+        )
         batch_op.drop_column("orden_id")
 
     # ### end Alembic commands ###
@@ -34,13 +37,19 @@ def downgrade():
     with op.batch_alter_table("casino_seleccion_orden", schema=None) as batch_op:
         batch_op.add_column(sa.Column("orden_id", sa.INTEGER(), nullable=False))
         batch_op.create_foreign_key(
-            batch_op.f("fk_casino_seleccion_orden_orden_id_casino_orden"), "casino_orden", ["orden_id"], ["id"]
+            batch_op.f("fk_casino_seleccion_orden_orden_id_casino_orden"),
+            "casino_orden",
+            ["orden_id"],
+            ["id"],
         )
 
     with op.batch_alter_table("casino_orden", schema=None) as batch_op:
         batch_op.add_column(sa.Column("menu_id", sa.INTEGER(), nullable=False))
         batch_op.create_foreign_key(
-            batch_op.f("fk_casino_orden_menu_id_casino_menu_dia"), "casino_menu_dia", ["menu_id"], ["id"]
+            batch_op.f("fk_casino_orden_menu_id_casino_menu_dia"),
+            "casino_menu_dia",
+            ["menu_id"],
+            ["id"],
         )
 
     # ### end Alembic commands ###

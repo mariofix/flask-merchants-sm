@@ -26,20 +26,33 @@ def upgrade():
         sa.Column(
             "estado",
             sa.Enum(
-                "CREADA", "PENDIENTE", "PAGADA", "ENVIADA", "CONFIRMADA", "ENTREGADA", "CANCELADA", name="estadoorden"
+                "CREADA",
+                "PENDIENTE",
+                "PAGADA",
+                "ENVIADA",
+                "CONFIRMADA",
+                "ENTREGADA",
+                "CANCELADA",
+                name="estadoorden",
             ),
             nullable=False,
         ),
         sa.Column("fecha_orden", sa.DateTime(), nullable=False),
         sa.Column("fecha_entrega", sa.DateTime(), nullable=True),
         sa.Column("precio_total", sa.Numeric(precision=10, scale=0), nullable=False),
-        sa.Column("tipo_pago", sa.Enum("EFECTIVO", "TRANSFERENCIA", "TARJETA", name="tipopago"), nullable=False),
+        sa.Column(
+            "tipo_pago",
+            sa.Enum("EFECTIVO", "TRANSFERENCIA", "TARJETA", name="tipopago"),
+            nullable=False,
+        ),
         sa.Column("pagado", sa.Boolean(), nullable=False),
         sa.Column("extra_attrs", sa.JSON(), nullable=True),
         sa.Column("created", sa.DateTime(), nullable=False),
         sa.Column("updated", sa.DateTime(), nullable=False),
         sa.ForeignKeyConstraint(
-            ["menu_id"], ["casino_menu_dia.id"], name=op.f("fk_casino_orden_menu_id_casino_menu_dia")
+            ["menu_id"],
+            ["casino_menu_dia.id"],
+            name=op.f("fk_casino_orden_menu_id_casino_menu_dia"),
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_casino_orden")),
         sa.UniqueConstraint("codigo", name=op.f("uq_casino_orden_codigo")),
@@ -53,7 +66,11 @@ def upgrade():
         sa.Column("orden_id", sa.Integer(), nullable=False),
         sa.Column("opcion_id", sa.Integer(), nullable=False),
         sa.Column("plato_nombre", sa.String(length=255), nullable=False),
-        sa.Column("tipo_curso", sa.Enum("ENTRADA", "FONDO", "POSTRE", name="tipocurso"), nullable=False),
+        sa.Column(
+            "tipo_curso",
+            sa.Enum("ENTRADA", "FONDO", "POSTRE", name="tipocurso"),
+            nullable=False,
+        ),
         sa.Column("cantidad", sa.Integer(), nullable=False),
         sa.Column("notas", sa.String(length=255), nullable=True),
         sa.Column("created", sa.DateTime(), nullable=False),
@@ -64,7 +81,9 @@ def upgrade():
             name=op.f("fk_casino_seleccion_orden_opcion_id_casino_opcion_menu_dia"),
         ),
         sa.ForeignKeyConstraint(
-            ["orden_id"], ["casino_orden.id"], name=op.f("fk_casino_seleccion_orden_orden_id_casino_orden")
+            ["orden_id"],
+            ["casino_orden.id"],
+            name=op.f("fk_casino_seleccion_orden_orden_id_casino_orden"),
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_casino_seleccion_orden")),
     )

@@ -10,7 +10,18 @@ from slugify import slugify
 
 from .. import settings
 from ..database import db
-from ..model import Alumno, Apoderado, FotoPlato, MenuDiario, OpcionMenuDia, Orden, Plato, Role, Settings, User
+from ..model import (
+    Alumno,
+    Apoderado,
+    FotoPlato,
+    MenuDiario,
+    OpcionMenuDia,
+    Orden,
+    Plato,
+    Role,
+    Settings,
+    User,
+)
 
 admin = Admin(
     name="Merchants Store",
@@ -52,7 +63,10 @@ class FileView(FileAdmin):
         db.session.add(foto)
         db.session.commit()
 
-        flash(f'Foto "{filename}" subida y registrada. Asóciala a un plato desde el editor.', "success")
+        flash(
+            f'Foto "{filename}" subida y registrada. Asóciala a un plato desde el editor.',
+            "success",
+        )
 
     def on_file_delete(self, full_path, filename):
         """Se ejecuta antes de eliminar un archivo"""
@@ -78,7 +92,12 @@ class PlatoAdminView(ModelView):
 
 admin.add_view(PlatoAdminView(Plato, db.session, category="Casino"))
 admin.add_view(
-    FileView(settings.DIRECTORIO_FOTOS_PLATO, "/static/platos/", name="Administrador de Archivos", category="Casino")
+    FileView(
+        settings.DIRECTORIO_FOTOS_PLATO,
+        "/static/platos/",
+        name="Administrador de Archivos",
+        category="Casino",
+    )
 )
 admin.add_view(ModelView(MenuDiario, db.session, category="Casino"))
 admin.add_view(ModelView(OpcionMenuDia, db.session, category="Casino"))

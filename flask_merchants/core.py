@@ -49,7 +49,12 @@ class FlaskMerchantsExtension:
     payment_model: Any | None
     integration_model: Any | None
 
-    def __init__(self, app: Flask | None = None, db: SQLAlchemy | None = None, admin: Admin | None = None):
+    def __init__(
+        self,
+        app: Flask | None = None,
+        db: SQLAlchemy | None = None,
+        admin: Admin | None = None,
+    ):
         if app:
             self.init_app(app, db, admin)  # type: ignore
 

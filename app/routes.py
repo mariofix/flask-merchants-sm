@@ -1,16 +1,25 @@
 from flask import Blueprint, abort, render_template
+from .model import MenuDiario
+from .database import db
+from datetime import date, datetime
+from collections import OrderedDict
+from sqlalchemy import and_, or_, select
 
 core_bp = Blueprint("core", __name__)
 
 
 @core_bp.route("/", methods=["GET"])
 def index():
-    return render_template("site/index.j2")
+    today = date.today()
 
+    stmt = select(MenuDiario.dia).where(MenuDiario.dia >= today).distinct().order_by(MenuDiario.dia.asc()).limit(5)
 
-@core_bp.route("/buscar", methods=["GET"])
-def buscar():
-    return render_template("site/resultados.html")
+    lista_dias = db.session.execute(stmt).scalars().all()
+    payload = OrderedDict()
+    for dia in lista_dias:
+        payload[dia.isoformat()] = obtiene_menues(dia.isoformat())
+
+    return render_template("site/index.j2", menues=payload)
 
 
 @core_bp.route("/admin", methods=["GET"])
@@ -29,11 +38,6 @@ def configuracion():
 
 
 def obtiene_menues(dia):
-    from datetime import date, datetime
-
-    from sqlalchemy import and_, or_
-
-    from .model import MenuDiario
 
     if dia:
         try:
@@ -44,7 +48,8 @@ def obtiene_menues(dia):
         fecha = date.today()
 
     menu_hoy = MenuDiario.query.filter(
-        or_(MenuDiario.dia == fecha, MenuDiario.es_permanente == True), and_(MenuDiario.activo == True)
+        or_(MenuDiario.dia == fecha, MenuDiario.es_permanente == True),
+        and_(MenuDiario.activo == True),
     ).all()
     return menu_hoy
 

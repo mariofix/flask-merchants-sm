@@ -27,7 +27,9 @@ def upgrade():
         sa.Column("created", sa.DateTime(), nullable=False),
         sa.Column("updated", sa.DateTime(), nullable=False),
         sa.ForeignKeyConstraint(
-            ["plato_id"], ["casino_plato.id"], name=op.f("fk_casino_plato_imagen_plato_id_casino_plato")
+            ["plato_id"],
+            ["casino_plato.id"],
+            name=op.f("fk_casino_plato_imagen_plato_id_casino_plato"),
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_casino_plato_imagen")),
         sa.UniqueConstraint("archivo", name=op.f("uq_casino_plato_imagen_archivo")),

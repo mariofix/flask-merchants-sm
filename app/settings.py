@@ -1,4 +1,5 @@
 from pathlib import Path
+from flask_security.utils import uia_username_mapper
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY: str
@@ -6,7 +7,6 @@ DEBUG = True
 LOG_LEVEL = "DEBUG" if DEBUG else "INFO"
 TRUSTED_HOSTS = ["tardis.local", "localhost"]
 SESSION_COOKIE_NAME = "merchants"
-ADMIN_BASE_URL = "data-manager"
 DIRECTORIO_FOTOS_PLATO = f"{BASE_DIR}/app/static/platos"
 
 SQLALCHEMY_DATABASE_URI = ""
@@ -14,12 +14,13 @@ SQLALCHEMY_RECORD_QUERIES = DEBUG
 SQLALCHEMY_ECHO = False
 SQLALCHEMY_ENGINE_OPTIONS = {"pool_pre_ping": True, "pool_recycle": 1800}
 
-SECURITY_EMAIL_SENDER = "Merchants"
+SECURITY_EMAIL_SENDER = "Sabor Mirandiano"
 SECURITY_PASSWORD_SALT = "password-salt-randomnesssss.0"
 # SECURITY_LOGIN_URL = "/ingreso/"
 # SECURITY_LOGOUT_URL = "/salida/"
 SECURITY_POST_LOGIN_VIEW = "/"
 SECURITY_POST_LOGOUT_VIEW = "/"
+SECURITY_POST_CONFIRM_VIEW = "/apoderado/wizard"
 
 SECURITY_USERNAME_ENABLE = True
 SECURITY_USERNAME_REQUIRED = True
@@ -28,11 +29,14 @@ SECURITY_TRACKABLE = True
 SECURITY_CHANGEABLE = True
 SECURITY_RECOVERABLE = True
 SECURITY_REGISTERABLE = True
+SECURITY_CONFIRMABLE = True
 SECURITY_SEND_REGISTER_EMAIL = True
-SECURITY_EMAIL_SUBJECT_REGISTER = "Bienvenido a Sabor Mirandiano"
+SECURITY_EMAIL_SUBJECT_REGISTER = "Bienvenida a Sabor Mirandiano"
+SECURITY_AUTO_LOGIN_AFTER_CONFIRM = True
+SECURITY_LOGIN_WITHOUT_CONFIRMATION = False
 # Flask-Babel
 BABEL_DEFAULT_LOCALE = "es"
-BABEL_DEFAULT_TIMEZONE = "UTC"
+BABEL_DEFAULT_TIMEZONE = "America/Santiago"
 BABEL_DEFAULT_FOLDER = "store/translations"
 BABEL_DOMAIN = "merchants"
 LANGUAGES = {
@@ -90,7 +94,9 @@ STORE_BRAND_ICON = "bi bi-shop"
 STORE_NAME = "Storefront"
 
 CELERY = {
-    "broker_url": "redis://10.0.0.3/10",
-    "result_backend": "redis://10.0.0.3/11",
+    "broker_url": "redis://10.100.254.2/10",
+    "result_backend": "redis://10.100.254.2/11",
     "task_ignore_result": False,
+    "worker_concurrency": 1,
+    "worker_max_tasks_per_child": 1,
 }
