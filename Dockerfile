@@ -61,4 +61,4 @@ CMD ["gunicorn", \
     "--timeout", "60", \
     "--graceful-timeout", "30", \
     "--keep-alive", "5", \
-    "app:app"]
+    "wsgi:app"]
