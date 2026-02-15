@@ -4,6 +4,9 @@ from .database import db
 from datetime import date, datetime
 from collections import OrderedDict
 from sqlalchemy import and_, or_, select
+from flask_login import login_required
+from flask_security.decorators import roles_required
+import locale
 
 core_bp = Blueprint("core", __name__)
 
@@ -16,13 +19,18 @@ def index():
 
     lista_dias = db.session.execute(stmt).scalars().all()
     payload = OrderedDict()
+    payload_dias = OrderedDict()
     for dia in lista_dias:
         payload[dia.isoformat()] = obtiene_menues(dia.isoformat())
 
-    return render_template("site/index.j2", menues=payload)
+        locale.setlocale(locale.LC_TIME, "es_CL.utf8")
+        payload_dias[dia.isoformat()] = dia.strftime("%A, %d de %B de %Y")
+
+    return render_template("site/index.j2", menues=payload, str_dias=payload_dias)
 
 
 @core_bp.route("/admin", methods=["GET"])
+@roles_required("admin")
 def admin():
     return render_template("seleccion.html")
 
@@ -33,6 +41,7 @@ def ayuda():
 
 
 @core_bp.route("/configuracion", methods=["GET"])
+@login_required
 def configuracion():
     return render_template("core/configuracion.html")
 
@@ -55,6 +64,7 @@ def obtiene_menues(dia):
 
 
 @core_bp.route("/consulta/<dia>")
+@login_required
 def consulta(dia):
     menues = obtiene_menues(dia)
     if not menues:

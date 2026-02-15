@@ -1,15 +1,29 @@
 services:
   flask:
-    image: ghcr.io/mariofix/flask-merchants:latest
+    image: ghcr.io/mariofix/flask-merchants:latest-sm
     ports:
       - "8080:80"
     environment:
       FLASK_ENV: production
       SECRET_KEY: supersecretkey
       LOG_LEVEL: info
+      FLASK_DEBUG: true
+      FLASK_APP_SETTINGS_FILE: app.settings
+      FLASK_SECRET_KEY: unsafe-key
+      FLASK_SQLALCHEMY_DATABASE_URI: sqlite:///merchants-store.db
+      FLASK_SQLALCHEMY_RECORD_QUERIES: true
+      FLASK_MAIL_SERVER: mail.sabormirandiano.cl
+      FLASK_MAIL_PORT: 587
+      FLASK_MAIL_USE_TLS: true
+      FLASK_MAIL_USERNAME: notificaciones@sabormirandiano.cl
+      FLASK_MAIL_PASSWORD: capsule-crummy-chief-shallot-punctual-nacho
+
+      FLASK_SECURITY_EMAIL_SENDER: ${FLASK_MAIL_USERNAME}
     volumes:
-      - ./logs:/app/logs:rw
-      - /dev/shm:/dev/shm
+      - ./logs:/app/logs:r
+      - ./app/static:/app/app/static:rw
+      - ./instance:/app/instance:rw
+
     restart: unless-stopped
     stop_grace_period: 30s
     # healthcheck:
@@ -79,38 +93,38 @@ services:
   #     - /tmp:noexec,nosuid,size=200m
 
 
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    command: >
-      redis-server
-      --appendonly yes
-      --appendfsync everysec
-      --maxmemory 512mb
-      --maxmemory-policy allkeys-lru
-    volumes:
-      - redis-data:/data
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 3s
-      retries: 3
-    deploy:
-      resources:
-        limits:
-          cpus: '1'
-          memory: 512M
-        reservations:
-          cpus: '0.25'
-          memory: 256M
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+#   redis:
+#     image: redis:7-alpine
+#     ports:
+#       - "6379:6379"
+#     command: >
+#       redis-server
+#       --appendonly yes
+#       --appendfsync everysec
+#       --maxmemory 512mb
+#       --maxmemory-policy allkeys-lru
+#     volumes:
+#       - redis-data:/data
+#     restart: unless-stopped
+#     healthcheck:
+#       test: ["CMD", "redis-cli", "ping"]
+#       interval: 10s
+#       timeout: 3s
+#       retries: 3
+#     deploy:
+#       resources:
+#         limits:
+#           cpus: '1'
+#           memory: 512M
+#         reservations:
+#           cpus: '0.25'
+#           memory: 256M
+#     logging:
+#       driver: "json-file"
+#       options:
+#         max-size: "10m"
+#         max-file: "3"
 
-volumes:
-  redis-data:
-    driver: local
+# volumes:
+#   redis-data:
+#     driver: local

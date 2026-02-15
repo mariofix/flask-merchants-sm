@@ -5,10 +5,10 @@
   <div class="container">
     <div class="row align-items-center">
       <div class="col-auto">
-        <span class="avatar avatar-lg">JCB</span>
+        <span class="avatar avatar-lg">{{ alumno.nombre[0] }}</span>
       </div>
       <div class="col">
-        <h1 class="fw-bold m-0">Juan Carlos Bodoque</h1>
+        <h1 class="fw-bold m-0">{{ alumno.nombre }}</h1>
         <div class="list-inline list-inline-dots text-secondary">
           <div class="list-inline-item">
             <!-- Download SVG icon from http://tabler.io/icons/icon/map -->
@@ -17,7 +17,7 @@
               <path d="M9 4v13" />
               <path d="M15 7v13" />
             </svg>
-            Limite Diario: <strong>$900</strong>
+            Limite Diario: <strong>${{ alumno.maximo_diario }}</strong>
           </div>
           <div class="list-inline-item">
             <!-- Download SVG icon from http://tabler.io/icons/icon/mail -->
@@ -25,19 +25,32 @@
               <path d="M3 7a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-10z" />
               <path d="M3 7l9 6l9 -6" />
             </svg>
-            Limite Semanal: <strong>$4.900</strong>
+            Limite Semanal: <strong>${{ alumno.maximo_semanal }}</strong>
           </div>
         </div>
       </div>
       <div class="col-auto ms-auto">
         <div class="btn-list">
+          {% if not alumno.activo %}
+          <a href="#" class="btn btn-danger btn-3">
+
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-ban">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
+              <path d="M5.7 5.7l12.6 12.6" />
+            </svg>
+            Billetera Inhabilitada
+          </a>
+          {% else %}
           <a href="#" class="btn btn-success btn-3">
-            <!-- Download SVG icon from http://tabler.io/icons/icon/check -->
+
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-2">
               <path d="M5 12l5 5l10 -10" />
             </svg>
             Billetera Activa
           </a>
+          {% endif %}
+
         </div>
       </div>
     </div>
@@ -51,7 +64,7 @@
 <div class="container-xl">
   <div class="row g-3">
     <div class="col">
-      <ul class="timeline">
+      {# <ul class="timeline">
         <li class="timeline-event">
           <div class="timeline-event-icon bg-x-lt">
             <!-- Download SVG icon from http://tabler.io/icons/icon/brand-x -->
@@ -116,7 +129,7 @@
             </div>
           </div>
         </li>
-      </ul>
+      </ul> #}
     </div>
     <div class="col-lg-4">
       <div class="row row-cards">
@@ -133,7 +146,7 @@
                   <path d="M12 6l0 13" />
                   <path d="M21 6l0 13" />
                 </svg>
-                Uso 24h: <strong>$3300</strong>
+                Uso 24h: <strong>$0</strong>
               </div>
               <div class="mb-2">
                 <!-- Download SVG icon from http://tabler.io/icons/icon/briefcase -->
@@ -143,7 +156,7 @@
                   <path d="M12 12l0 .01" />
                   <path d="M3 13a20 20 0 0 0 18 0" />
                 </svg>
-                Uso 7d: <strong>$8.500</strong>
+                Uso 7d: <strong>$0</strong>
               </div>
               <div class="mb-2">
                 <!-- Download SVG icon from http://tabler.io/icons/icon/home -->
@@ -152,25 +165,28 @@
                   <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
                   <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
                 </svg>
-                Uso 14d: <strong>$19.200</strong>
+                Uso 14d: <strong>$0</strong>
               </div>
             </div>
           </div>
         </div>
         <div class="col-12">
+          <a id="restricciones"></a>
           <div class="card">
+            <div class="card-header">
+              <div class="card-title">Restricciones</div>
+            </div>
             <div class="card-body">
-              <h2 class="card-title">Estadisticas</h2>
-              <div>
-                <p>
-                  Productos mas comprados, dia más usado, graficos varios.
-                </p>
+              <div class="badges-list">
+                {% for item in alumno.restricciones %}
+                <span class="badge bg-danger-lt" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Motivo: {{item.motivo}}">{{item.nombre}}</span>
+                {% endfor %}
               </div>
+
             </div>
           </div>
         </div>
       </div>
     </div>
   </div>
-</div>
-{% endblock page_body %}
+  {% endblock page_body %}

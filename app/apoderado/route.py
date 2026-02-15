@@ -1,30 +1,31 @@
-from flask import (
-    Blueprint,
-    current_app,
-    flash,
-    redirect,
-    render_template,
-    request,
-    url_for,
-)
-from flask_login import current_user
+from decimal import Decimal
+from flask import Blueprint, current_app, flash, redirect, render_template, request, url_for
 from ..database import db
-from ..model import Apoderado, Settings, Alumno
+from ..model import Apoderado, Settings, Alumno, Abono, Payment
 from .controller import ApoderadoController
 from slugify import slugify
-
+from flask_security import current_user, roles_required, roles_accepted, login_required  # type: ignore
+from flask_merchants.core import PaymentStatus
 
 apoderado_bp = Blueprint("apoderado_cliente", __name__)
 apoderado_controller = ApoderadoController()
 
 
 @apoderado_bp.route("/", methods=["GET"])
+@roles_accepted("apoderado", "admin")
 def index():
-    return render_template("apoderado/dashboard.html")
+    apoderado = None
+    if current_user.has_role("apoderado"):
+        apoderado = db.session.execute(db.select(Apoderado).filter_by(usuario=current_user)).scalar_one()
+
+    if not apoderado and not current_user.has_role("admin"):
+        redirect("core.index")
+    return render_template("apoderado/dashboard.html", apoderado=apoderado)
 
 
 @apoderado_bp.route("/wizard", methods=["GET"])
 @apoderado_bp.route("/wizard/1", methods=["GET", "POST"])
+@login_required
 def wizp1():
 
     if request.method == "POST":
@@ -48,6 +49,7 @@ def wizp1():
 
 
 @apoderado_bp.route("/wizard/2", methods=["GET", "POST"])
+@login_required
 def wizp2():
     apoderado = db.session.execute(db.select(Apoderado).filter_by(usuario=current_user)).scalar_one()
     cursos = db.session.execute(db.select(Settings).filter_by(slug="cursos")).scalar_one()
@@ -72,6 +74,7 @@ def wizp2():
 
 
 @apoderado_bp.route("/wizard/3", methods=["GET", "POST"])
+@login_required
 def wizp3():
     apoderado = db.session.execute(db.select(Apoderado).filter_by(usuario=current_user)).scalar_one()
     if request.method == "POST":
@@ -82,6 +85,7 @@ def wizp3():
         correo_alternativo = request.form.get("correo_alternativo", False)
         monto_diario = request.form.get("monto_diario", False)
         monto_semanal = request.form.get("monto_semanal", False)
+        limite_notificaciones = request.form.get("monto_semanal", 1500)
         apoderado.comprobantes_transferencia = bool(notificacion_comprobante)
         apoderado.notificacion_compra = bool(notificacion_compra)
         apoderado.informe_semanal = bool(informe_semanal)
@@ -89,6 +93,15 @@ def wizp3():
         apoderado.copia_notificaciones = correo_alternativo
         apoderado.maximo_diario = int(monto_diario)
         apoderado.maximo_semanal = int(monto_semanal)
+        apoderado.limite_notificaciones = int(limite_notificaciones)
+        apoderado.saldo_cuenta = 1
+
+        wizard_completado = Settings()
+        wizard_completado.user_id = current_user.id
+        wizard_completado.slug = "wizard"
+        wizard_completado.value = {"status": "ok"}
+        db.session.add(wizard_completado)
+
         db.session.commit()
         return redirect(url_for(".wizp4"))
 
@@ -96,21 +109,76 @@ def wizp3():
 
 
 @apoderado_bp.route("/wizard/4", methods=["GET"])
+@login_required
 def wizp4():
     apoderado = db.session.execute(db.select(Apoderado).filter_by(usuario=current_user)).scalar_one()
     ## Notificar a Admins
+    correo = render_template("core/emails/nuevo_apoderado.html", apoderado=apoderado)
 
     return render_template("apoderado/wizard-paso4.html", apoderado=apoderado)
 
 
-@apoderado_bp.route("/abonar", methods=["GET", "POST"])
-def abonar():
-    return render_template("apoderado/abono.html")
+@apoderado_bp.route("/abono", methods=["POST"])
+@roles_accepted("apoderado", "admin")
+def abono():
+    monto = request.form["monto"]
+    forma_pago = request.form["forma-de-pago"]
+    abono = Abono()
+    abono.monto = Decimal(monto)
+    abono.apoderado = current_user.apoderado
+    abono.descripcion = "Abono Web"
+    abono.forma_pago = forma_pago
+
+    db.session.add(abono)
+    db.session.commit()
+
+    pago = Payment()
+    pago.merchants_token = abono.codigo
+    pago.amount = abono.monto
+    pago.currency = "CLP"
+    pago.integration_slug = abono.forma_pago
+
+    db.session.add(pago)
+    db.session.commit()
+
+    # Para evitar el re-POST, el procesamiento se hace en el detalle, antes de mostrar algo
+    return redirect(f"abono-detalle/{abono.codigo}")
+
+
+@apoderado_bp.route("/abono-detalle/<string:codigo>", methods=["GET"])
+def abono_detalle(codigo):
+    abono = db.session.execute(db.select(Abono).filter_by(codigo=codigo)).scalar_one_or_none()
+    pago = db.session.execute(db.select(Payment).filter_by(merchants_token=codigo)).scalar_one_or_none()
+    pago_process = None
+
+    if (
+        pago
+        and abono
+        and pago.integration.slug == abono.forma_pago
+        and pago.amount == abono.monto
+        and pago.status == PaymentStatus.created
+    ):
+        pago_process = pago.process()
+
+        if "transaction" in pago_process:
+            pago.status = PaymentStatus.processing
+            pago.integration_transaction = pago_process["transaction"]
+
+            db.session.commit()
+        if "url" in pago_process:
+            return redirect(pago_process["url"])
+
+    return render_template("apoderado/detalle-abono.html", abono=abono, pago=pago, PaymentStatus=PaymentStatus)
 
 
 @apoderado_bp.route("/menu-casino", methods=["GET"])
 def menu_casino():
     return render_template("apoderado/menu-casino.html")
+
+
+@apoderado_bp.route("/almuerzos", methods=["GET"])
+def almuerzos():
+    return render_template("apoderado/abonos.html")
 
 
 @apoderado_bp.route("/kiosko", methods=["GET"])
@@ -120,7 +188,8 @@ def kiosko():
 
 @apoderado_bp.route("/ficha-alumno/<int:id>", methods=["GET"])
 def ficha(id):
-    return render_template("apoderado/ficha.html")
+    alumno = db.session.execute(db.select(Alumno).filter_by(apoderado=current_user.apoderado, id=id)).scalar_one()
+    return render_template("apoderado/ficha.html", alumno=alumno)
 
 
 @apoderado_bp.route("/abonos", methods=["GET"])

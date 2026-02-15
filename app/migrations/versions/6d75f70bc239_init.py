@@ -1,17 +1,17 @@
 """init
 
-Revision ID: a879adbfc59e
+Revision ID: 6d75f70bc239
 Revises:
-Create Date: 2026-02-06 23:54:20.040401
+Create Date: 2026-02-15 02:55:48.080841
 
 """
 
-import flask_security
-import sqlalchemy as sa
 from alembic import op
+import sqlalchemy as sa
+import flask_security
 
 # revision identifiers, used by Alembic.
-revision = "a879adbfc59e"
+revision = "6d75f70bc239"
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -23,10 +23,13 @@ def upgrade():
         "casino_menu_dia",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("dia", sa.Date(), nullable=False),
+        sa.Column("es_permanente", sa.Boolean(), nullable=True),
         sa.Column("slug", sa.String(length=255), nullable=False),
         sa.Column("precio", sa.Numeric(precision=10, scale=0), nullable=True),
         sa.Column("descripcion", sa.String(length=2048), nullable=True),
         sa.Column("extra_attrs", sa.JSON(), nullable=True),
+        sa.Column("foto_principal", sa.JSON(), nullable=True),
+        sa.Column("activo", sa.Boolean(), nullable=False),
         sa.Column("created", sa.DateTime(), nullable=False),
         sa.Column("updated", sa.DateTime(), nullable=False),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_casino_menu_dia")),
@@ -34,6 +37,41 @@ def upgrade():
     )
     with op.batch_alter_table("casino_menu_dia", schema=None) as batch_op:
         batch_op.create_index(batch_op.f("ix_casino_menu_dia_dia"), ["dia"], unique=False)
+
+    op.create_table(
+        "casino_pedido",
+        sa.Column("id", sa.Integer(), nullable=False),
+        sa.Column("codigo", sa.String(length=36), nullable=False),
+        sa.Column("codigo_merchants", sa.String(length=36), nullable=True),
+        sa.Column(
+            "estado",
+            sa.Enum(
+                "CREADO",
+                "PENDIENTE",
+                "PAGADO",
+                "CONFIRMADA",
+                "ENTREGADO_PARCIAL",
+                "ENTREGADO",
+                "COMPLETADO",
+                "CANCELADA",
+                name="estadopedido",
+            ),
+            nullable=False,
+        ),
+        sa.Column("fecha_pedido", sa.DateTime(), nullable=False),
+        sa.Column("fecha_pago", sa.DateTime(), nullable=True),
+        sa.Column("precio_total", sa.Numeric(precision=10, scale=0), nullable=False),
+        sa.Column("tipo_pago", sa.Enum("EFECTIVO", "TRANSFERENCIA", "TARJETA", name="tipopago"), nullable=False),
+        sa.Column("pagado", sa.Boolean(), nullable=False),
+        sa.Column("extra_attrs", sa.JSON(), nullable=True),
+        sa.Column("created", sa.DateTime(), nullable=False),
+        sa.Column("updated", sa.DateTime(), nullable=False),
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_casino_pedido")),
+        sa.UniqueConstraint("codigo", name=op.f("uq_casino_pedido_codigo")),
+    )
+    with op.batch_alter_table("casino_pedido", schema=None) as batch_op:
+        batch_op.create_index(batch_op.f("ix_casino_pedido_codigo_merchants"), ["codigo_merchants"], unique=False)
+        batch_op.create_index(batch_op.f("ix_casino_pedido_fecha_pedido"), ["fecha_pedido"], unique=False)
 
     op.create_table(
         "casino_plato",
@@ -44,6 +82,7 @@ def upgrade():
         sa.Column("es_vegetariano", sa.Boolean(), nullable=False),
         sa.Column("es_hipocalorico", sa.Boolean(), nullable=False),
         sa.Column("contiene_gluten", sa.Boolean(), nullable=False),
+        sa.Column("contiene_alergenos", sa.Boolean(), nullable=False),
         sa.Column("created", sa.DateTime(), nullable=False),
         sa.Column("updated", sa.DateTime(), nullable=False),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_casino_plato")),
@@ -61,20 +100,12 @@ def upgrade():
     op.create_table(
         "merchants_payment",
         sa.Column("id", sa.Integer(), nullable=False),
-        sa.Column("merchants_token", sa.String(length=255), nullable=False),
+        sa.Column("merchants_token", sa.String(length=36), nullable=False),
         sa.Column("amount", sa.Numeric(precision=10, scale=2), nullable=False),
         sa.Column("currency", sa.String(length=3), nullable=False),
         sa.Column(
             "status",
-            sa.Enum(
-                "created",
-                "processing",
-                "declined",
-                "cancelled",
-                "refunded",
-                "paid",
-                name="paymentstatus",
-            ),
+            sa.Enum("created", "processing", "declined", "cancelled", "refunded", "paid", name="paymentstatus"),
             nullable=False,
         ),
         sa.Column("integration_slug", sa.String(length=255), nullable=False),
@@ -82,30 +113,18 @@ def upgrade():
         sa.Column("integration_payload", sa.JSON(), nullable=True),
         sa.Column("integration_response", sa.JSON(), nullable=True),
         sa.Column(
-            "creation",
-            sa.DateTime(timezone=True),
-            server_default=sa.text("(CURRENT_TIMESTAMP)"),
-            nullable=False,
+            "creation", sa.DateTime(timezone=True), server_default=sa.text("(CURRENT_TIMESTAMP)"), nullable=False
         ),
         sa.Column(
-            "last_update",
-            sa.DateTime(timezone=True),
-            server_default=sa.text("(CURRENT_TIMESTAMP)"),
-            nullable=False,
+            "last_update", sa.DateTime(timezone=True), server_default=sa.text("(CURRENT_TIMESTAMP)"), nullable=False
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_merchants_payment")),
         sa.UniqueConstraint("merchants_token", name=op.f("uq_merchants_payment_merchants_token")),
     )
     with op.batch_alter_table("merchants_payment", schema=None) as batch_op:
+        batch_op.create_index(batch_op.f("ix_merchants_payment_integration_slug"), ["integration_slug"], unique=False)
         batch_op.create_index(
-            batch_op.f("ix_merchants_payment_integration_slug"),
-            ["integration_slug"],
-            unique=False,
-        )
-        batch_op.create_index(
-            batch_op.f("ix_merchants_payment_integration_transaction"),
-            ["integration_transaction"],
-            unique=False,
+            batch_op.f("ix_merchants_payment_integration_transaction"), ["integration_transaction"], unique=False
         )
         batch_op.create_index(batch_op.f("ix_merchants_payment_status"), ["status"], unique=False)
 
@@ -114,20 +133,15 @@ def upgrade():
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("name", sa.String(length=80), nullable=False),
         sa.Column("description", sa.String(length=255), nullable=True),
-        sa.Column("permissions", flask_security.datastore.AsaList(), nullable=True),
-        sa.Column(
-            "update_datetime",
-            sa.DateTime(),
-            server_default=sa.text("(CURRENT_TIMESTAMP)"),
-            nullable=False,
-        ),
+        sa.Column("permissions", flask_security.datastore.AsaList(), nullable=True),  # type: ignore
+        sa.Column("update_datetime", sa.DateTime(), server_default=sa.text("(CURRENT_TIMESTAMP)"), nullable=False),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_role")),
         sa.UniqueConstraint("name", name=op.f("uq_role_name")),
     )
     op.create_table(
         "user",
         sa.Column("fs_webauthn_user_handle", sa.String(length=64), nullable=True),
-        sa.Column("mf_recovery_codes", flask_security.datastore.AsaList(), nullable=True),
+        sa.Column("mf_recovery_codes", flask_security.datastore.AsaList(), nullable=True),  # type: ignore
         sa.Column("password", sa.String(length=255), nullable=True),
         sa.Column("us_phone_number", sa.String(length=128), nullable=True),
         sa.Column("username", sa.String(length=255), nullable=True),
@@ -145,18 +159,8 @@ def upgrade():
         sa.Column("tf_primary_method", sa.String(length=64), nullable=True),
         sa.Column("tf_totp_secret", sa.String(length=255), nullable=True),
         sa.Column("tf_phone_number", sa.String(length=128), nullable=True),
-        sa.Column(
-            "create_datetime",
-            sa.DateTime(),
-            server_default=sa.text("(CURRENT_TIMESTAMP)"),
-            nullable=False,
-        ),
-        sa.Column(
-            "update_datetime",
-            sa.DateTime(),
-            server_default=sa.text("(CURRENT_TIMESTAMP)"),
-            nullable=False,
-        ),
+        sa.Column("create_datetime", sa.DateTime(), server_default=sa.text("(CURRENT_TIMESTAMP)"), nullable=False),
+        sa.Column("update_datetime", sa.DateTime(), server_default=sa.text("(CURRENT_TIMESTAMP)"), nullable=False),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_user")),
         sa.UniqueConstraint("email", name=op.f("uq_user_email")),
         sa.UniqueConstraint("fs_uniquifier", name=op.f("uq_user_fs_uniquifier")),
@@ -168,55 +172,36 @@ def upgrade():
         "casino_apoderado",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("nombre", sa.String(length=255), nullable=False),
+        sa.Column("alumnos_registro", sa.Integer(), nullable=True),
         sa.Column("usuario_id", sa.Integer(), nullable=False),
+        sa.Column("comprobantes_transferencia", sa.Boolean(), nullable=False),
+        sa.Column("notificacion_compra", sa.Boolean(), nullable=False),
+        sa.Column("informe_semanal", sa.Boolean(), nullable=False),
+        sa.Column("tag_compartido", sa.Boolean(), nullable=False),
+        sa.Column("copia_notificaciones", sa.String(length=255), nullable=True),
+        sa.Column("maximo_diario", sa.Integer(), nullable=True),
+        sa.Column("maximo_semanal", sa.Integer(), nullable=True),
+        sa.Column("saldo_cuenta", sa.Integer(), nullable=True),
+        sa.Column("limite_notificacion", sa.Integer(), nullable=False),
         sa.Column("created", sa.DateTime(), nullable=False),
         sa.Column("updated", sa.DateTime(), nullable=False),
-        sa.ForeignKeyConstraint(
-            ["usuario_id"],
-            ["user.id"],
-            name=op.f("fk_casino_apoderado_usuario_id_user"),
-        ),
+        sa.ForeignKeyConstraint(["usuario_id"], ["user.id"], name=op.f("fk_casino_apoderado_usuario_id_user")),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_casino_apoderado")),
-    )
-    op.create_table(
-        "casino_foto_plato",
-        sa.Column("id", sa.Integer(), nullable=False),
-        sa.Column("slug", sa.String(length=255), nullable=False),
-        sa.Column("nombre", sa.String(length=64), nullable=False),
-        sa.Column("archivo", sa.String(length=255), nullable=False),
-        sa.Column("plato_id", sa.Integer(), nullable=False),
-        sa.Column("created", sa.DateTime(), nullable=False),
-        sa.Column("updated", sa.DateTime(), nullable=False),
-        sa.ForeignKeyConstraint(
-            ["plato_id"],
-            ["casino_plato.id"],
-            name=op.f("fk_casino_foto_plato_plato_id_casino_plato"),
-        ),
-        sa.PrimaryKeyConstraint("id", name=op.f("pk_casino_foto_plato")),
-        sa.UniqueConstraint("slug", name=op.f("uq_casino_foto_plato_slug")),
     )
     op.create_table(
         "casino_opcion_menu_dia",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("menu_id", sa.Integer(), nullable=False),
         sa.Column("plato_id", sa.Integer(), nullable=False),
-        sa.Column(
-            "tipo_curso",
-            sa.Enum("ENTRADA", "FONDO", "POSTRE", "VEGETARIANO", name="tipocurso"),
-            nullable=False,
-        ),
+        sa.Column("tipo_curso", sa.Enum("ENTRADA", "FONDO", "POSTRE", name="tipocurso"), nullable=False),
         sa.Column("orden", sa.Integer(), nullable=False),
         sa.Column("created", sa.DateTime(), nullable=False),
         sa.Column("updated", sa.DateTime(), nullable=False),
         sa.ForeignKeyConstraint(
-            ["menu_id"],
-            ["casino_menu_dia.id"],
-            name=op.f("fk_casino_opcion_menu_dia_menu_id_casino_menu_dia"),
+            ["menu_id"], ["casino_menu_dia.id"], name=op.f("fk_casino_opcion_menu_dia_menu_id_casino_menu_dia")
         ),
         sa.ForeignKeyConstraint(
-            ["plato_id"],
-            ["casino_plato.id"],
-            name=op.f("fk_casino_opcion_menu_dia_plato_id_casino_plato"),
+            ["plato_id"], ["casino_plato.id"], name=op.f("fk_casino_opcion_menu_dia_plato_id_casino_plato")
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_casino_opcion_menu_dia")),
     )
@@ -228,6 +213,19 @@ def upgrade():
         sa.ForeignKeyConstraint(["user_id"], ["user.id"], name=op.f("fk_roles_users_user_id_user")),
     )
     op.create_table(
+        "store_settings",
+        sa.Column("id", sa.Integer(), nullable=False),
+        sa.Column("user_id", sa.Integer(), nullable=True),
+        sa.Column("slug", sa.String(length=255), nullable=False),
+        sa.Column("active", sa.Boolean(), nullable=False),
+        sa.Column("value", sa.JSON(), nullable=True),
+        sa.Column("created", sa.DateTime(), nullable=False),
+        sa.Column("updated", sa.DateTime(), nullable=False),
+        sa.ForeignKeyConstraint(["user_id"], ["user.id"], name=op.f("fk_store_settings_user_id_user")),
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_store_settings")),
+        sa.UniqueConstraint("slug", name=op.f("uq_store_settings_slug")),
+    )
+    op.create_table(
         "alumno",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("slug", sa.String(length=255), nullable=False),
@@ -236,25 +234,50 @@ def upgrade():
         sa.Column("activo", sa.Boolean(), nullable=False),
         sa.Column("motivo", sa.String(length=255), nullable=True),
         sa.Column("apoderado_id", sa.Integer(), nullable=False),
+        sa.Column("maximo_diario", sa.Integer(), nullable=True),
+        sa.Column("maximo_semanal", sa.Integer(), nullable=True),
+        sa.Column("tag_compartido", sa.Boolean(), nullable=False),
+        sa.Column("restricciones", sa.JSON(), nullable=True),
         sa.Column("created", sa.DateTime(), nullable=False),
         sa.Column("updated", sa.DateTime(), nullable=False),
         sa.ForeignKeyConstraint(
-            ["apoderado_id"],
-            ["casino_apoderado.id"],
-            name=op.f("fk_alumno_apoderado_id_casino_apoderado"),
+            ["apoderado_id"], ["casino_apoderado.id"], name=op.f("fk_alumno_apoderado_id_casino_apoderado")
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_alumno")),
         sa.UniqueConstraint("slug", name=op.f("uq_alumno_slug")),
     )
+    op.create_table(
+        "casino_abono",
+        sa.Column("id", sa.Integer(), nullable=False),
+        sa.Column("codigo", sa.String(length=36), nullable=False),
+        sa.Column("descripcion", sa.String(length=255), nullable=True),
+        sa.Column("monto", sa.Numeric(precision=10, scale=2), nullable=False),
+        sa.Column("forma_pago", sa.String(length=255), nullable=False),
+        sa.Column("apoderado_id", sa.Integer(), nullable=False),
+        sa.Column("created", sa.DateTime(), nullable=False),
+        sa.Column("updated", sa.DateTime(), nullable=False),
+        sa.ForeignKeyConstraint(
+            ["apoderado_id"], ["casino_apoderado.id"], name=op.f("fk_casino_abono_apoderado_id_casino_apoderado")
+        ),
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_casino_abono")),
+        sa.UniqueConstraint("codigo", name=op.f("uq_casino_abono_codigo")),
+    )
+    with op.batch_alter_table("casino_abono", schema=None) as batch_op:
+        batch_op.create_index(batch_op.f("ix_casino_abono_forma_pago"), ["forma_pago"], unique=False)
+
     # ### end Alembic commands ###
 
 
 def downgrade():
     # ### commands auto generated by Alembic - please adjust! ###
+    with op.batch_alter_table("casino_abono", schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f("ix_casino_abono_forma_pago"))
+
+    op.drop_table("casino_abono")
     op.drop_table("alumno")
+    op.drop_table("store_settings")
     op.drop_table("roles_users")
     op.drop_table("casino_opcion_menu_dia")
-    op.drop_table("casino_foto_plato")
     op.drop_table("casino_apoderado")
     op.drop_table("user")
     op.drop_table("role")
@@ -266,6 +289,11 @@ def downgrade():
     op.drop_table("merchants_payment")
     op.drop_table("merchants_integrations")
     op.drop_table("casino_plato")
+    with op.batch_alter_table("casino_pedido", schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f("ix_casino_pedido_fecha_pedido"))
+        batch_op.drop_index(batch_op.f("ix_casino_pedido_codigo_merchants"))
+
+    op.drop_table("casino_pedido")
     with op.batch_alter_table("casino_menu_dia", schema=None) as batch_op:
         batch_op.drop_index(batch_op.f("ix_casino_menu_dia_dia"))
 

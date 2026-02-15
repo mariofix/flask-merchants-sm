@@ -11,6 +11,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy_utils.models import Timestamp
 from werkzeug.utils import import_string
 
+
 from flask_merchants.core import MerchantsError
 from flask_merchants.mixins import IntegrationMixin, PaymentMixin
 
@@ -73,12 +74,30 @@ class Payment(db.Model, PaymentMixin):
 
         try:
             integration = import_string(self.integration.integration_class)
-            return integration.create()
+            provider = integration()
+            return provider.create(payload=self.merchants_payload())
         except MerchantsError as err:
             raise err
 
 
 # Casino
+class Abono(db.Model, Timestamp):
+    __tablename__ = "casino_abono"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    codigo: Mapped[str] = mapped_column(String(36), default=lambda: str(uuid.uuid4()), unique=True, nullable=False)
+    descripcion: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    monto: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
+    forma_pago: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+
+    apoderado_id: Mapped[int] = mapped_column(ForeignKey("casino_apoderado.id"))
+    apoderado: Mapped["Apoderado"] = relationship(back_populates="abonos")
+
+    def __str__(self):
+        return f"{self.codigo}"
+
+    def to_dict(self):
+        return {"id": self.id, "codigo": self.codigo, "descripcion": self.descripcion, "monto": self.monto}
 
 
 class Alumno(db.Model, Timestamp):
@@ -93,6 +112,13 @@ class Alumno(db.Model, Timestamp):
 
     apoderado_id: Mapped[int] = mapped_column(ForeignKey("casino_apoderado.id"))
     apoderado: Mapped["Apoderado"] = relationship(back_populates="alumnos")
+
+    maximo_diario: Mapped[int] = mapped_column(default=None, nullable=True)
+    maximo_semanal: Mapped[int] = mapped_column(default=None, nullable=True)
+
+    tag_compartido: Mapped[bool] = mapped_column(default=False)
+
+    restricciones: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
 
     def __str__(self):
         return f"{self.slug}"
@@ -119,7 +145,11 @@ class Apoderado(db.Model, Timestamp):
     maximo_diario: Mapped[int] = mapped_column(default=None, nullable=True)
     maximo_semanal: Mapped[int] = mapped_column(default=None, nullable=True)
 
+    saldo_cuenta: Mapped[int] = mapped_column(default=None, nullable=True)
+    limite_notificacion: Mapped[int] = mapped_column(default=1500)
+
     alumnos: Mapped[list["Alumno"]] = relationship(back_populates="apoderado")
+    abonos: Mapped[list["Abono"]] = relationship(back_populates="apoderado", order_by=Abono.created.desc())
 
     def __str__(self):
         return f"{self.usuario.username}"
@@ -141,28 +171,12 @@ class Plato(db.Model, Timestamp):
     es_vegetariano: Mapped[bool] = mapped_column(default=False)
     es_hipocalorico: Mapped[bool] = mapped_column(default=False)
     contiene_gluten: Mapped[bool] = mapped_column(default=True)
-
-    fotos: Mapped[list["FotoPlato"]] = relationship(back_populates="plato")
+    contiene_alergenos: Mapped[bool] = mapped_column(default=False)
 
     opciones_menu: Mapped[list["OpcionMenuDia"]] = relationship(back_populates="plato")
 
     def __str__(self):
         return self.nombre
-
-
-class FotoPlato(db.Model, Timestamp):
-    __tablename__ = "casino_foto_plato"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    slug: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
-    nombre: Mapped[str] = mapped_column(String(255), nullable=True, default=None)
-    archivo: Mapped[str] = mapped_column(String(255))
-
-    plato_id: Mapped[int] = mapped_column(ForeignKey("casino_plato.id"), nullable=True)
-    plato: Mapped["Plato"] = relationship(back_populates="fotos")
-
-    def __str__(self):
-        return f"{self.archivo}"
 
 
 class MenuDiario(db.Model, Timestamp):
@@ -182,6 +196,7 @@ class MenuDiario(db.Model, Timestamp):
     precio: Mapped[Decimal | None] = mapped_column(Numeric(10, 0), nullable=True)
     descripcion: Mapped[str | None] = mapped_column(String(2048), nullable=True)
     extra_attrs: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+    foto_principal: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True, default=list)
     activo: Mapped[bool] = mapped_column(default=True)
 
     @property
@@ -218,73 +233,6 @@ class OpcionMenuDia(db.Model, Timestamp):
 
     def __str__(self):
         return f"{self.tipo_curso.value}: {self.plato.nombre}"
-
-
-# class Plato(db.Model, Timestamp):
-#     __tablename__ = "casino_plato"
-
-#     id: Mapped[int] = mapped_column(primary_key=True)
-#     nombre: Mapped[str | None] = mapped_column(String(255), nullable=False)
-#     activo: Mapped[bool] = mapped_column(default=True)
-#     es_vegano: Mapped[bool] = mapped_column(default=False)
-#     es_vegetariano: Mapped[bool] = mapped_column(default=False)
-#     es_hipocalorico: Mapped[bool] = mapped_column(default=False)
-#     contiene_gluten: Mapped[bool] = mapped_column(default=True)
-
-#     fotos: Mapped[list["FotoPlato"]] = relationship(back_populates="plato")
-
-#     def __str__(self):
-#         return f"{self.nombre}"
-
-
-# @listens_for(FotoPlato, "after_delete")
-# def del_image(mapper, connection, target):
-#     if target.archivo:
-#         # Delete image
-#         try:
-#             os.remove(op.join(file_path, target.archivo))
-#         except OSError:
-#             pass
-
-#         # Delete thumbnail
-#         try:
-#             os.remove(op.join(file_path, form.thumbgen_filename(target.archivo)))
-#         except OSError:
-#             pass
-
-
-# class DiaMenuDiario(db.Model, Timestamp):
-#     __tablename__ = "casino_menu_dia_2"
-
-#     id: Mapped[int] = mapped_column(primary_key=True)
-#     dia: Mapped[date] = mapped_column(SaDate, index=True)
-
-#     def __str__(self):
-#         return f"{self.dia}"
-
-
-# class MenuDiario(db.Model, Timestamp):
-#     __tablename__ = "casino_menu"
-
-#     id: Mapped[int] = mapped_column(primary_key=True)
-#     slug: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
-
-#     dia_id: Mapped[int] = mapped_column(ForeignKey("casino_menu_dia.id"))
-#     dia: Mapped[list["DiaMenuDiario"]] = relationship(foreign_keys=[dia_id])
-
-#     entrada_id: Mapped[int] = mapped_column(ForeignKey("casino_plato.id"))
-#     entrada: Mapped["Plato"] = relationship(foreign_keys=[entrada_id])
-
-#     fondo_id: Mapped[int] = mapped_column(ForeignKey("casino_plato.id"))
-#     fondo: Mapped["Plato"] = relationship(foreign_keys=[fondo_id])
-
-#     postre_id: Mapped[int] = mapped_column(ForeignKey("casino_plato.id"))
-#     postre: Mapped["Plato"] = relationship(foreign_keys=[postre_id])
-
-#     precio: Mapped[Decimal] = mapped_column(Numeric(10, 0), nullable=True)
-#     orden: Mapped[int] = mapped_column(default=1)
-#     descripcion: Mapped[str | None] = mapped_column(String(2048), nullable=True)
-#     extra_attrs: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
 
 
 ## Tienda
@@ -428,13 +376,14 @@ import uuid
 from enum import Enum as PyEnum
 
 
-class EstadoOrden(PyEnum):
-    CREADA = "creada"
+class EstadoPedido(PyEnum):
+    CREADO = "creado"
     PENDIENTE = "pendiente"
-    PAGADA = "pagada"
-    ENVIADA = "enviada"
-    CONFIRMADA = "confirmada"
-    ENTREGADA = "entregada"
+    PAGADO = "pagado"
+    CONFIRMADA = "confirmado"
+    ENTREGADO_PARCIAL = "entregado-parcial"
+    ENTREGADO = "entregado"
+    COMPLETADO = "completado"
     CANCELADA = "cancelada"
 
 
@@ -444,19 +393,19 @@ class TipoPago(PyEnum):
     TARJETA = "tarjeta"
 
 
-class Orden(db.Model, Timestamp):
-    """Orden de comida de un usuario"""
+class Pedido(db.Model, Timestamp):
+    """Pedido de comida de un usuario"""
 
-    __tablename__ = "casino_orden"
+    __tablename__ = "casino_pedido"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     codigo: Mapped[str] = mapped_column(String(36), default=lambda: str(uuid.uuid4()), unique=True, nullable=False)
     codigo_merchants: Mapped[str | None] = mapped_column(String(36), default=None, nullable=True, index=True)
 
     # Estado y tracking
-    estado: Mapped[EstadoOrden] = mapped_column(Enum(EstadoOrden), default=EstadoOrden.CREADA)
-    fecha_orden: Mapped[datetime] = mapped_column(default=datetime.now(), index=True)
-    fecha_entrega: Mapped[datetime | None] = mapped_column(nullable=True)
+    estado: Mapped[EstadoPedido] = mapped_column(Enum(EstadoPedido), default=EstadoPedido.CREADO)
+    fecha_pedido: Mapped[datetime] = mapped_column(default=datetime.now(), index=True)
+    fecha_pago: Mapped[datetime | None] = mapped_column(nullable=True)
 
     # Pago
     precio_total: Mapped[Decimal] = mapped_column(Numeric(10, 0), nullable=False)

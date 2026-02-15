@@ -33,6 +33,15 @@
     {%- endblock head_styles %}
 
     {%- block head_scripts %}
+    <style>
+      .btn-floating-end {
+        position: fixed;
+        z-index: 1030;
+        bottom: 1rem;
+        right: 1rem;
+        box-shadow: var(--tblr-shadow-dropdown);
+      }
+    </style>
     {%- endblock head_scripts %}
 
     {%- endblock head %}
@@ -63,19 +72,18 @@
                   <a class="nav-link active" href="/"><span class="nav-link-title">Inicio</span></a>
                 </li>
                 <li class="nav-item">
-                  <a class="nav-link" href="#casino"><span class="nav-link-title">Casino</span></a>
-                </li>
-                <li class="nav-item">
-                  <a class="nav-link" href="#cafeteria"><span class="nav-link-title">Cafetería</span></a>
-                </li>
-                <li class="nav-item">
                   <a class="nav-link" href="#nosotros"><span class="nav-link-title">Sobre Nosotros</span></a>
                 </li>
                 <li class="nav-item">
-                  <a class="nav-link" href="#aiuda"><span class="nav-link-title">Ayuda</span></a>
+                  <a class="nav-link" href="#ayuda"><span class="nav-link-title">Ayuda</span></a>
                 </li>
                 <li class="nav-item ms-4">
+                  {% if current_user.is_authenticated %}
+
+                  <a href="{{ url_for('apoderado_cliente.index') }}" class="btn btn-primary">Mi Cuenta</a>
+                  {% else %}
                   <a href="{{ url_for('security.login') }}" class="btn btn-primary">Ingresar</a>
+                  {% endif %}
                 </li>
               </ul>
             </nav>
@@ -212,6 +220,17 @@
         <!-- END FOOTER -->a
       </div>
     </div>
+
+    <a href="#top" class="btn btn-floating-end btn-icon btn-success btn-pill btn-outline">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
+        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+        <path d="M12 10l0 10" />
+        <path d="M12 10l4 4" />
+        <path d="M12 10l-4 4" />
+        <path d="M4 4l16 0" />
+      </svg>
+    </a>
+
     <div class="settings">
       <a href="#" class="btn btn-floating btn-icon btn-primary" data-bs-toggle="offcanvas" data-bs-target="#offcanvasSettings" aria-controls="offcanvasSettings" aria-label="Theme Settings">
         <!-- Download SVG icon from http://tabler.io/icons/icon/brush -->

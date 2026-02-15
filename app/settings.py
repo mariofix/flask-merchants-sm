@@ -14,13 +14,13 @@ SQLALCHEMY_RECORD_QUERIES = DEBUG
 SQLALCHEMY_ECHO = False
 SQLALCHEMY_ENGINE_OPTIONS = {"pool_pre_ping": True, "pool_recycle": 1800}
 
+SECURITY_EMAIL_SUBJECT_REGISTER = "Bienvenida a Sabor Mirandiano"
 SECURITY_EMAIL_SENDER = "Sabor Mirandiano"
 SECURITY_PASSWORD_SALT = "password-salt-randomnesssss.0"
-# SECURITY_LOGIN_URL = "/ingreso/"
-# SECURITY_LOGOUT_URL = "/salida/"
-SECURITY_POST_LOGIN_VIEW = "/"
+SECURITY_POST_LOGIN_VIEW = "/apoderado/"
 SECURITY_POST_LOGOUT_VIEW = "/"
 SECURITY_POST_CONFIRM_VIEW = "/apoderado/wizard"
+SECURITY_UNAUTHORIZED_VIEW = "/"
 
 SECURITY_USERNAME_ENABLE = True
 SECURITY_USERNAME_REQUIRED = True
@@ -31,9 +31,10 @@ SECURITY_RECOVERABLE = True
 SECURITY_REGISTERABLE = True
 SECURITY_CONFIRMABLE = True
 SECURITY_SEND_REGISTER_EMAIL = True
-SECURITY_EMAIL_SUBJECT_REGISTER = "Bienvenida a Sabor Mirandiano"
+
 SECURITY_AUTO_LOGIN_AFTER_CONFIRM = True
 SECURITY_LOGIN_WITHOUT_CONFIRMATION = False
+
 # Flask-Babel
 BABEL_DEFAULT_LOCALE = "es"
 BABEL_DEFAULT_TIMEZONE = "America/Santiago"
@@ -74,8 +75,8 @@ MAIL_TIMEOUT = 5
 MAIL_USE_LOCALTIME = True
 
 MERCHANTS_ALLOWED_INTEGRATIONS = [
-    "merchants.integrations.DummyProvider",
-    "merchants.integrations.CashProvider",
+    "merchants.integrations.KhipuProvider",
+    "merchants.integrations.CasinoProvider",
 ]
 MERCHANTS_PAYMENT_MODEL = "model.store.Payment"
 MERCHANTS_INTEGRATION_MODEL = "model.store.Integration"

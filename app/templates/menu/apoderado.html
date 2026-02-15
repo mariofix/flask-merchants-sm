@@ -134,18 +134,26 @@
       </div>
       <div class="nav-item dropdown">
         <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown" aria-label="Open user menu">
-          <span class="avatar avatar-sm avatar-1 bg-lime text-white"> TT </span>
+          <span class="avatar avatar-sm avatar-1 bg-lime text-white"> {{ current_user.email[0] }} </span>
           <div class="d-none d-xl-block ps-2">
-            <div>Tulio Triviño</div>
-            <div class="mt-1 small text-secondary">Apoderado</div>
+            <div>{{ current_user.email }}</div>
+            <div class="mt-1 small text-secondary">
+              {% if current_user.has_role("apoderado") %}
+              Apoderado
+              {% elif current_user.has_role("admin") %}
+              Administrador
+              {% else %}
+              Usuario
+              {% endif %}
+            </div>
           </div>
         </a>
         <!-- BEGIN USER MENU -->
         <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
-          <a href="{{ url_for('core.index') }}" class="dropdown-item">Cambiar App</a>
           <a href="{{ url_for('apoderado_cliente.abonos')}}" class="dropdown-item">Abonos</a>
+          <a href="{{ url_for('apoderado_cliente.almuerzos')}}" class="dropdown-item">Almuerzos</a>
+          <a href="/apoderado/ajustes" class="dropdown-item">Ajustes</a>
           <div class="dropdown-divider"></div>
-          <a href="{{ url_for('core.configuracion') }}" class="dropdown-item">Ajustes</a>
           <a href="{{ url_for('security.logout') }}" class="dropdown-item">Cerrar Sesión</a>
         </div>
         <!-- END USER MENU -->
@@ -157,7 +165,7 @@
         <!-- BEGIN NAVBAR MENU -->
         <ul class="navbar-nav">
           <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('apoderado.index_view') }}">
+            <a class="nav-link" href="{{ url_for('apoderado_cliente.index') }}">
               <span class="nav-link-icon d-md-none d-lg-inline-block">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" class="icon icon-1">
                   <path d="M5 12l-2 0l9 -9l9 9l-2 0" />
@@ -168,7 +176,7 @@
             </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('apoderado_cliente.abonar') }}">
+            <a class="nav-link" href="#abonos" data-bs-toggle="modal" data-bs-target="#modal-abono" aria-label="Nuevo Abono">
               <span class="nav-link-icon d-md-none d-lg-inline-block">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-credit-card-pay">
                   <path stroke="none" d="M0 0h24v24H0z" fill="none" />
@@ -193,8 +201,8 @@
               <span class="nav-link-title"> Menu Casino </span>
             </a>
           </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('apoderado_cliente.kiosko') }}">
+          {# <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('.kiosko') }}">
               <span class="nav-link-icon d-md-none d-lg-inline-block">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-cookie">
                   <path stroke="none" d="M0 0h24v24H0z" fill="none" />
@@ -208,9 +216,9 @@
                 </svg></span>
               <span class="nav-link-title"> Colaciones </span>
             </a>
-          </li>
+          </li> #}
           <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('core.ayuda') }}">
+            <a class="nav-link" href="{{ url_for('core.index') }}#ayuda">
               <span class="nav-link-icon d-md-none d-lg-inline-block">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-help">
                   <path stroke="none" d="M0 0h24v24H0z" fill="none" />

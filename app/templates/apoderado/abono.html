@@ -20,7 +20,7 @@
       <div class="col">
         <div class="row row-cards">
           <div class="col-12">
-            <form class="card h-100" action="{{ url_for('apoderado.abonar') }}" method="post">
+            <form class="card h-100" action="{{ url_for('.abono') }}" method="post" class="needs-validation" novalidate>
               <div class="card-header">
                 <h3 class="card-title">Abonar</h3>
               </div>
@@ -29,7 +29,7 @@
                 <div class="mb-3 row">
                   <label class="col-3 col-form-label required">Monto</label>
                   <div class="col">
-                    <input type="number" class="form-control" min="2000" max="100000" placeholder="Monto a Abonar" />
+                    <input type="number" class="form-control" name="monto" min="2000" max="100000" placeholder="Monto a Abonar" required />
                     <small class="form-hint">Mínimo: <strong>$2.000</strong> - Máximo: <strong>$100.000</strong></small>
                   </div>
                 </div>
@@ -39,7 +39,7 @@
                   <div class="col">
                     <div class="form-selectgroup form-selectgroup-boxes d-flex flex-column">
                       <label class="form-selectgroup-item flex-fill">
-                        <input type="radio" name="form-payment" value="khipu" class="form-selectgroup-input" />
+                        <input type="radio" name="forma-de-pago" value="khipu" class="form-selectgroup-input" />
                         <div class="form-selectgroup-label d-flex align-items-center p-3">
                           <div class="me-3">
                             <span class="form-selectgroup-check"></span>
@@ -51,38 +51,14 @@
                         </div>
                       </label>
                       <label class="form-selectgroup-item flex-fill">
-                        <input type="radio" name="form-payment" value="flow" class="form-selectgroup-input" />
+                        <input type="radio" name="forma-de-pago" value="cafeteria" class="form-selectgroup-input" checked />
                         <div class="form-selectgroup-label d-flex align-items-center p-3">
                           <div class="me-3">
                             <span class="form-selectgroup-check"></span>
                           </div>
                           <div>
                             <span class="payment payment-provider-mastercard payment-xs me-2"></span>
-                            Tarjetas via <strong>Flow</strong>
-                          </div>
-                        </div>
-                      </label>
-                      <label class="form-selectgroup-item flex-fill">
-                        <input type="radio" name="form-payment" value="Webpay" class="form-selectgroup-input" checked />
-                        <div class="form-selectgroup-label d-flex align-items-center p-3">
-                          <div class="me-3">
-                            <span class="form-selectgroup-check"></span>
-                          </div>
-                          <div>
-                            <span class="payment payment-provider-payconiq payment-xs me-2"></span>
-                            Tarjetas y Billeteras Electrónicas via <strong>Webpay</strong>
-                          </div>
-                        </div>
-                      </label>
-                      <label class="form-selectgroup-item flex-fill">
-                        <input type="radio" name="form-payment" value="efectivo" class="form-selectgroup-input" />
-                        <div class="form-selectgroup-label d-flex align-items-center p-3">
-                          <div class="me-3">
-                            <span class="form-selectgroup-check"></span>
-                          </div>
-                          <div>
-                            <span class="payment payment-provider-cash-app payment-xs me-2"></span>
-                            Efectivo <strong>En el colegio</strong>
+                            Efectivo/Tarjetas presencialmente en la cafeteria
                           </div>
                         </div>
                       </label>
@@ -92,6 +68,7 @@
               </div>
               <div class="card-footer">
                 <div class="text-end">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                   <button type="submit" class="btn btn-success">Abonar</button>
                 </div>
               </div>

@@ -1,0 +1,262 @@
+{% extends "base.html" %}
+
+{% block page_header -%}
+<div class="page-header d-print-none text-white">
+    <div class="container-xl">
+        <div class="row g-2 align-items-center">
+            <div class="col">
+                <!-- Page pre-title -->
+                <h1 class="page-title">Detalle Pedido Web </h1>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock page_header -%}
+
+{% block page_body %}
+
+<main id="content" class="page-body">
+    <div class="container-xl">
+        <div class="row row-cards">
+            <div class="row g-4">
+
+                <!-- LEFT: Order Items -->
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Menús en el pedido </h3>
+                            <div class="card-options">
+                                <span class="badge bg-primary-lt">{{ pedido|count }} items</span>
+                            </div>
+                        </div>
+                        <div class="card-body py-0">
+                            {% for item in pedido %}
+                            <div class="order-item">
+                                <div class="order-item-img">MP</div>
+                                <div class="flex-fill">
+                                    <div class="order-item-name">{{ item.detalle_menu.descripcion }}</div>
+                                    <div class="order-item-meta">Fecha: {{ item.fecha }} · Notas: {{ item.nota }}</div>
+                                </div>
+                                <div class="fw-semibold">${{ "{:,.0f}".format(item.detalle_menu.precio) | replace(",", ".") }}</div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RIGHT: Summary + Payment -->
+                <div class="col-lg-4">
+
+                    <!-- Totals -->
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h3 class="card-title">Totales</h3>
+                        </div>
+                        <div class="card-body">
+                            <table class="totals-table w-100 table table-borderless mb-0">
+                                <tbody>
+                                    <tr>
+                                        <td class="text-muted ps-0">Subtotal</td>
+                                        <td class="text-end pe-0">${{ "{:,.0f}".format(total) | replace(",", ".") }}</td>
+                                    </tr>
+                                    <tr class="grand-total">
+                                        <td class="ps-0">Total</td>
+                                        <td class="text-end pe-0 text-primary">${{ "{:,.0f}".format(total) | replace(",", ".") }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    {% if pago %}
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h3 class="card-title">Informacion de pago</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="text-secondary">Presenta este código en la cafeteria del colegio para confirmar tu pedido.</div>
+                            <div class="mb-3 row">
+                                <!-- Codigo QR -->
+                                <div id="codigo-pago"></div>
+                                <div class="alert alert-success mt-3" role="alert">
+                                    <strong>{{ pago.integration_transaction }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <form class="card" action="#" method="post">
+                        <!-- Payment -->
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h3 class="card-title">Forma de Pago</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3 row">
+                                    <div class="col">
+                                        <div class="form-selectgroup form-selectgroup-boxes d-flex flex-column">
+                                            <label class="form-selectgroup-item flex-fill">
+                                                <input type="radio" name="forma-de-pago" value="khipu" class="form-selectgroup-input" />
+                                                <div class="form-selectgroup-label d-flex align-items-center p-3">
+                                                    <div class="me-3">
+                                                        <span class="form-selectgroup-check"></span>
+                                                    </div>
+                                                    <div>
+                                                        <span class="payment payment-provider-khalti payment-xs me-2"></span>
+                                                        Transferencia Bancaria via <strong>Khipu</strong>
+                                                    </div>
+                                                </div>
+                                            </label>
+                                            <label class="form-selectgroup-item flex-fill">
+                                                <input type="radio" name="forma-de-pago" value="cafeteria" class="form-selectgroup-input" checked />
+                                                <div class="form-selectgroup-label d-flex align-items-center p-3">
+                                                    <div class="me-3">
+                                                        <span class="form-selectgroup-check"></span>
+                                                    </div>
+                                                    <div>
+                                                        <span class="payment payment-provider-mastercard payment-xs me-2"></span>
+                                                        Efectivo/Tarjetas presencialmente en la cafeteria
+                                                    </div>
+                                                </div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                        <button class="btn btn-primary w-100 pay-btn" type="submit">
+                            <i class="ti ti-check me-2"></i>Pagar ${{ "{:,.0f}".format(total) | replace(",", ".") }}
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+    </div>
+</main>
+
+{% endblock page_body %}
+
+{% block page_scripts %}
+<script>
+    function selectMethod(el) {
+        document.querySelectorAll('.method-card').forEach(c => {
+            c.classList.remove('selected');
+            c.querySelector('i:last-child').className = 'ti ti-circle text-muted fs-4';
+        });
+        el.classList.add('selected');
+        el.querySelector('i:last-child').className = 'ti ti-circle-check text-primary fs-4';
+    }
+</script>
+<script src="{{ url_for('static', filename='tabler/libs/qrcodejs/qrcode.min.js', v=app_version)}}"></script>
+<script>
+    var qrcode = new QRCode("codigo-pago", {
+        text: "{{ pago.integration_transaction }}",
+        width: 300,
+        height: 300,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+    });
+</script>
+{% endblock %}
+
+
+{% block head_styles %}
+<style>
+    .order-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: .85rem 0;
+    }
+
+    .order-item+.order-item {
+        border-top: 1px solid var(--tblr-border-color);
+    }
+
+    .order-item-img {
+        width: 46px;
+        height: 46px;
+        border-radius: 8px;
+        background: #e8edf2;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 1.25rem;
+    }
+
+    .order-item-name {
+        font-weight: 600;
+        font-size: .88rem;
+    }
+
+    .order-item-meta {
+        font-size: .78rem;
+        color: var(--tblr-muted);
+    }
+
+    .totals-table td {
+        padding: .3rem 0;
+        font-size: .9rem;
+    }
+
+    .totals-table tr.grand-total td {
+        font-weight: 700;
+        font-size: 1rem;
+        padding-top: .7rem;
+        border-top: 2px solid var(--tblr-border-color);
+    }
+
+    .method-card {
+        border: 2px solid var(--tblr-border-color);
+        border-radius: 8px;
+        padding: .9rem 1.1rem;
+        cursor: pointer;
+        transition: border-color .15s, background .15s;
+        display: flex;
+        align-items: center;
+        gap: .85rem;
+    }
+
+    .method-card:hover {
+        border-color: var(--tblr-primary);
+    }
+
+    .method-card.selected {
+        border-color: var(--tblr-primary);
+        background: #f0f6ff;
+    }
+
+    .method-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 6px;
+        background: var(--tblr-primary-lt);
+        color: var(--tblr-primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+
+    .method-label {
+        font-weight: 600;
+        font-size: .88rem;
+    }
+
+    .method-sub {
+        font-size: .76rem;
+        color: var(--tblr-muted);
+    }
+
+    .pay-btn {
+        height: 46px;
+        font-size: .95rem;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}

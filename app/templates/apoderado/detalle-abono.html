@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block page_header -%}
+<div class="page-header d-print-none text-white">
+  <div class="container-xl">
+    <div class="row g-2 align-items-center">
+      <div class="col">
+        <!-- Page pre-title -->
+        <h1 class="page-title">Detalle Abono </h1>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock page_header -%}
+
+{% block page_body %}
+
+
+<main id="content" class="page-body">
+  <div class="container-xl">
+    <div class="row row-cards">
+      <div class="col-md-6 col-lg-3 mb-5">
+        <div class="card">
+          <div class="card-status-bottom bg-pink"></div>
+          <div class="card-body">
+            <h3 class="card-title">Informacion para Pago</h3>
+            {% if pago.status == PaymentStatus.processing %}
+            <p class="text-secondary">
+              Presenta este codigo en la cafeteria del colegio para completar tu pago.
+            </p>
+            {% endif %}
+            <!-- Codigo QR -->
+            <div id="codigo-pago"></div>
+
+            <div class="alert alert-success mt-3" role="alert">
+              <strong>{{ pago.integration_transaction }}</strong>
+            </div>
+
+          </div>
+        </div>
+      </div>
+      <div class="row row-cards">
+        <div class="col">
+          <div class="row row-cards">
+            <div class="col-12">
+              <form class="card h-100" action="#" method="post">
+                <div class="card-header">
+                  <h3 class="card-title">Código: {{ abono.codigo }}</h3>
+                </div>
+                <div class="card-body">
+
+                  <div class="mb-3 row">
+                    <label class="col-3 col-form-label">Monto Abonado</label>
+                    <div class="col">
+                      <input class="form-control" value="{{ abono.monto }}" readonly />
+                    </div>
+                  </div>
+
+                  <div class="mb-3 row">
+                    <label class="col-3 col-form-label">Estado</label>
+                    <div class="col">
+                      <input class="form-control" value="{{ pago.status }}" readonly />
+                    </div>
+                  </div>
+
+                  <div class="mb-3 row">
+                    <label class="col-3 col-form-label">Descripcion</label>
+                    <div class="col">
+                      <input class="form-control" value="{{ abono.descripcion }}" readonly />
+                    </div>
+                  </div>
+
+                  <div class="mb-3 row">
+                    <label class="col-3 col-form-label">Transaccion</label>
+                    <div class="col">
+                      <input class="form-control" value="{{ pago.integration_transaction }}" readonly />
+                    </div>
+                  </div>
+
+                  <div class="mb-3 row">
+                    <label class="col-3 col-form-label">Forma de Pago</label>
+                    <div class="col">
+                      <div class="form-selectgroup form-selectgroup-boxes d-flex flex-column">
+                        <label class="form-selectgroup-item flex-fill">
+                          <input type="radio" class="form-selectgroup-input" checked disabled />
+                          <div class="form-selectgroup-label d-flex align-items-center p-3">
+                            <div class="me-3">
+                              <span class="form-selectgroup-check"></span>
+                            </div>
+                            <div>
+                              <span class="payment payment-provider-mastercard payment-xs me-2"></span>
+                              Efectivo/Tarjetas presencialmente en la cafeteria
+                            </div>
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="card-footer">
+                  <div class="text-end">
+                    {% if current_user.has_role('pos') or current_user.has_role('admin') and pago.status == PaymentStatus.processing %}
+                    <a href="{{ url_for("pos.completa_abono", codigo=abono.codigo) }}" class="btn btn-success">Completar Abono</a>
+                    {% endif %}
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+</main>
+
+{% endblock page_body %}
+
+{% block page_scripts %}
+<script src="{{ url_for('static', filename='tabler/libs/qrcodejs/qrcode.min.js', v=app_version)}}"></script>
+<script>
+  var qrcode = new QRCode("codigo-pago", {
+    text: "{{ pago.integration_transaction }}",
+    width: 300,
+    height: 300,
+    colorDark: "#000000",
+    colorLight: "#ffffff",
+    correctLevel: QRCode.CorrectLevel.H
+  });
+</script>
+{% endblock %}

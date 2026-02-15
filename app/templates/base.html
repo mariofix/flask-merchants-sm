@@ -179,6 +179,66 @@
         </div>
       </div>
     </div>
+    <div class="modal modal-blur fade" id="modal-abono" tabindex="-1" role="dialog" aria-hidden="true">
+      <form action="{{ url_for('.abono') }}" method="post" class="needs-validation" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <div class="modal-dialog modal-lg" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Nuevo Abono</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-3">
+                <label class="form-label required">Monto</label>
+                <input type="number" class="form-control" name="monto" placeholder="2000" min="2000" max="100000" required />
+                <small class="form-hint">Mínimo: <strong>$2.000</strong> - Máximo: <strong>$100.000</strong></small>
+              </div>
+              <label class="form-label required">Forma de Pago</label>
+              <div class="form-selectgroup-boxes row mb-3">
+                <div class="col-lg-6">
+                  <label class="form-selectgroup-item">
+                    <input type="radio" name="forma-de-pago" value="khipu" class="form-selectgroup-input" />
+                    <span class="form-selectgroup-label d-flex align-items-center p-3">
+                      <span class="me-3">
+                        <span class="form-selectgroup-check"></span>
+                      </span>
+                      <span class="form-selectgroup-label-content">
+                        <span class="form-selectgroup-title strong mb-1">Transferencia Electrónica</span>
+                        <span class="d-block text-secondary">Validación automática de abonos, procesado por Khipu</span>
+                      </span>
+                    </span>
+                  </label>
+                </div>
+                <div class="col-lg-6">
+                  <label class="form-selectgroup-item">
+                    <input type="radio" name="forma-de-pago" value="cafeteria" class="form-selectgroup-input" checked />
+                    <span class="form-selectgroup-label d-flex align-items-center p-3">
+                      <span class="me-3">
+                        <span class="form-selectgroup-check"></span>
+                      </span>
+                      <span class="form-selectgroup-label-content">
+                        <span class="form-selectgroup-title strong mb-1">Efectivo/Tarjetas</span>
+                        <span class="d-block text-secondary">Presencialmente en la Cafeteria del colegio</span>
+                      </span>
+                    </span>
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <a href="#" class="btn btn-link link-secondary btn-3" data-bs-dismiss="modal"> Cancelar </a>
+              <button type="submit" class="btn btn-primary btn-5 ms-auto"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" class="icon icon-2">
+                  <path d="M12 5l0 14" />
+                  <path d="M5 12l14 0" />
+                </svg>
+                Pagar Abono
+              </button>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
     <!-- END PAGE MODALS -->
     <div class="settings">
       <a href="#" class="btn btn-floating btn-icon btn-primary" data-bs-toggle="offcanvas" data-bs-target="#offcanvasSettings" aria-controls="offcanvasSettings" aria-label="Theme Settings">
@@ -412,10 +472,10 @@
 
     <!-- END PAGE LIBRARIES -->
     <!-- BEGIN GLOBAL MANDATORY SCRIPTS -->
-    <script src="{{ url_for('static', filename='tabler/js/tabler.min.js', v=app_version)}}" defer></script>
+    <script src="{{ url_for('static', filename='tabler/js/tabler.js', v=app_version)}}" defer></script>
     <!-- END GLOBAL MANDATORY SCRIPTS -->
     <!-- BEGIN DEMO SCRIPTS -->
-    <script src="{{ url_for('static', filename='tabler/preview/js/demo.min.js', v=app_version)}}" defer></script>
+    <script src="{{ url_for('static', filename='tabler/preview/js/demo.js', v=app_version)}}" defer></script>
     <!-- END DEMO SCRIPTS -->
     <script>
       /*

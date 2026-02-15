@@ -2,6 +2,7 @@
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,flask
 
 ### Flask ###
+fotos_platos
 instance/*
 !instance/.gitignore
 .webassets-cache

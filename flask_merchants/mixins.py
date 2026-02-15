@@ -3,7 +3,7 @@ import uuid
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import JSON, Boolean, DateTime, Enum, Numeric, String
+from sqlalchemy import JSON, Boolean, DateTime, Enum, Numeric, String, event
 from sqlalchemy.orm import Mapped, declarative_mixin, mapped_column
 from sqlalchemy.sql import func
 
@@ -36,7 +36,9 @@ class PaymentMixin:
     """
 
     ___abstract__ = True
-    merchants_token: Mapped[str | None] = mapped_column(String(255), nullable=False, unique=True, default=uuid.uuid4)
+    merchants_token: Mapped[str | None] = mapped_column(
+        String(36), default=lambda: str(uuid.uuid4()), unique=True, nullable=False
+    )
     amount: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
     currency: Mapped[str] = mapped_column(String(3), nullable=False)
     status: Mapped[PaymentStatus] = mapped_column(Enum(PaymentStatus), default=PaymentStatus.created, index=True)
@@ -60,3 +62,40 @@ class PaymentMixin:
         server_default=func.now(),
         insert_default=func.now(),
     )
+
+    def merchants_payload(self):
+        payload = {
+            "merchants_token": f"{self.merchants_token}",
+            "currency": self.currency,
+            "amount": self.amount,
+            "payload": self.integration_payload,
+        }
+        return payload
+
+    @classmethod
+    def __declare_last__(cls):
+        """
+        From Claude: to add the event before_insert directly on the abstract model
+
+        """
+
+        event.listen(cls, "before_insert", cls.event_before_insert)
+
+    @staticmethod
+    def event_before_insert(mapper, connection, target):
+        if target.status == "created":
+            print(f"from PaymentMixin {target=}")
+            # integration_info = get_integration(slug=target.integration_slug)
+            # try:
+            #     integration_class = getattr(integrations, integration_info["integration_class"])
+            #     integration = integration_class()
+            # except Exception as e:
+            #     raise e
+
+            # new_payment = integration.create_payment()
+
+            # target.integration_transaction = new_payment.get("token", None)
+            # target.status = PaymentStatus.processing
+            # target.integration_response = new_payment
+
+            return target
