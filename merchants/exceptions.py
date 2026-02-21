@@ -1,2 +1,0 @@
-class MerchantsException(Exception):
-    pass
