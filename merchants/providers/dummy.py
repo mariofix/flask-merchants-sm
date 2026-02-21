@@ -30,6 +30,13 @@ class DummyProvider(Provider):
     """
 
     key = "dummy"
+    name = "Dummy"
+    author = "merchants team"
+    version = "1.0.0"
+    description = (
+        "Local development provider that returns random data without calling any real API."
+    )
+    url = ""
 
     _TERMINAL_STATES = [
         PaymentState.SUCCEEDED,

@@ -104,11 +104,11 @@ def wizp3():
             alumno.maximo_diario = apoderado.maximo_diario
             alumno.maximo_semanal = apoderado.maximo_semanal
 
-        wizard_completado = Settings()
-        wizard_completado.user_id = current_user.id
-        wizard_completado.slug = "wizard"
-        wizard_completado.value = {"status": "ok"}
-        db.session.add(wizard_completado)
+        # wizard_completado = Settings()
+        # wizard_completado.user_id = current_user.id
+        # wizard_completado.slug = "wizard"
+        # wizard_completado.value = {"status": "ok"}
+        # db.session.add(wizard_completado)
 
         db.session.commit()
         return redirect(url_for(".wizp4"))

@@ -43,6 +43,11 @@ class FlowProvider(Provider):
     """
 
     key = "flow"
+    name = "Flow.cl"
+    author = "merchants team"
+    version = "1.0.0"
+    description = "Flow.cl payment gateway for Chile, powered by pyflowcl."
+    url = "https://www.flow.cl"
 
     def __init__(
         self,

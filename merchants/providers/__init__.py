@@ -5,6 +5,8 @@ from abc import ABC, abstractmethod
 from decimal import Decimal
 from typing import Any
 
+from pydantic import BaseModel
+
 from merchants.models import CheckoutSession, PaymentState, PaymentStatus, WebhookEvent
 
 
@@ -17,11 +19,55 @@ class UserError(Exception):
         self.code = code
 
 
+class ProviderInfo(BaseModel):
+    """Structured metadata for a payment provider.
+
+    Downstream applications can use this model to introspect the provider
+    registry — e.g. serialise to JSON, render in a UI, or drive routing logic.
+
+    Attributes:
+        key: Short machine-readable identifier (e.g. ``"stripe"``).
+        name: Human-readable provider name (e.g. ``"Stripe"``).
+        author: Author or maintainer of the provider integration.
+        version: Version string for this provider integration.
+        description: Short description of the provider.
+        url: Documentation or homepage URL for the provider.
+    """
+
+    key: str
+    name: str
+    author: str
+    version: str
+    description: str = ""
+    url: str = ""
+
+
 class Provider(ABC):
     """Abstract base class for payment provider integrations."""
 
-    #: Short identifier, e.g. ``"stripe"``.
+    #: Short machine-readable identifier, e.g. ``"stripe"``.
     key: str = "base"
+    #: Human-readable provider name, e.g. ``"Stripe"``.
+    name: str = "Base"
+    #: Author or maintainer of this provider integration.
+    author: str = ""
+    #: Version string for this provider integration.
+    version: str = "0.0.0"
+    #: Short description of the provider.
+    description: str = ""
+    #: Documentation or homepage URL.
+    url: str = ""
+
+    def get_info(self) -> ProviderInfo:
+        """Return a :class:`ProviderInfo` populated from this provider's class attributes."""
+        return ProviderInfo(
+            key=self.key,
+            name=self.name,
+            author=self.author,
+            version=self.version,
+            description=self.description,
+            url=self.url,
+        )
 
     @abstractmethod
     def create_checkout(
@@ -92,6 +138,15 @@ def get_provider(key_or_instance: str | Provider) -> Provider:
 def list_providers() -> list[str]:
     """Return the keys of all registered providers."""
     return list(_REGISTRY.keys())
+
+
+def describe_providers() -> list[ProviderInfo]:
+    """Return :class:`ProviderInfo` for every registered provider.
+
+    Downstream applications can use this to inspect the registry without
+    knowing provider implementation details.
+    """
+    return [p.get_info() for p in _REGISTRY.values()]
 
 
 # ---------------------------------------------------------------------------

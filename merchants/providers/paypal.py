@@ -30,6 +30,11 @@ class PayPalProvider(Provider):
     """
 
     key = "paypal"
+    name = "PayPal"
+    author = "merchants team"
+    version = "1.0.0"
+    description = "PayPal payment gateway integration (stub). Sends amounts as decimal strings."
+    url = "https://developer.paypal.com"
 
     def __init__(
         self,

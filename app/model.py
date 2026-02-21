@@ -9,13 +9,30 @@ from sqlalchemy import Date as SaDate
 from sqlalchemy import Enum, ForeignKey, Numeric, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy_utils.models import Timestamp
-from werkzeug.utils import import_string
 
+import uuid
+from enum import Enum as PyEnum
 
-# from flask_merchants.core import MerchantsError
 from flask_merchants.models import PaymentMixin
 
 from .database import db
+
+
+class EstadoPedido(PyEnum):
+    CREADO = "creado"
+    PENDIENTE = "pendiente"
+    PAGADO = "pagado"
+    CONFIRMADA = "confirmado"
+    ENTREGADO_PARCIAL = "entregado-parcial"
+    ENTREGADO = "entregado"
+    COMPLETADO = "completado"
+    CANCELADA = "cancelada"
+
+
+class TipoPago(PyEnum):
+    EFECTIVO = "efectivo"
+    TRANSFERENCIA = "transferencia"
+    TARJETA = "tarjeta"
 
 
 class Role(db.Model, fsqla.FsRoleMixin):
@@ -30,70 +47,13 @@ class User(db.Model, fsqla.FsUserMixin):
         return f"{self.username}"
 
 
-# class Integration(db.Model, IntegrationMixin):
-#     __tablename__ = "merchants_integrations"
-
-#     id: Mapped[int] = mapped_column(primary_key=True)
-
-#     # Relationship to payments
-#     payments: Mapped[list["Payment"]] = relationship(
-#         "Payment",
-#         primaryjoin="and_(Integration.slug == foreign(Payment.integration_slug))",
-#         viewonly=True,
-#         back_populates="integration",
-#     )
-
-#     def __str__(self):
-#         # From IntegrationMixin
-#         return f"{self.slug}"
-
-
 class Payment(db.Model, PaymentMixin):
     __tablename__ = "merchants_payment"
 
     id: Mapped[int] = mapped_column(primary_key=True)
 
-    # Relationship to integration
-    # integration: Mapped[Optional["Integration"]] = relationship(
-    #     "Integration",
-    #     primaryjoin="and_(Integration.slug == foreign(Payment.integration_slug))",
-    #     viewonly=True,
-    #     back_populates="payments",
-    # )
-
     def __str__(self):
-        # From PaymentMixin
         return f"{self.id}"
-
-    # def process(self):
-    #     if not self.integration:
-    #         raise MerchantsError(f"Integration: {self.integration_slug} does not exist.")
-
-    #     if not self.integration.is_active:
-    #         raise MerchantsError(f"Integration: {self.integration_slug} is not active.")
-
-    #     try:
-    #         integration = import_string(self.integration.integration_class)
-    #         provider = integration()
-    #         if self.integration.config:
-    #             provider.extra_attrs = self.integration.config
-
-    #         pago_process = provider.create(payload=self.merchants_payload())
-    #         salida = {}
-    #         if pago_process:
-    #             self.integration_payload = self.merchants_payload()
-    #             self.integration_response = pago_process
-    #             self.integration_transaction = pago_process.payment_id
-    #             db.session.commit()
-
-    #             salida = {
-    #                 "transaction": pago_process.payment_id,
-    #                 "url": pago_process.payment_url,
-    #                 "integration_payload": pago_process,
-    #             }
-    #         return salida
-    #     except MerchantsError as err:
-    #         raise err
 
 
 # Casino
@@ -190,7 +150,7 @@ class Plato(db.Model, Timestamp):
     contiene_gluten: Mapped[bool] = mapped_column(default=True)
     contiene_alergenos: Mapped[bool] = mapped_column(default=False)
 
-    opciones_menu: Mapped[list["OpcionMenuDia"]] = relationship(back_populates="plato")
+    # opciones_menu: Mapped[list["OpcionMenuDia"]] = relationship(back_populates="plato")
 
     def __str__(self):
         return self.nombre
@@ -215,6 +175,8 @@ class MenuDiario(db.Model, Timestamp):
     extra_attrs: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
     foto_principal: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True, default=list)
     activo: Mapped[bool] = mapped_column(default=True)
+    stock: Mapped[int] = mapped_column(default=1, server_default="1")
+    fuera_stock: Mapped[bool] = mapped_column(default=False, nullable=True)
 
     @property
     def entradas(self) -> list["Plato"]:
@@ -243,101 +205,13 @@ class OpcionMenuDia(db.Model, Timestamp):
     menu: Mapped["MenuDiario"] = relationship(back_populates="opciones")
 
     plato_id: Mapped[int] = mapped_column(ForeignKey("casino_plato.id"))
-    plato: Mapped["Plato"] = relationship(back_populates="opciones_menu")
+    plato: Mapped["Plato"] = relationship()
 
     tipo_curso: Mapped[TipoCurso] = mapped_column(Enum(TipoCurso), nullable=False)
     orden: Mapped[int] = mapped_column(default=0)
 
     def __str__(self):
         return f"{self.tipo_curso.value}: {self.plato.nombre}"
-
-
-## Tienda
-
-
-# class Category(db.Model, Timestamp):
-#     __tablename__ = "store_category"
-#     id: Mapped[int] = mapped_column(primary_key=True)
-#     slug: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
-#     name: Mapped[str | None] = mapped_column(String(255), nullable=False)
-#     active: Mapped[bool] = mapped_column(default=True)
-
-#     # Relationship
-#     products: Mapped[list["Product"]] = relationship(back_populates="category")
-
-#     def __str__(self):
-#         return f"{self.slug}"
-
-
-# class ProductType(db.Model, Timestamp):
-#     __tablename__ = "store_product_type"
-
-#     id: Mapped[int] = mapped_column(primary_key=True)
-#     slug: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
-#     name: Mapped[str | None] = mapped_column(String(255), nullable=False)
-
-#     # Relationship
-#     products: Mapped[list["Product"]] = relationship(back_populates="product_type")
-
-#     def __str__(self):
-#         return f"{self.slug}"
-
-
-# class Branch(db.Model, Timestamp):
-#     __tablename__ = "store_branch"
-
-#     id: Mapped[int] = mapped_column(primary_key=True)
-#     slug: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
-#     name: Mapped[str] = mapped_column(String(255), nullable=False)
-#     active: Mapped[bool] = mapped_column(default=True)
-#     extra_attrs: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
-
-#     # Foreign Key
-#     partner_id: Mapped[int] = mapped_column(ForeignKey("user.id"), nullable=False, index=True)
-
-#     # Relationships
-#     partner: Mapped["User"] = relationship(back_populates="branches")
-#     products: Mapped[list["Product"]] = relationship(secondary="store_branch_product", back_populates="branches")
-
-#     def __str__(self):
-#         return f"{self.slug}"
-
-
-# # Association table for Branch-Product many-to-many
-# class BranchProduct(db.Model):
-#     __tablename__ = "store_branch_product"
-
-#     branch_id: Mapped[int] = mapped_column(ForeignKey("store_branch.id"), primary_key=True)
-#     product_id: Mapped[int] = mapped_column(ForeignKey("store_product.id"), primary_key=True)
-#     price_override: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), nullable=True)
-
-#     active: Mapped[bool] = mapped_column(default=True)
-
-
-# # Update Product model
-# class Product(db.Model, Timestamp):
-#     __tablename__ = "store_product"
-
-#     id: Mapped[int] = mapped_column(primary_key=True)
-#     slug: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
-#     name: Mapped[str | None] = mapped_column(String(255), nullable=False)
-#     description: Mapped[str | None] = mapped_column(String(2048), nullable=True)
-#     price: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
-#     currency: Mapped[str] = mapped_column(String(3), nullable=False, default="CLP")
-#     active: Mapped[bool] = mapped_column(default=True)
-#     extra_attrs: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
-
-#     # Foreign Keys
-#     category_id: Mapped[int] = mapped_column(ForeignKey("store_category.id"), nullable=False, index=True)
-#     product_type_id: Mapped[int] = mapped_column(ForeignKey("store_product_type.id"), nullable=False, index=True)
-
-#     # Relationships
-#     category: Mapped["Category"] = relationship(back_populates="products")
-#     product_type: Mapped["ProductType"] = relationship(back_populates="products")
-#     branches: Mapped[list["Branch"]] = relationship(secondary="store_branch_product", back_populates="products")
-
-#     def __str__(self):
-#         return f"{self.name}"
 
 
 class Settings(db.Model, Timestamp):
@@ -353,61 +227,6 @@ class Settings(db.Model, Timestamp):
 
     def __str__(self):
         return f"{self.slug} - {self.user_id}"
-
-
-# class Student(db.Model, Timestamp):
-#     __tablename__ = "store_student"
-
-#     id: Mapped[int] = mapped_column(primary_key=True)
-#     parent_id: Mapped[None | int] = mapped_column(ForeignKey("user.id"), nullable=True, default=None)
-#     name: Mapped[str] = mapped_column(String(255), nullable=False)
-
-#     daily_limit: Mapped[int] = mapped_column()
-#     weekly_limit: Mapped[int] = mapped_column()
-
-#     user: Mapped["User"] = relationship(back_populates="students")
-
-
-# ## Lector
-
-
-# class Operador(db.Model, Timestamp):
-#     __tablename__ = "reader_operator"
-
-#     id: Mapped[int] = mapped_column(primary_key=True)
-#     nombre: Mapped[str] = mapped_column(String(255), nullable=False)
-#     codigo_qr: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
-#     en_turno: Mapped[bool] = mapped_column(default=True)
-#     linea: Mapped[int]
-
-
-# class lecturas(db.Model, Timestamp):
-#     __tablename__ = "reader_readings"
-
-#     id: Mapped[int] = mapped_column(primary_key=True)
-#     codigo_qr: Mapped[str]
-#     linea: Mapped[int]
-#     camara: Mapped[int]
-
-import uuid
-from enum import Enum as PyEnum
-
-
-class EstadoPedido(PyEnum):
-    CREADO = "creado"
-    PENDIENTE = "pendiente"
-    PAGADO = "pagado"
-    CONFIRMADA = "confirmado"
-    ENTREGADO_PARCIAL = "entregado-parcial"
-    ENTREGADO = "entregado"
-    COMPLETADO = "completado"
-    CANCELADA = "cancelada"
-
-
-class TipoPago(PyEnum):
-    EFECTIVO = "efectivo"
-    TRANSFERENCIA = "transferencia"
-    TARJETA = "tarjeta"
 
 
 class Pedido(db.Model, Timestamp):

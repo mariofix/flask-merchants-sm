@@ -28,95 +28,98 @@
     <svg class="section-divider" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 145 36" preserveAspectRatio="none">
       <path d="M 145 36 m -145 -18 s 32.36 18 72.27 18 s 72.73 -18 72.73 -18 v 18 h -145 z"></path>
     </svg>
-    <div class="container">
-      <div class="row g-lg-6">
 
-        {% for dia, menus in menues.items() %}
-        <div class="col-md-6">
+    {% for dia, menus in menues.items() %}
 
-          <div class="card">
-            <div class="card-header">
-              <h3 class="card-title text-capitalize">{{ str_dias[dia] }}</h3>
-            </div>
-            <div class="card-body">
-              <div id="carousel-{{ dia }}" class="carousel slide" data-bs-ride="carousel">
-                <div class="carousel-inner">
-                  {% for menu in menus %}
-                  <div class="carousel-item active">
-                    <img class="d-block w-100" alt="" src="{{ url_for('static', filename='platos/' ~ menu.foto_principal, v=app_version) }}" />
-                    <div class="carousel-caption-background d-none d-md-block"></div>
-                    <div class="carousel-caption d-none d-md-block">
-                      <h3>{{ menu.descripcion }}</h3>
-                      <p>{{ menu.entradas[0].nombre }} - {{ menu.postres[0].nombre }}</p>
-                    </div>
-                  </div>
-                  {% endfor %}
-                </div>
-                <a class="carousel-control-prev" href="#carousel-{{ dia }}" role="button" data-bs-slide="prev">
-                  <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                  <span class="visually-hidden">Previous</span>
-                </a>
-                <a class="carousel-control-next" href="#carousel-{{ dia }}" role="button" data-bs-slide="next">
-                  <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                  <span class="visually-hidden">Next</span>
-                </a>
-              </div>
-            </div>
-            <div class="card-footer"><a href="{{ url_for('apoderado_cliente.menu_casino') }}" class="btn btn-primary w-100">Armar Menú</a></div>
-          </div>
+    <div class="container-xl py-4">
 
-        </div>
-        {% endfor %}
-
-
-        <div class="row g-2 align-items-center mt-5">
+      <div class="page-header mb-4">
+        <div class="row align-items-center">
           <div class="col">
-            <h2 class="page-title">Martes 2/12</h2>
-          </div>
-        </div>
-        <div class="row g-lg-6">
-          <div class="col-md-6 col-lg-4">
-            <div class="card">
-              <a href="#">
-                <div class="img-bg ratio ratio-4x3 card-img-top" style="background-image: url({{ url_for('static', filename='platos/mechada-pure.jpg', v=app_version)}})"></div>
-              </a>
-              <div class="card-body">
-                <div class="h1 mb-2 fw-bold">Carne Mechada con Puré de Papas</div>
-                <div>
-                  <div class="text-secondary">Choclo, Lechucha, Zanahoria</div>
-                  <div class="d-flex mb-4 text-secondary">
-                    <div class="d-block d-flex align-items-center me-3">
-                      Jalea
-                    </div>
-                  </div>
-                  <a href="{{ url_for('apoderado_cliente.menu_casino') }}" class="btn btn-primary py-2 px-3">Armar Menu</a>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-6 col-lg-4">
-            <div class="card">
-              <a href="#">
-                <div class="img-bg ratio ratio-4x3 card-img-top" style="background-image: url({{ url_for('static', filename='platos/arroz.jpg', v=app_version)}})"></div>
-              </a>
-              <div class="card-body">
-                <div class="h1 mb-2 fw-bold">Croquetas de Verdura</div>
-                <div>
-                  <div class="text-secondary">Choclo, Lechucha, Zanahoria</div>
-                  <div class="d-flex mb-4 text-secondary">
-                    <div class="d-block d-flex align-items-center me-3">
-                      Jalea
-                    </div>
-                  </div>
-                  <a href="{{ url_for('apoderado_cliente.menu_casino') }}" class="btn btn-primary py-2 px-3">Armar Menu</a>
-                </div>
-              </div>
-            </div>
+            <h2 class="page-title">Menú del Día</h2>
+            <div class="text-muted mt-1">{{ str_dias[dia] }}</div>
           </div>
         </div>
       </div>
-      <a id="nosotros"></a>
 
+      <div class="swiper menu-carousel">
+        <div class="swiper-wrapper">
+          {% for menu in menus %}
+          <div class="swiper-slide">
+            <div class="card shadow-sm position-relative {% if menu.fuera_stock %}is-out-of-stock{% endif %}">
+              <img src="{{ url_for('static', filename='platos/' ~ menu.foto_principal[0], v=app_version) }}" class="menu-card-img" alt="Menú Clásico">
+              <div class="card-body">
+                <div class="mb-2 d-flex flex-wrap gap-1">
+                  {% if menu.fuera_stock %}
+                  <span class="badge bg-red-lt text-red">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-tools-kitchen-2-off">
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                      <path d="M14.386 10.409c.53 -2.28 1.766 -4.692 4.614 -7.409v12m-4 0h-1c0 -.313 0 -.627 0 -.941" />
+                      <path d="M19 19v2h-1v-3" />
+                      <path d="M8 8v13" />
+                      <path d="M5 5v2a3 3 0 0 0 4.546 2.572m1.454 -2.572v-3" />
+                      <path d="M3 3l18 18" />
+                    </svg>
+                    Agotado
+                  </span>
+                  {% endif %}
+                  {% if "hipocalorico" in menu.extra_attrs %}
+                  <span class="badge bg-green-lt text-green">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-bowl-spoon">
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                      <path d="M4 11h16a1 1 0 0 1 1 1v.5c0 1.5 -2.517 5.573 -4 6.5v1a1 1 0 0 1 -1 1h-8a1 1 0 0 1 -1 -1v-1c-1.687 -1.054 -4 -5 -4 -6.5v-.5a1 1 0 0 1 1 -1" />
+                      <path d="M8 7c1.657 0 3 -.895 3 -2s-1.343 -2 -3 -2s-3 .895 -3 2s1.343 2 3 2" />
+                      <path d="M11 5h9" />
+                    </svg>
+                    Hipocalorico
+                  </span>
+                  {% endif %}
+                  {% if "vegano" in menu.extra_attrs %}
+                  <span class="badge bg-indigo-lt text-indigo">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-leaf">
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                      <path d="M5 21c.5 -4.5 2.5 -8 7 -10" />
+                      <path d="M9 18c6.218 0 10.5 -3.288 11 -12v-2h-4.014c-9 0 -11.986 4 -12 9c0 1 0 3 2 5h3l.014 0" />
+                    </svg>
+                    Vegano
+                  </span>
+                  {% endif %}
+                </div>
+
+                <h4 class="card-title mb-3">{{ menu.descripcion }}</h4>
+
+                <!-- Courses -->
+                <div class="mb-3">
+                  {% for item in menu.opciones %}
+                  <div class="course-row">
+                    <span class="course-label">{{ item.tipo_curso.value }}</span>
+                    <span class="course-name">{{ item.plato.nombre }}</span>
+                  </div>
+                  {% endfor %}
+                </div>
+
+              </div>
+              <div class="card-footer d-flex justify-content-between align-items-center">
+                <div>
+                  <div class="menu-price">${{ "{:,.0f}".format(menu.precio) | replace(",", ".") }}</div>
+                  <small class="text-muted">¿Incluye Pan?</small>
+                </div>
+                <a href="{{ url_for('apoderado_cliente.menu_casino') }}" class="btn btn-primary">Armar Menu</a>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <div class="swiper-pagination"></div>
+        <div class="swiper-button-prev"></div>
+        <div class="swiper-button-next"></div>
+      </div>
+
+    </div>
+    {% endfor %}
+
+    <div class="container py-4">
       <a id="ayuda"></a>
       <div class="card card-md sticky-top mt-5">
         <div class="card-stamp card-stamp-lg">
@@ -129,7 +132,7 @@
           </div>
         </div>
         <div class="card-body">
-          <h2 class="h1"></h2>
+          <h1 class="h1">Preguntas Frecuentes</h1>
           <div class="space-y-4">
             <div class="markdown">
 
@@ -230,8 +233,151 @@
           </div>
         </div>
       </div>
+    </div>
   </section>
 </main>
 <!-- END PAGE BODY -->
 
 {% endblock page_body %}
+
+
+{% block head_styles %}
+<!-- Swiper 12 -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@12/swiper-bundle.min.css">
+
+<style>
+  .swiper {
+    padding: 0.5rem 0.25rem 3.5rem !important;
+  }
+
+  .swiper-slide {
+    height: auto;
+  }
+
+  .swiper-slide .card {
+    height: 100%;
+  }
+
+  /* Card image */
+  .menu-card-img {
+    height: 200px;
+    object-fit: cover;
+    border-radius: var(--tblr-border-radius) var(--tblr-border-radius) 0 0;
+  }
+
+  /* Out of stock overlay */
+  .card.is-out-of-stock {
+    opacity: 0.6;
+    pointer-events: none;
+  }
+
+  .card.is-out-of-stock::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(-45deg,
+        transparent,
+        transparent 6px,
+        rgba(0, 0, 0, 0.04) 6px,
+        rgba(0, 0, 0, 0.04) 12px);
+    border-radius: var(--tblr-border-radius);
+    pointer-events: none;
+  }
+
+  /* Course rows */
+  .course-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: baseline;
+    padding: 0.35rem 0;
+    border-bottom: 1px dashed var(--tblr-border-color);
+  }
+
+  .course-row:last-child {
+    border-bottom: none;
+  }
+
+  .course-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--tblr-muted);
+    white-space: nowrap;
+    min-width: 70px;
+  }
+
+  .course-name {
+    font-size: 0.85rem;
+    color: var(--tblr-body-color);
+  }
+
+  /* Price */
+  .menu-price {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--tblr-primary);
+    line-height: 1;
+  }
+
+  .menu-price small {
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: var(--tblr-muted);
+  }
+
+  /* Swiper controls */
+  .swiper-pagination-bullet {
+    background: var(--tblr-secondary);
+    opacity: 0.4;
+  }
+
+  .swiper-pagination-bullet-active {
+    background: var(--tblr-primary);
+    opacity: 1;
+  }
+
+  .swiper-button-prev,
+  .swiper-button-next {
+    color: var(--tblr-secondary);
+    top: 40%;
+  }
+
+  .swiper-button-prev:hover,
+  .swiper-button-next:hover {
+    color: var(--tblr-primary);
+  }
+
+  .swiper-button-prev::after,
+  .swiper-button-next::after {
+    font-size: 1.25rem;
+    font-weight: 900;
+  }
+</style>
+{% endblock head_styles%}
+
+{% block page_scripts %}
+<!-- Swiper JS -->
+<script src="https://cdn.jsdelivr.net/npm/swiper@12/swiper-bundle.min.js"></script>
+<script>
+  new Swiper('.menu-carousel', {
+    slidesPerView: 1,
+    slidesPerGroup: 1,
+    spaceBetween: 16,
+    loop: true,
+    grabCursor: true,
+    pagination: {
+      el: '.swiper-pagination',
+      clickable: true,
+    },
+    navigation: {
+      nextEl: '.swiper-button-next',
+      prevEl: '.swiper-button-prev',
+    },
+    breakpoints: {
+      576: { slidesPerView: 2 },
+      992: { slidesPerView: 3 },
+    },
+  });
+</script>
+{% endblock page_scripts%}

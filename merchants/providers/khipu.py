@@ -41,6 +41,11 @@ class KhipuProvider(Provider):
     """
 
     key = "khipu"
+    name = "Khipu"
+    author = "merchants team"
+    version = "1.0.0"
+    description = "Khipu payment gateway for Chile, powered by khipu-tools."
+    url = "https://khipu.com"
 
     def __init__(
         self,

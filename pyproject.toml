@@ -1,6 +1,6 @@
 [project]
 name = "sabormirandiano"
-version = "2026.2.3"
+version = "2026.2.4"
 description = "SaborMirandiano"
 authors = [{ name = "Mario Hernandez", email = "mariofix@proton.me" }]
 license = { text = "MIT" }

@@ -12,7 +12,9 @@ from merchants.models import (
 )
 from merchants.providers import (
     Provider,
+    ProviderInfo,
     UserError,
+    describe_providers,
     get_provider,
     list_providers,
     normalise_state,
@@ -24,6 +26,7 @@ from merchants.transport import (
     Transport,
     TransportError,
 )
+from merchants.version import __version__
 from merchants.webhooks import WebhookVerificationError, parse_event, verify_signature
 
 __all__ = [
@@ -41,7 +44,9 @@ __all__ = [
     "WebhookEvent",
     # Providers
     "Provider",
+    "ProviderInfo",
     "UserError",
+    "describe_providers",
     "get_provider",
     "list_providers",
     "normalise_state",
@@ -59,6 +64,6 @@ __all__ = [
     "WebhookVerificationError",
     "parse_event",
     "verify_signature",
+    # Version
+    "__version__",
 ]
-
-__version__ = "0.1.0"

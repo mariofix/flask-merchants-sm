@@ -24,6 +24,11 @@ class GenericProvider(Provider):
     """
 
     key = "generic"
+    name = "Generic"
+    author = "merchants team"
+    version = "1.0.0"
+    description = "Generic REST endpoint provider for custom or in-house payment gateways."
+    url = ""
 
     def __init__(
         self,

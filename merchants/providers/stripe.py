@@ -33,6 +33,13 @@ class StripeProvider(Provider):
     """
 
     key = "stripe"
+    name = "Stripe"
+    author = "merchants team"
+    version = "1.0.0"
+    description = (
+        "Stripe payment gateway integration (stub). Converts amounts to minor units (cents)."
+    )
+    url = "https://stripe.com"
 
     def __init__(
         self,
