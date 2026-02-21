@@ -11,12 +11,14 @@ from slugify import slugify
 from flask_security import current_user  # type: ignore
 from .. import settings
 from ..database import db
-from ..model import Alumno, Apoderado, MenuDiario, OpcionMenuDia, Pedido, Plato, Role, Settings, User, Abono
+from ..model import Alumno, Apoderado, MenuDiario, OpcionMenuDia, Pedido, Plato, Role, Settings, User, Abono, Payment
 from wtforms import SelectMultipleField
 from flask_admin.form import Select2Widget
 from wtforms import StringField
 from wtforms.validators import Optional
 from flask_merchants.contrib.sqla import PaymentModelView
+from flask_merchants.contrib.admin import ProvidersView
+from . import flask_merchants
 
 
 admin = Admin(
@@ -174,3 +176,6 @@ admin.add_view(AlumnoAdminView(Alumno, db.session, category="Usuarios y Roles"))
 
 
 admin.add_view(SecureModelView(Settings, db.session, name="Configuracion"))
+
+admin.add_view(PaymentModelView(Payment, db.session, ext=flask_merchants, name="Payments", category="Merchants"))
+admin.add_view(ProvidersView(flask_merchants, name="Providers", endpoint="merchants_providers", category="Merchants"))

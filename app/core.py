@@ -67,7 +67,7 @@ def create_app():
         }
 
     # merchants
-    flask_merchants.init_app(app=app, db=db, models=[Payment], admin=admin)
+    flask_merchants.init_app(app=app, db=db, models=[Payment])
     app.register_blueprint(core_bp)
     app.register_blueprint(apoderado_bp, url_prefix="/apoderado")
     app.register_blueprint(pos_bp, url_prefix="/pos")
