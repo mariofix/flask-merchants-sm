@@ -67,7 +67,7 @@ def create_app():
         }
 
     # merchants
-    flask_merchants.init_app(app, db, admin)
+    flask_merchants.init_app(app=app, db=db, models=[Payment], admin=admin)
     app.register_blueprint(core_bp)
     app.register_blueprint(apoderado_bp, url_prefix="/apoderado")
     app.register_blueprint(pos_bp, url_prefix="/pos")
@@ -80,6 +80,6 @@ def create_app():
         from flask_debugtoolbar import DebugToolbarExtension
 
         toolbar = DebugToolbarExtension()
-        # toolbar.init_app(app)
+        toolbar.init_app(app)
 
     return app

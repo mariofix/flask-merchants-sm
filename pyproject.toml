@@ -30,6 +30,9 @@ dependencies = [
     "flask-debugtoolbar",
     "isort (>=7.0.0,<8.0.0)",
     "requests (>=2.32.5,<3.0.0)",
+    "sentry-sdk[flask] (>=2.53.0,<3.0.0)",
+    "khipu-tools (>=2025.1.0,<2026.0.0)",
+    "pydantic (>=2.12.5,<3.0.0)",
 ]
 
 

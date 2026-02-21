@@ -1,0 +1,155 @@
+{% extends 'admin/model/edit.html' %}
+
+{% block tail %}
+{{ super() }}
+
+<style>
+    .nfc-input-wrapper {
+        position: relative;
+    }
+
+    .nfc-scan-btn {
+        position: absolute;
+        right: 5px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 5;
+    }
+
+    #tag-input {
+        padding-right: 140px;
+    }
+
+    .nfc-spinner {
+        display: none;
+    }
+
+    .nfc-spinner.active {
+        display: inline-block;
+    }
+
+    #nfc-error {
+        display: none;
+        margin-top: 0.25rem;
+        font-size: 80%;
+        color: #dc3545;
+    }
+
+    #nfc-error.show {
+        display: block;
+    }
+</style>
+
+<script>
+    (function () {
+        document.addEventListener('DOMContentLoaded', function () {
+            const input = document.getElementById('tag-input');
+            if (!input) return;
+
+            const formGroup = input.closest('.form-group');
+            if (!formGroup) return;
+
+            // Crear wrapper para el input
+            const wrapper = document.createElement('div');
+            wrapper.className = 'nfc-input-wrapper';
+            input.parentNode.insertBefore(wrapper, input);
+            wrapper.appendChild(input);
+
+            // Crear botón de escaneo
+            const btnScan = document.createElement('button');
+            btnScan.type = 'button';
+            btnScan.className = 'btn btn-sm btn-primary nfc-scan-btn';
+            btnScan.id = 'btn-nfc-scan';
+            btnScan.innerHTML = `
+      <span class="spinner-border spinner-border-sm nfc-spinner" id="nfc-spinner" role="status"></span>
+      <span id="btn-nfc-text">📡 Escanear</span>
+    `;
+            wrapper.appendChild(btnScan);
+
+            // Crear elemento de error
+            const errorDiv = document.createElement('div');
+            errorDiv.id = 'nfc-error';
+            wrapper.parentNode.appendChild(errorDiv);
+
+            const btnText = document.getElementById('btn-nfc-text');
+            const spinner = document.getElementById('nfc-spinner');
+            const errorEl = document.getElementById('nfc-error');
+
+            function setError(msg) {
+                errorEl.textContent = msg;
+                errorEl.classList.add('show');
+                input.classList.add('is-invalid');
+                input.classList.remove('is-valid');
+                spinner.classList.remove('active');
+                btnScan.disabled = false;
+            }
+
+            function setSuccess() {
+                errorEl.textContent = '';
+                errorEl.classList.remove('show');
+                input.classList.remove('is-invalid');
+                input.classList.add('is-valid');
+                spinner.classList.remove('active');
+                btnScan.disabled = false;
+            }
+
+            function clearError() {
+                errorEl.textContent = '';
+                errorEl.classList.remove('show');
+                input.classList.remove('is-invalid');
+                input.classList.remove('is-valid');
+            }
+
+            async function escanearNFC() {
+                clearError();
+
+                if (!('NDEFReader' in window)) {
+                    setError('Tu navegador no soporta NFC. Usa Chrome en Android.');
+                    return;
+                }
+
+                try {
+                    spinner.classList.add('active');
+                    btnText.textContent = 'Acerque TAG...';
+                    btnScan.disabled = true;
+
+                    const ndef = new NDEFReader();
+                    await ndef.scan();
+
+                    ndef.onreading = ({ serialNumber }) => {
+                        input.value = serialNumber;
+                        input.readOnly = false;
+                        setSuccess();
+                        btnText.textContent = '✓ Leído';
+
+                        // Restaurar texto después de 2 segundos
+                        setTimeout(() => {
+                            btnText.textContent = '📡 Escanear';
+                        }, 2000);
+                    };
+
+                    ndef.onreadingerror = () => {
+                        setError('Error al leer TAG. Intente nuevamente.');
+                        btnText.textContent = '📡 Escanear';
+                    };
+
+                } catch (err) {
+                    setError(err.message || 'Error al iniciar escaneo');
+                    btnText.textContent = '📡 Escanear';
+                    spinner.classList.remove('active');
+                    btnScan.disabled = false;
+                }
+            }
+
+            btnScan.addEventListener('click', escanearNFC);
+
+            // Permitir que el usuario también escriba manualmente
+            input.addEventListener('focus', function () {
+                if (this.readOnly) {
+                    this.readOnly = false;
+                }
+            });
+        });
+    })();
+</script>
+{% endblock %}

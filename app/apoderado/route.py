@@ -5,7 +5,8 @@ from ..model import Apoderado, Settings, Alumno, Abono, Payment
 from .controller import ApoderadoController
 from slugify import slugify
 from flask_security import current_user, roles_required, roles_accepted, login_required  # type: ignore
-from flask_merchants.core import PaymentStatus
+
+# from flask_merchants.core import PaymentStatus
 
 apoderado_bp = Blueprint("apoderado_cliente", __name__)
 apoderado_controller = ApoderadoController()
@@ -16,10 +17,13 @@ apoderado_controller = ApoderadoController()
 def index():
     apoderado = None
     if current_user.has_role("apoderado"):
-        apoderado = db.session.execute(db.select(Apoderado).filter_by(usuario=current_user)).scalar_one()
-
+        apoderado = db.session.execute(db.select(Apoderado).filter_by(usuario=current_user)).scalar_one_or_none()
+    if not apoderado and current_user.has_role("admin"):
+        return redirect(url_for(".wizp1"))
     if not apoderado and not current_user.has_role("admin"):
-        redirect("core.index")
+        return redirect(url_for("core.index"))
+    if not apoderado and current_user.has_role("apoderado"):
+        return redirect(url_for(".wizp1"))
     return render_template("apoderado/dashboard.html", apoderado=apoderado)
 
 
@@ -96,6 +100,10 @@ def wizp3():
         apoderado.limite_notificaciones = int(limite_notificaciones)
         apoderado.saldo_cuenta = 1
 
+        for alumno in apoderado.alumnos:
+            alumno.maximo_diario = apoderado.maximo_diario
+            alumno.maximo_semanal = apoderado.maximo_semanal
+
         wizard_completado = Settings()
         wizard_completado.user_id = current_user.id
         wizard_completado.slug = "wizard"
@@ -132,14 +140,14 @@ def abono():
     db.session.add(abono)
     db.session.commit()
 
-    pago = Payment()
-    pago.merchants_token = abono.codigo
-    pago.amount = abono.monto
-    pago.currency = "CLP"
-    pago.integration_slug = abono.forma_pago
+    # pago = Payment()
+    # pago.merchants_token = abono.codigo
+    # pago.amount = abono.monto
+    # pago.currency = "CLP"
+    # pago.integration_slug = abono.forma_pago
 
-    db.session.add(pago)
-    db.session.commit()
+    # db.session.add(pago)
+    # db.session.commit()
 
     # Para evitar el re-POST, el procesamiento se hace en el detalle, antes de mostrar algo
     return redirect(f"abono-detalle/{abono.codigo}")
@@ -151,24 +159,23 @@ def abono_detalle(codigo):
     pago = db.session.execute(db.select(Payment).filter_by(merchants_token=codigo)).scalar_one_or_none()
     pago_process = None
 
-    if (
-        pago
-        and abono
-        and pago.integration.slug == abono.forma_pago
-        and pago.amount == abono.monto
-        and pago.status == PaymentStatus.created
-    ):
-        pago_process = pago.process()
+    # if (
+    #     pago
+    #     and abono
+    #     and pago.integration.slug == abono.forma_pago
+    #     and pago.amount == abono.monto
+    #     and pago.status == PaymentStatus.created
+    # ):
+    #     pago_process = pago.process()
 
-        if "transaction" in pago_process:
-            pago.status = PaymentStatus.processing
-            pago.integration_transaction = pago_process["transaction"]
+    #     if "transaction" in pago_process:
+    #         pago.status = PaymentStatus.processing
 
-            db.session.commit()
-        if "url" in pago_process:
-            return redirect(pago_process["url"])
+    #         db.session.commit()
+    #     if "url" in pago_process:
+    #         return redirect(pago_process["url"])
 
-    return render_template("apoderado/detalle-abono.html", abono=abono, pago=pago, PaymentStatus=PaymentStatus)
+    return render_template("apoderado/detalle-abono.html", abono=abono, pago=pago)
 
 
 @apoderado_bp.route("/menu-casino", methods=["GET"])

@@ -1,11 +1,11 @@
 from pathlib import Path
-from flask_security.utils import uia_username_mapper
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY: str
 DEBUG = True
 LOG_LEVEL = "DEBUG" if DEBUG else "INFO"
-TRUSTED_HOSTS = ["tardis.local", "localhost"]
+TRUSTED_HOSTS = ["tardis.local", "192.168.110.133"]
 SESSION_COOKIE_NAME = "merchants"
 DIRECTORIO_FOTOS_PLATO = f"{BASE_DIR}/app/static/platos"
 
@@ -34,7 +34,7 @@ SECURITY_SEND_REGISTER_EMAIL = True
 
 SECURITY_AUTO_LOGIN_AFTER_CONFIRM = True
 SECURITY_LOGIN_WITHOUT_CONFIRMATION = False
-
+SECURITY_PHONE_REGION_DEFAULT = "CL"
 # Flask-Babel
 BABEL_DEFAULT_LOCALE = "es"
 BABEL_DEFAULT_TIMEZONE = "America/Santiago"
@@ -74,25 +74,25 @@ MAIL_PASSWORD = ""
 MAIL_TIMEOUT = 5
 MAIL_USE_LOCALTIME = True
 
-MERCHANTS_ALLOWED_INTEGRATIONS = [
-    "merchants.integrations.KhipuProvider",
-    "merchants.integrations.CasinoProvider",
-]
-MERCHANTS_PAYMENT_MODEL = "model.store.Payment"
-MERCHANTS_INTEGRATION_MODEL = "model.store.Integration"
-MERCHANTS_INTEGRATIONS = {
-    "test_provider": {
-        "class": "app.extensions.TestProvider",
-    }
-}
+# MERCHANTS_ALLOWED_INTEGRATIONS = [
+#     "merchants.integrations.KhipuProvider",
+#     "merchants.integrations.CasinoProvider",
+# ]
+# MERCHANTS_PAYMENT_MODEL = "model.store.Payment"
+# MERCHANTS_INTEGRATION_MODEL = "model.store.Integration"
+# MERCHANTS_INTEGRATIONS = {
+#     "test_provider": {
+#         "class": "app.extensions.TestProvider",
+#     }
+# }
 
-STORE_SOCIALS = {
-    "youtube": "https://www.youtube.com/channel/channel-name",
-    "instagram": "https://www.instagram.com/instagram-user",
-    "facebook": "https://www.facebook.com/facebook-user",
-}
-STORE_BRAND_ICON = "bi bi-shop"
-STORE_NAME = "Storefront"
+# STORE_SOCIALS = {
+#     "youtube": "https://www.youtube.com/channel/channel-name",
+#     "instagram": "https://www.instagram.com/instagram-user",
+#     "facebook": "https://www.facebook.com/facebook-user",
+# }
+# STORE_BRAND_ICON = "bi bi-shop"
+# STORE_NAME = "Storefront"
 
 CELERY = {
     "broker_url": "redis://10.100.254.2/10",

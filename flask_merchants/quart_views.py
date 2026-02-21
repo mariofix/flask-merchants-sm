@@ -1,4 +1,13 @@
-"""Blueprint with checkout, webhook, success and cancel routes."""
+"""Async blueprint for Quart applications.
+
+This module mirrors :mod:`flask_merchants.views` but uses ``async def``
+view functions and awaits Quart's coroutine-based request helpers
+(``await request.get_json()``, ``await request.get_data()``,
+``await request.form``).
+
+It is selected automatically by :meth:`~flask_merchants.FlaskMerchants.init_app`
+when the application is a :class:`quart.Quart` instance.
+"""
 
 from __future__ import annotations
 
@@ -6,14 +15,20 @@ import json
 from typing import TYPE_CHECKING
 
 import merchants
-from flask import Blueprint, jsonify, redirect, request, url_for
 
 if TYPE_CHECKING:
     from flask_merchants import FlaskMerchants
 
 
-def create_blueprint(ext: "FlaskMerchants") -> Blueprint:
-    """Return a Blueprint pre-configured with the extension instance."""
+def create_async_blueprint(ext: "FlaskMerchants"):
+    """Return a Quart Blueprint pre-configured with the extension instance."""
+    try:
+        from quart import Blueprint, jsonify, redirect, request, url_for
+    except ImportError as exc:  # pragma: no cover
+        raise ImportError(
+            "quart is required for flask_merchants.quart_views. "
+            "Install it with: pip install 'flask-merchants[quart]'"
+        ) from exc
 
     bp = Blueprint("merchants", __name__, template_folder="templates")
 
@@ -22,18 +37,13 @@ def create_blueprint(ext: "FlaskMerchants") -> Blueprint:
     # ------------------------------------------------------------------
 
     @bp.route("/checkout", methods=["GET", "POST"])
-    def checkout():
-        """Create a hosted-checkout session and redirect the user.
-
-        Accepts JSON body **or** form fields:
-
-        * ``amount`` – decimal string (e.g. ``"19.99"``)
-        * ``currency`` – ISO-4217 code (e.g. ``"USD"``)
-        * ``metadata`` – optional JSON object / form JSON string
-        * ``provider`` – optional provider key string (e.g. ``"dummy"``).
-          Defaults to the first registered provider.
-        """
-        data = request.get_json(silent=True) or request.form
+    async def checkout():
+        """Create a hosted-checkout session and redirect the user."""
+        json_data = await request.get_json(silent=True)
+        if json_data is not None:
+            data = json_data
+        else:
+            data = await request.form
 
         amount = data.get("amount", "1.00")
         currency = data.get("currency", "USD")
@@ -66,8 +76,8 @@ def create_blueprint(ext: "FlaskMerchants") -> Blueprint:
                 cancel_url=cancel_url,
                 metadata=metadata,
             )
-        except merchants.UserError as exc:
-            return jsonify({"error": str(exc)}), 400
+        except merchants.UserError as exc_:
+            return jsonify({"error": str(exc_)}), 400
 
         req_payload = {
             "amount": amount,
@@ -80,7 +90,7 @@ def create_blueprint(ext: "FlaskMerchants") -> Blueprint:
             req_payload["provider"] = provider_key
         ext.save_session(session, request_payload=req_payload)
 
-        if request.is_json:
+        if json_data is not None:
             return jsonify(
                 {
                     "session_id": session.session_id,
@@ -94,7 +104,7 @@ def create_blueprint(ext: "FlaskMerchants") -> Blueprint:
     # ------------------------------------------------------------------
 
     @bp.route("/providers", methods=["GET"])
-    def providers():
+    async def providers():
         """Return the list of registered payment provider keys."""
         return jsonify({"providers": ext.list_providers()})
 
@@ -103,7 +113,7 @@ def create_blueprint(ext: "FlaskMerchants") -> Blueprint:
     # ------------------------------------------------------------------
 
     @bp.route("/success")
-    def success():
+    async def success():
         """Landing page after a successful payment."""
         payment_id = request.args.get("payment_id", "")
         stored = ext.get_session(payment_id) if payment_id else None
@@ -116,7 +126,7 @@ def create_blueprint(ext: "FlaskMerchants") -> Blueprint:
         )
 
     @bp.route("/cancel")
-    def cancel():
+    async def cancel():
         """Landing page after a cancelled payment."""
         payment_id = request.args.get("payment_id", "")
         stored = ext.get_session(payment_id) if payment_id else None
@@ -133,12 +143,12 @@ def create_blueprint(ext: "FlaskMerchants") -> Blueprint:
     # ------------------------------------------------------------------
 
     @bp.route("/status/<payment_id>")
-    def payment_status(payment_id: str):
+    async def payment_status(payment_id: str):
         """Return the live payment status from the provider."""
         try:
             status = ext.client.payments.get(payment_id)
-        except merchants.UserError as exc:
-            return jsonify({"error": str(exc)}), 400
+        except merchants.UserError as exc_:
+            return jsonify({"error": str(exc_)}), 400
 
         ext.update_state(payment_id, status.state.value)
 
@@ -157,16 +167,12 @@ def create_blueprint(ext: "FlaskMerchants") -> Blueprint:
     # ------------------------------------------------------------------
 
     @bp.route("/webhook", methods=["POST"])
-    def webhook():
-        """Receive and process incoming provider webhook events.
-
-        When ``MERCHANTS_WEBHOOK_SECRET`` is set on the app config the
-        request signature is verified before processing.
-        """
-        from flask import current_app
+    async def webhook():
+        """Receive and process incoming provider webhook events."""
+        from quart import current_app
 
         secret: str | None = current_app.config.get("MERCHANTS_WEBHOOK_SECRET")
-        payload: bytes = request.get_data()
+        payload: bytes = await request.get_data()
         headers: dict[str, str] = dict(request.headers)
 
         if secret:

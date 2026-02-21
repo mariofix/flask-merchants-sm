@@ -12,8 +12,8 @@ from sqlalchemy_utils.models import Timestamp
 from werkzeug.utils import import_string
 
 
-from flask_merchants.core import MerchantsError
-from flask_merchants.mixins import IntegrationMixin, PaymentMixin
+# from flask_merchants.core import MerchantsError
+from flask_merchants.models import PaymentMixin
 
 from .database import db
 
@@ -30,22 +30,22 @@ class User(db.Model, fsqla.FsUserMixin):
         return f"{self.username}"
 
 
-class Integration(db.Model, IntegrationMixin):
-    __tablename__ = "merchants_integrations"
+# class Integration(db.Model, IntegrationMixin):
+#     __tablename__ = "merchants_integrations"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
+#     id: Mapped[int] = mapped_column(primary_key=True)
 
-    # Relationship to payments
-    payments: Mapped[list["Payment"]] = relationship(
-        "Payment",
-        primaryjoin="and_(Integration.slug == foreign(Payment.integration_slug))",
-        viewonly=True,
-        back_populates="integration",
-    )
+#     # Relationship to payments
+#     payments: Mapped[list["Payment"]] = relationship(
+#         "Payment",
+#         primaryjoin="and_(Integration.slug == foreign(Payment.integration_slug))",
+#         viewonly=True,
+#         back_populates="integration",
+#     )
 
-    def __str__(self):
-        # From IntegrationMixin
-        return f"{self.slug}"
+#     def __str__(self):
+#         # From IntegrationMixin
+#         return f"{self.slug}"
 
 
 class Payment(db.Model, PaymentMixin):
@@ -54,30 +54,46 @@ class Payment(db.Model, PaymentMixin):
     id: Mapped[int] = mapped_column(primary_key=True)
 
     # Relationship to integration
-    integration: Mapped[Optional["Integration"]] = relationship(
-        "Integration",
-        primaryjoin="and_(Integration.slug == foreign(Payment.integration_slug))",
-        viewonly=True,
-        back_populates="payments",
-    )
+    # integration: Mapped[Optional["Integration"]] = relationship(
+    #     "Integration",
+    #     primaryjoin="and_(Integration.slug == foreign(Payment.integration_slug))",
+    #     viewonly=True,
+    #     back_populates="payments",
+    # )
 
     def __str__(self):
         # From PaymentMixin
-        return f"{self.merchants_token}"
+        return f"{self.id}"
 
-    def process(self):
-        if not self.integration:
-            raise MerchantsError(f"Integration: {self.integration_slug} does not exist.")
+    # def process(self):
+    #     if not self.integration:
+    #         raise MerchantsError(f"Integration: {self.integration_slug} does not exist.")
 
-        if not self.integration.is_active:
-            raise MerchantsError(f"Integration: {self.integration_slug} is not active.")
+    #     if not self.integration.is_active:
+    #         raise MerchantsError(f"Integration: {self.integration_slug} is not active.")
 
-        try:
-            integration = import_string(self.integration.integration_class)
-            provider = integration()
-            return provider.create(payload=self.merchants_payload())
-        except MerchantsError as err:
-            raise err
+    #     try:
+    #         integration = import_string(self.integration.integration_class)
+    #         provider = integration()
+    #         if self.integration.config:
+    #             provider.extra_attrs = self.integration.config
+
+    #         pago_process = provider.create(payload=self.merchants_payload())
+    #         salida = {}
+    #         if pago_process:
+    #             self.integration_payload = self.merchants_payload()
+    #             self.integration_response = pago_process
+    #             self.integration_transaction = pago_process.payment_id
+    #             db.session.commit()
+
+    #             salida = {
+    #                 "transaction": pago_process.payment_id,
+    #                 "url": pago_process.payment_url,
+    #                 "integration_payload": pago_process,
+    #             }
+    #         return salida
+    #     except MerchantsError as err:
+    #         raise err
 
 
 # Casino
@@ -116,6 +132,7 @@ class Alumno(db.Model, Timestamp):
     maximo_diario: Mapped[int] = mapped_column(default=None, nullable=True)
     maximo_semanal: Mapped[int] = mapped_column(default=None, nullable=True)
 
+    tag: Mapped[str | None] = mapped_column(String(255), nullable=True)
     tag_compartido: Mapped[bool] = mapped_column(default=False)
 
     restricciones: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)

@@ -1,8 +1,8 @@
 """init
 
-Revision ID: 6d75f70bc239
+Revision ID: a472a74ad0df
 Revises:
-Create Date: 2026-02-15 02:55:48.080841
+Create Date: 2026-02-20 21:56:39.668614
 
 """
 
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 import flask_security
 
 # revision identifiers, used by Alembic.
-revision = "6d75f70bc239"
+revision = "a472a74ad0df"
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -88,52 +88,34 @@ def upgrade():
         sa.PrimaryKeyConstraint("id", name=op.f("pk_casino_plato")),
     )
     op.create_table(
-        "merchants_integrations",
-        sa.Column("id", sa.Integer(), nullable=False),
-        sa.Column("slug", sa.String(length=255), nullable=False),
-        sa.Column("is_active", sa.Boolean(), nullable=False),
-        sa.Column("integration_class", sa.String(length=255), nullable=True),
-        sa.Column("config", sa.JSON(), nullable=True),
-        sa.PrimaryKeyConstraint("id", name=op.f("pk_merchants_integrations")),
-        sa.UniqueConstraint("slug", name=op.f("uq_merchants_integrations_slug")),
-    )
-    op.create_table(
         "merchants_payment",
         sa.Column("id", sa.Integer(), nullable=False),
-        sa.Column("merchants_token", sa.String(length=36), nullable=False),
-        sa.Column("amount", sa.Numeric(precision=10, scale=2), nullable=False),
-        sa.Column("currency", sa.String(length=3), nullable=False),
+        sa.Column("session_id", sa.String(length=128), nullable=False),
+        sa.Column("redirect_url", sa.String(length=2048), nullable=False),
+        sa.Column("provider", sa.String(length=64), nullable=False),
+        sa.Column("amount", sa.Numeric(precision=19, scale=4), nullable=False),
+        sa.Column("currency", sa.String(length=8), nullable=False),
+        sa.Column("state", sa.String(length=32), nullable=False),
+        sa.Column("metadata_json", sa.JSON(), nullable=False),
+        sa.Column("request_payload", sa.JSON(), nullable=False),
+        sa.Column("response_payload", sa.JSON(), nullable=False),
         sa.Column(
-            "status",
-            sa.Enum("created", "processing", "declined", "cancelled", "refunded", "paid", name="paymentstatus"),
-            nullable=False,
-        ),
-        sa.Column("integration_slug", sa.String(length=255), nullable=False),
-        sa.Column("integration_transaction", sa.String(length=255), nullable=True),
-        sa.Column("integration_payload", sa.JSON(), nullable=True),
-        sa.Column("integration_response", sa.JSON(), nullable=True),
-        sa.Column(
-            "creation", sa.DateTime(timezone=True), server_default=sa.text("(CURRENT_TIMESTAMP)"), nullable=False
+            "created_at", sa.DateTime(timezone=True), server_default=sa.text("(CURRENT_TIMESTAMP)"), nullable=False
         ),
         sa.Column(
-            "last_update", sa.DateTime(timezone=True), server_default=sa.text("(CURRENT_TIMESTAMP)"), nullable=False
+            "updated_at", sa.DateTime(timezone=True), server_default=sa.text("(CURRENT_TIMESTAMP)"), nullable=False
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_merchants_payment")),
-        sa.UniqueConstraint("merchants_token", name=op.f("uq_merchants_payment_merchants_token")),
     )
     with op.batch_alter_table("merchants_payment", schema=None) as batch_op:
-        batch_op.create_index(batch_op.f("ix_merchants_payment_integration_slug"), ["integration_slug"], unique=False)
-        batch_op.create_index(
-            batch_op.f("ix_merchants_payment_integration_transaction"), ["integration_transaction"], unique=False
-        )
-        batch_op.create_index(batch_op.f("ix_merchants_payment_status"), ["status"], unique=False)
+        batch_op.create_index(batch_op.f("ix_merchants_payment_session_id"), ["session_id"], unique=True)
 
     op.create_table(
         "role",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("name", sa.String(length=80), nullable=False),
         sa.Column("description", sa.String(length=255), nullable=True),
-        sa.Column("permissions", flask_security.datastore.AsaList(), nullable=True),  # type: ignore
+        sa.Column("permissions", flask_security.datastore.AsaList(), nullable=True),
         sa.Column("update_datetime", sa.DateTime(), server_default=sa.text("(CURRENT_TIMESTAMP)"), nullable=False),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_role")),
         sa.UniqueConstraint("name", name=op.f("uq_role_name")),
@@ -141,7 +123,7 @@ def upgrade():
     op.create_table(
         "user",
         sa.Column("fs_webauthn_user_handle", sa.String(length=64), nullable=True),
-        sa.Column("mf_recovery_codes", flask_security.datastore.AsaList(), nullable=True),  # type: ignore
+        sa.Column("mf_recovery_codes", flask_security.datastore.AsaList(), nullable=True),
         sa.Column("password", sa.String(length=255), nullable=True),
         sa.Column("us_phone_number", sa.String(length=128), nullable=True),
         sa.Column("username", sa.String(length=255), nullable=True),
@@ -236,6 +218,7 @@ def upgrade():
         sa.Column("apoderado_id", sa.Integer(), nullable=False),
         sa.Column("maximo_diario", sa.Integer(), nullable=True),
         sa.Column("maximo_semanal", sa.Integer(), nullable=True),
+        sa.Column("tag", sa.String(length=255), nullable=True),
         sa.Column("tag_compartido", sa.Boolean(), nullable=False),
         sa.Column("restricciones", sa.JSON(), nullable=True),
         sa.Column("created", sa.DateTime(), nullable=False),
@@ -282,12 +265,9 @@ def downgrade():
     op.drop_table("user")
     op.drop_table("role")
     with op.batch_alter_table("merchants_payment", schema=None) as batch_op:
-        batch_op.drop_index(batch_op.f("ix_merchants_payment_status"))
-        batch_op.drop_index(batch_op.f("ix_merchants_payment_integration_transaction"))
-        batch_op.drop_index(batch_op.f("ix_merchants_payment_integration_slug"))
+        batch_op.drop_index(batch_op.f("ix_merchants_payment_session_id"))
 
     op.drop_table("merchants_payment")
-    op.drop_table("merchants_integrations")
     op.drop_table("casino_plato")
     with op.batch_alter_table("casino_pedido", schema=None) as batch_op:
         batch_op.drop_index(batch_op.f("ix_casino_pedido_fecha_pedido"))

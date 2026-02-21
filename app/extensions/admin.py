@@ -14,6 +14,10 @@ from ..database import db
 from ..model import Alumno, Apoderado, MenuDiario, OpcionMenuDia, Pedido, Plato, Role, Settings, User, Abono
 from wtforms import SelectMultipleField
 from flask_admin.form import Select2Widget
+from wtforms import StringField
+from wtforms.validators import Optional
+from flask_merchants.contrib.sqla import PaymentModelView
+
 
 admin = Admin(
     name="Sabor Mirandiano",
@@ -119,6 +123,34 @@ class ApoderadoAdminView(SecureModelView):
     ]
 
 
+class AlumnoAdminView(SecureModelView):
+
+    column_list = [
+        "apoderado",
+        "nombre",
+        "curso",
+        "maximo_diario",
+        "maximo_semanal",
+        "tag",
+        "created",
+    ]
+
+    form_overrides = {"tag": StringField}
+
+    form_args = {
+        "tag": {
+            "validators": [Optional()],
+            "render_kw": {
+                "id": "tag-input",
+                "readonly": True,
+                "class": "form-control",
+            },
+        }
+    }
+
+    edit_template = "admin/alumno_edit.html"
+
+
 admin.add_view(PlatoAdminView(Plato, db.session, category="Casino"))
 admin.add_view(
     FileView(
@@ -138,7 +170,7 @@ admin.add_view(UserView(User, db.session, category="Usuarios y Roles", name="Usu
 admin.add_view(SecureModelView(Role, db.session, category="Usuarios y Roles", name="Roles"))
 admin.add_menu_item(MenuDivider(), target_category="Usuarios y Roles")
 admin.add_view(ApoderadoAdminView(Apoderado, db.session, category="Usuarios y Roles"))
-admin.add_view(SecureModelView(Alumno, db.session, category="Usuarios y Roles"))
+admin.add_view(AlumnoAdminView(Alumno, db.session, category="Usuarios y Roles"))
 
 
 admin.add_view(SecureModelView(Settings, db.session, name="Configuracion"))
