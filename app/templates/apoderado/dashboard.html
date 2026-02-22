@@ -427,8 +427,8 @@
                   {% endif %}
                 </div>
               </td>
-              <td class="text-secondary">$0/${{ alumno.maximo_diario }}</td>
-              <td class="text-secondary">$0/${{ alumno.maximo_semanal }}</td>
+              <td class="text-secondary">${{ stats_por_alumno[alumno.id].gasto_hoy | default(0) }}/${{ alumno.maximo_diario }}</td>
+              <td class="text-secondary">${{ stats_por_alumno[alumno.id].gasto_semana | default(0) }}/${{ alumno.maximo_semanal }}</td>
               <td class="text-end">
                 <a href="{{ url_for('apoderado_cliente.ficha', id=alumno.id)}}" class="btn btn-info btn-sm">Resumen</a>
                 {% if alumno.activo %}
