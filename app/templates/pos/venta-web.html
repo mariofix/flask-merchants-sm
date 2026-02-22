@@ -144,32 +144,43 @@
                     <h3 class="card-title">Forma de Pago</h3>
                 </div>
                 <div class="card-body">
-                    <div class="mb-3">
+                    {% if apoderado and apoderado.saldo_cuenta and apoderado.saldo_cuenta >= 50 %}
+                    <div class="mb-3 p-3 border rounded bg-green-lt">
+                        <label class="form-label fw-bold">
+                            <i class="ti ti-wallet me-1"></i>Usar Saldo de Cuenta
+                            <span class="badge bg-success ms-2">${{ "{:,.0f}".format(apoderado.saldo_cuenta) | replace(",", ".") }} disponible</span>
+                        </label>
+                        <input type="range" class="form-range" id="descuento_saldo" name="descuento_saldo"
+                               min="0" max="{{ [apoderado.saldo_cuenta, total|int] | min }}" value="0" step="1"
+                               aria-label="Monto del saldo de cuenta a descontar del pedido"
+                               oninput="updateDescuento(this.value)">
+                        <div class="d-flex justify-content-between mt-1">
+                            <span class="text-muted small">Descuento: <strong id="descuento-label">$0</strong></span>
+                            <span class="text-muted small">Total a pagar: <strong id="total-a-pagar">${{ "{:,.0f}".format(total) | replace(",", ".") }}</strong></span>
+                        </div>
+                    </div>
+                    {% else %}
+                    <input type="hidden" name="descuento_saldo" value="0">
+                    {% endif %}
+                    <div class="mb-3" id="provider-section">
+                        <label class="form-label fw-bold">Medio de pago</label>
                         <div class="form-selectgroup form-selectgroup-boxes d-flex flex-column">
+                            {% for provider in payment_providers %}
                             <label class="form-selectgroup-item flex-fill">
-                                <input type="radio" name="forma-de-pago" value="khipu" class="form-selectgroup-input" />
+                                <input type="radio" name="forma-de-pago" value="{{ provider.key }}" class="form-selectgroup-input"{% if loop.last %} checked{% endif %} />
                                 <div class="form-selectgroup-label d-flex align-items-center p-3">
                                     <div class="me-3">
                                         <span class="form-selectgroup-check"></span>
                                     </div>
                                     <div>
-                                        <span class="payment payment-provider-khalti payment-xs me-2"></span>
-                                        Transferencia Bancaria via <strong>Khipu</strong>
+                                        <strong>{{ provider.title }}</strong>
+                                        {% if provider.subtitle %}
+                                        <div class="text-muted small">{{ provider.subtitle }}</div>
+                                        {% endif %}
                                     </div>
                                 </div>
                             </label>
-                            <label class="form-selectgroup-item flex-fill">
-                                <input type="radio" name="forma-de-pago" value="cafeteria" class="form-selectgroup-input" checked />
-                                <div class="form-selectgroup-label d-flex align-items-center p-3">
-                                    <div class="me-3">
-                                        <span class="form-selectgroup-check"></span>
-                                    </div>
-                                    <div>
-                                        <span class="payment payment-provider-mastercard payment-xs me-2"></span>
-                                        Efectivo/Tarjetas presencialmente en la cafetería
-                                    </div>
-                                </div>
-                            </label>
+                            {% endfor %}
                         </div>
                     </div>
                 </div>
@@ -200,6 +211,26 @@
         colorLight: "#ffffff",
         correctLevel: QRCode.CorrectLevel.H
     });
+</script>
+{% endif %}
+{% if not pago and apoderado and apoderado.saldo_cuenta and apoderado.saldo_cuenta >= 50 %}
+<script>
+    var _total = {{ total | int }};
+    function updateDescuento(val) {
+        var descuento = parseInt(val) || 0;
+        var montoPagar = Math.max(0, _total - descuento);
+        document.getElementById('descuento-label').textContent = '$' + descuento.toLocaleString('es-CL');
+        document.getElementById('total-a-pagar').textContent = '$' + montoPagar.toLocaleString('es-CL');
+        var btn = document.querySelector('.pay-btn');
+        var providerSection = document.getElementById('provider-section');
+        if (montoPagar === 0) {
+            btn.innerHTML = '<i class="ti ti-wallet me-2"></i>Pagar con Saldo de Cuenta';
+            if (providerSection) providerSection.style.display = 'none';
+        } else {
+            btn.innerHTML = '<i class="ti ti-check me-2"></i>Pagar $' + montoPagar.toLocaleString('es-CL');
+            if (providerSection) providerSection.style.display = '';
+        }
+    }
 </script>
 {% endif %}
 {% endblock %}
