@@ -1,11 +1,13 @@
+from datetime import date, timedelta
 from decimal import Decimal, InvalidOperation
 import json
 from flask import Blueprint, current_app, flash, redirect, render_template, request, url_for
 from ..database import db
-from ..model import Apoderado, Settings, Alumno, Abono, Payment
+from ..model import Apoderado, EstadoAlmuerzo, OrdenCasino, Settings, Alumno, Abono, Payment
 from .controller import ApoderadoController
 from slugify import slugify
 from flask_security import current_user, roles_required, roles_accepted, login_required  # type: ignore
+from sqlalchemy import func, and_
 
 apoderado_bp = Blueprint("apoderado_cliente", __name__)
 apoderado_controller = ApoderadoController()
@@ -23,7 +25,37 @@ def index():
         return redirect(url_for("core.index"))
     if not apoderado and current_user.has_role("apoderado"):
         return redirect(url_for("apoderado_cliente.wizp1"))
-    return render_template("apoderado/dashboard.html", apoderado=apoderado)
+
+    today = date.today()
+    seven_days_ago = today - timedelta(days=6)
+
+    stats_por_alumno: dict[int, dict] = {}
+    for alumno in apoderado.alumnos:
+        gasto_hoy = db.session.execute(
+            db.select(func.coalesce(func.sum(OrdenCasino.menu_precio), 0)).where(
+                and_(
+                    OrdenCasino.alumno_id == alumno.id,
+                    OrdenCasino.fecha == today,
+                    OrdenCasino.estado != EstadoAlmuerzo.CANCELADO,
+                )
+            )
+        ).scalar() or Decimal(0)
+        gasto_semana = db.session.execute(
+            db.select(func.coalesce(func.sum(OrdenCasino.menu_precio), 0)).where(
+                and_(
+                    OrdenCasino.alumno_id == alumno.id,
+                    OrdenCasino.fecha >= seven_days_ago,
+                    OrdenCasino.fecha <= today,
+                    OrdenCasino.estado != EstadoAlmuerzo.CANCELADO,
+                )
+            )
+        ).scalar() or Decimal(0)
+        stats_por_alumno[alumno.id] = {
+            "gasto_hoy": int(gasto_hoy),
+            "gasto_semana": int(gasto_semana),
+        }
+
+    return render_template("apoderado/dashboard.html", apoderado=apoderado, stats_por_alumno=stats_por_alumno)
 
 
 @apoderado_bp.route("/wizard", methods=["GET"])
@@ -282,7 +314,27 @@ def kiosko():
 @apoderado_bp.route("/ficha-alumno/<int:id>", methods=["GET"])
 def ficha(id):
     alumno = db.session.execute(db.select(Alumno).filter_by(apoderado=current_user.apoderado, id=id)).scalar_one()
-    return render_template("apoderado/ficha.html", alumno=alumno)
+
+    today = date.today()
+
+    def _sum_ordenes(desde: date) -> int:
+        result = db.session.execute(
+            db.select(func.coalesce(func.sum(OrdenCasino.menu_precio), 0)).where(
+                and_(
+                    OrdenCasino.alumno_id == alumno.id,
+                    OrdenCasino.fecha >= desde,
+                    OrdenCasino.fecha <= today,
+                    OrdenCasino.estado != EstadoAlmuerzo.CANCELADO,
+                )
+            )
+        ).scalar()
+        return int(result or 0)
+
+    uso_24h = _sum_ordenes(today)
+    uso_7d = _sum_ordenes(today - timedelta(days=6))
+    uso_14d = _sum_ordenes(today - timedelta(days=13))
+
+    return render_template("apoderado/ficha.html", alumno=alumno, uso_24h=uso_24h, uso_7d=uso_7d, uso_14d=uso_14d)
 
 
 @apoderado_bp.route("/abonos", methods=["GET"])

@@ -333,23 +333,72 @@ def completa_pedido(codigo):
         pedido.fecha_pago = datetime.now()
         db.session.commit()
 
-        # TODO: post-payment processing (to be designed)
-        # e.g. send confirmation email, update stock, notify kitchen, etc.
         _process_payment_completion(pedido)
 
     return redirect(url_for("pos.pago_orden", orden=codigo))
 
 
 def _process_payment_completion(pedido: Pedido) -> None:
-    """Placeholder for post-payment processing triggered after a pedido is marked as paid.
+    """Creates one OrdenCasino per item×alumno in pedido.extra_attrs after payment."""
+    from datetime import date as _date
+    from ..model import Alumno, MenuDiario, OrdenCasino
 
-    This function will be expanded once the process is designed. Possible steps:
-    - Send a confirmation notification to the apoderado
-    - Deduct stock from the relevant MenuDiario records
-    - Notify the kitchen / cafeteria staff
-    - Record the transaction in an audit log
-    """
-    pass
+    items = pedido.extra_attrs or []
+
+    # Guard: skip if orders were already created for this pedido
+    existing = db.session.execute(
+        db.select(OrdenCasino).filter_by(pedido_codigo=pedido.codigo).limit(1)
+    ).scalar_one_or_none()
+    if existing:
+        return
+
+    for item in items:
+        fecha_str = item.get("date")
+        slug = item.get("slug")
+        nota = item.get("note") or None
+        alumnos_list = item.get("alumnos", [])
+
+        if not fecha_str or not slug:
+            continue
+
+        try:
+            fecha = _date.fromisoformat(fecha_str)
+        except ValueError:
+            continue
+
+        menu = db.session.execute(
+            db.select(MenuDiario).filter_by(slug=slug)
+        ).scalar_one_or_none()
+        if not menu:
+            from flask_merchants import merchants_audit
+            merchants_audit.warning(
+                "ordencasino_menu_not_found: pedido=%s slug=%r date=%r",
+                pedido.codigo,
+                slug,
+                fecha_str,
+            )
+
+        for alumno_data in alumnos_list:
+            try:
+                alumno_id = int(alumno_data.get("id"))
+            except (TypeError, ValueError):
+                continue
+
+            alumno = db.session.get(Alumno, alumno_id)
+            if not alumno:
+                continue
+
+            orden = OrdenCasino()
+            orden.pedido_codigo = pedido.codigo
+            orden.alumno_id = alumno_id
+            orden.menu_slug = slug
+            orden.menu_descripcion = menu.descripcion if menu else None
+            orden.menu_precio = menu.precio if menu else None
+            orden.fecha = fecha
+            orden.nota = nota
+            db.session.add(orden)
+
+    db.session.commit()
 
 
 
