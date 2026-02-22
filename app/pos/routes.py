@@ -1,10 +1,11 @@
 from decimal import Decimal
 
 from flask import Blueprint, jsonify, render_template, request, url_for, redirect
+from flask_security import current_user
 
 from ..database import db
 from ..extensions import flask_merchants
-from ..model import EstadoPedido, Pedido, Abono, Payment, MenuDiario, Alumno
+from ..model import Apoderado, EstadoPedido, Pedido, Abono, Payment, MenuDiario, Alumno
 
 from datetime import datetime
 
@@ -68,6 +69,12 @@ def pago_orden(orden):
     display_code = ""
     total = Decimal(0)
 
+    apoderado = None
+    if current_user.is_authenticated:
+        apoderado = db.session.execute(
+            db.select(Apoderado).filter_by(usuario=current_user)
+        ).scalar_one_or_none()
+
     if pedido:
         # Collect all alumno IDs up-front to avoid N+1 queries
         all_alumno_ids = [
@@ -111,21 +118,51 @@ def pago_orden(orden):
 
         if request.method == "POST":
             forma_pago = request.form.get("forma-de-pago", "cafeteria")
+
+            # Resolve saldo_cuenta discount
+            descuento_saldo = Decimal(0)
+            if apoderado and apoderado.saldo_cuenta and apoderado.saldo_cuenta >= 50:
+                try:
+                    raw = int(request.form.get("descuento_saldo", 0))
+                    max_descuento = min(apoderado.saldo_cuenta, int(total))
+                    raw = max(0, min(raw, max_descuento))
+                    descuento_saldo = Decimal(raw)
+                except (ValueError, TypeError):
+                    descuento_saldo = Decimal(0)
+
+            monto_a_pagar = total - descuento_saldo
+
+            if monto_a_pagar <= 0:
+                # Fully covered by saldo – complete the pedido without a payment provider
+                if descuento_saldo > 0:
+                    apoderado.saldo_cuenta = (apoderado.saldo_cuenta or 0) - int(descuento_saldo)
+                pedido.precio_total = total
+                pedido.estado = EstadoPedido.PAGADO
+                pedido.pagado = True
+                pedido.fecha_pago = datetime.now()
+                db.session.commit()
+                _process_payment_completion(pedido)
+                return redirect(url_for("pos.pago_orden", orden=pedido.codigo))
+
             session = flask_merchants.get_client(forma_pago).payments.create_checkout(
-                amount=total,
+                amount=monto_a_pagar,
                 currency="CLP",
                 success_url=url_for("pos.pago_orden", orden=pedido.codigo, _external=True),
                 cancel_url=url_for("pos.pago_orden", orden=pedido.codigo, _external=True),
                 metadata={"pedido_codigo": pedido.codigo},
             )
+            # Deduct saldo only after the provider session is created successfully
+            if descuento_saldo > 0:
+                apoderado.saldo_cuenta = (apoderado.saldo_cuenta or 0) - int(descuento_saldo)
             flask_merchants.save_session(
                 session,
                 model_class=Payment,
                 request_payload={
                     "pedido_codigo": pedido.codigo,
-                    "monto": str(total),
+                    "monto": str(monto_a_pagar),
                     "currency": "CLP",
                     "forma_pago": forma_pago,
+                    "descuento_saldo": str(descuento_saldo),
                 },
             )
             pedido.codigo_merchants = session.session_id
@@ -179,6 +216,7 @@ def pago_orden(orden):
         total=total,
         pago=pago,
         display_code=display_code,
+        apoderado=apoderado,
     )
 
 
