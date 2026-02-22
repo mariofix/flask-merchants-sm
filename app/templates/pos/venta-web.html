@@ -85,20 +85,24 @@
 
         <!-- RIGHT: Payment -->
         <div class="col-lg-4">
-            {% if pago %}
+            {% if pago or (orden and orden.pagado) %}
             <div class="card">
-                <div class="card-status-top {% if pago.state == 'succeeded' %}bg-success{% elif pago.state == 'processing' %}bg-yellow{% else %}bg-secondary{% endif %}"></div>
+                <div class="card-status-top {% if pago %}{% if pago.state == 'succeeded' %}bg-success{% elif pago.state == 'processing' %}bg-yellow{% else %}bg-secondary{% endif %}{% else %}bg-success{% endif %}"></div>
                 <div class="card-header">
                     <h3 class="card-title">Información de pago</h3>
                 </div>
                 <div class="card-body text-center">
                     <p class="text-secondary small mb-3">
-                        {% if pago.state == 'processing' %}
-                            Presenta este código en la cafetería del colegio para confirmar tu pedido.
-                        {% elif pago.state == 'succeeded' %}
-                            ¡Tu pago fue confirmado!
+                        {% if pago %}
+                            {% if pago.state == 'processing' %}
+                                Presenta este código en la cafetería del colegio para confirmar tu pedido.
+                            {% elif pago.state == 'succeeded' %}
+                                ¡Tu pago fue confirmado!
+                            {% else %}
+                                Procesando tu solicitud...
+                            {% endif %}
                         {% else %}
-                            Procesando tu solicitud...
+                            ¡Tu pedido fue pagado con saldo de cuenta!
                         {% endif %}
                     </p>
 
@@ -111,28 +115,36 @@
                     {% endif %}
 
                     <div class="mb-2">
-                        {% if pago.state == 'succeeded' %}
-                        <span class="badge bg-success fs-5">✔ Pagado</span>
-                        {% elif pago.state == 'processing' %}
-                        <span class="badge bg-yellow text-dark fs-5">⏳ Pendiente</span>
-                        {% elif pago.state == 'cancelled' %}
-                        <span class="badge bg-danger fs-5">✗ Cancelado</span>
+                        {% if pago %}
+                            {% if pago.state == 'succeeded' %}
+                            <span class="badge bg-success fs-5">✔ Pagado</span>
+                            {% elif pago.state == 'processing' %}
+                            <span class="badge bg-yellow text-dark fs-5">⏳ Pendiente</span>
+                            {% elif pago.state == 'cancelled' %}
+                            <span class="badge bg-danger fs-5">✗ Cancelado</span>
+                            {% else %}
+                            <span class="badge bg-secondary fs-5">{{ pago.state }}</span>
+                            {% endif %}
                         {% else %}
-                        <span class="badge bg-secondary fs-5">{{ pago.state }}</span>
+                        <span class="badge bg-success fs-5">✔ Pagado con Saldo</span>
                         {% endif %}
                     </div>
                 </div>
                 <div class="card-footer">
                     <div class="d-flex justify-content-end align-items-center">
-                        {% if pago.state == 'processing' and (current_user.has_role('admin') or current_user.has_role('pos')) %}
-                        <a href="{{ url_for('pos.completa_pedido', codigo=orden.codigo) }}" class="btn btn-success">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="icon me-1" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                                <path d="M5 12l5 5l10 -10" />
-                            </svg>
-                            Marcar como Pagado
-                        </a>
-                        {% elif pago.state == 'succeeded' %}
+                        {% if pago %}
+                            {% if pago.state == 'processing' and (current_user.has_role('admin') or current_user.has_role('pos')) %}
+                            <a href="{{ url_for('pos.completa_pedido', codigo=orden.codigo) }}" class="btn btn-success">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="icon me-1" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                                    <path d="M5 12l5 5l10 -10" />
+                                </svg>
+                                Marcar como Pagado
+                            </a>
+                            {% elif pago.state == 'succeeded' %}
+                            <span class="text-success fw-bold">✔ Pago aprobado</span>
+                            {% endif %}
+                        {% else %}
                         <span class="text-success fw-bold">✔ Pago aprobado</span>
                         {% endif %}
                     </div>
