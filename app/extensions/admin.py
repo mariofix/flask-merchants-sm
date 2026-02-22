@@ -195,6 +195,7 @@ class AbonoAdminView(SecureModelView):
                 "descripcion": abono.descripcion,
                 "apoderado_nombre": abono.apoderado.nombre,
                 "apoderado_email": abono.apoderado.usuario.email,
+                "saldo_anterior": saldo_actual,
                 "saldo_cuenta": nuevo_saldo,
                 "copia_notificaciones": abono.apoderado.copia_notificaciones,
             }
