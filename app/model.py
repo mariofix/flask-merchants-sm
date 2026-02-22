@@ -284,16 +284,19 @@ class OrdenCasino(db.Model, Timestamp):
 
     id: Mapped[int] = mapped_column(primary_key=True)
 
-    pedido_id: Mapped[int] = mapped_column(ForeignKey("casino_pedido.id"), index=True)
-    pedido: Mapped["Pedido"] = relationship("Pedido", foreign_keys=[pedido_id])
+    # Hard string copy of the originating pedido — intentionally not a FK so
+    # the record survives if the pedido is ever deleted.
+    pedido_codigo: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
 
     alumno_id: Mapped[int] = mapped_column(ForeignKey("alumno.id"), index=True)
     alumno: Mapped["Alumno"] = relationship("Alumno")
 
-    menu_id: Mapped[int | None] = mapped_column(ForeignKey("casino_menu_dia.id"), nullable=True)
-    menu: Mapped["MenuDiario | None"] = relationship("MenuDiario")
-
+    # Hard string copies of the menu — intentionally no FK so the record
+    # survives if the MenuDiario is ever deleted.
     menu_slug: Mapped[str] = mapped_column(String(255), nullable=False)
+    menu_descripcion: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+    menu_precio: Mapped[Decimal | None] = mapped_column(Numeric(10, 0), nullable=True)
+
     fecha: Mapped[date] = mapped_column(SaDate, nullable=False, index=True)
     nota: Mapped[str | None] = mapped_column(String(255), nullable=True)
 

@@ -20,10 +20,11 @@ def upgrade():
     op.create_table(
         "casino_orden_casino",
         sa.Column("id", sa.Integer(), nullable=False),
-        sa.Column("pedido_id", sa.Integer(), nullable=False),
+        sa.Column("pedido_codigo", sa.String(length=36), nullable=False),
         sa.Column("alumno_id", sa.Integer(), nullable=False),
-        sa.Column("menu_id", sa.Integer(), nullable=True),
         sa.Column("menu_slug", sa.String(length=255), nullable=False),
+        sa.Column("menu_descripcion", sa.String(length=2048), nullable=True),
+        sa.Column("menu_precio", sa.Numeric(precision=10, scale=0), nullable=True),
         sa.Column("fecha", sa.Date(), nullable=False),
         sa.Column("nota", sa.String(length=255), nullable=True),
         sa.Column(
@@ -41,16 +42,6 @@ def upgrade():
             name=op.f("fk_casino_orden_casino_alumno_id_alumno"),
         ),
         sa.ForeignKeyConstraint(
-            ["menu_id"],
-            ["casino_menu_dia.id"],
-            name=op.f("fk_casino_orden_casino_menu_id_casino_menu_dia"),
-        ),
-        sa.ForeignKeyConstraint(
-            ["pedido_id"],
-            ["casino_pedido.id"],
-            name=op.f("fk_casino_orden_casino_pedido_id_casino_pedido"),
-        ),
-        sa.ForeignKeyConstraint(
             ["reagendado_de_id"],
             ["casino_orden_casino.id"],
             name=op.f("fk_casino_orden_casino_reagendado_de_id_casino_orden_casino"),
@@ -60,12 +51,12 @@ def upgrade():
     with op.batch_alter_table("casino_orden_casino", schema=None) as batch_op:
         batch_op.create_index(batch_op.f("ix_casino_orden_casino_alumno_id"), ["alumno_id"], unique=False)
         batch_op.create_index(batch_op.f("ix_casino_orden_casino_fecha"), ["fecha"], unique=False)
-        batch_op.create_index(batch_op.f("ix_casino_orden_casino_pedido_id"), ["pedido_id"], unique=False)
+        batch_op.create_index(batch_op.f("ix_casino_orden_casino_pedido_codigo"), ["pedido_codigo"], unique=False)
 
 
 def downgrade():
     with op.batch_alter_table("casino_orden_casino", schema=None) as batch_op:
-        batch_op.drop_index(batch_op.f("ix_casino_orden_casino_pedido_id"))
+        batch_op.drop_index(batch_op.f("ix_casino_orden_casino_pedido_codigo"))
         batch_op.drop_index(batch_op.f("ix_casino_orden_casino_fecha"))
         batch_op.drop_index(batch_op.f("ix_casino_orden_casino_alumno_id"))
 
