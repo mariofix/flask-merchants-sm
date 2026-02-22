@@ -29,6 +29,12 @@ class EstadoPedido(PyEnum):
     CANCELADA = "cancelada"
 
 
+class EstadoAlmuerzo(PyEnum):
+    PENDIENTE = "pendiente"
+    ENTREGADO = "entregado"
+    CANCELADO = "cancelado"
+
+
 class TipoPago(PyEnum):
     EFECTIVO = "efectivo"
     TRANSFERENCIA = "transferencia"
@@ -269,3 +275,43 @@ class Pedido(db.Model, Timestamp):
 
     def __str__(self):
         return f"{self.codigo} - {self.estado.value}"
+
+
+class OrdenCasino(db.Model, Timestamp):
+    """Registro individual de un almuerzo por alumno, generado al pagar un pedido."""
+
+    __tablename__ = "casino_orden_casino"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+
+    # Hard string copy of the originating pedido — intentionally not a FK so
+    # the record survives if the pedido is ever deleted.
+    pedido_codigo: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+
+    alumno_id: Mapped[int] = mapped_column(ForeignKey("alumno.id"), index=True)
+    alumno: Mapped["Alumno"] = relationship("Alumno")
+
+    # Hard string copies of the menu — intentionally no FK so the record
+    # survives if the MenuDiario is ever deleted.
+    menu_slug: Mapped[str] = mapped_column(String(255), nullable=False)
+    menu_descripcion: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+    menu_precio: Mapped[Decimal | None] = mapped_column(Numeric(10, 0), nullable=True)
+
+    fecha: Mapped[date] = mapped_column(SaDate, nullable=False, index=True)
+    nota: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
+    estado: Mapped[EstadoAlmuerzo] = mapped_column(
+        Enum(EstadoAlmuerzo), default=EstadoAlmuerzo.PENDIENTE, nullable=False
+    )
+    fecha_entrega: Mapped[datetime | None] = mapped_column(nullable=True)
+
+    # Optional reference to the original OrdenCasino this was rescheduled from
+    reagendado_de_id: Mapped[int | None] = mapped_column(
+        ForeignKey("casino_orden_casino.id"), nullable=True
+    )
+    reagendado_de: Mapped["OrdenCasino | None"] = relationship(
+        "OrdenCasino", remote_side="OrdenCasino.id"
+    )
+
+    def __str__(self):
+        return f"OrdenCasino {self.id} - {self.alumno_id} - {self.fecha} - {self.estado.value}"
