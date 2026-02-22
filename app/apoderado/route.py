@@ -407,8 +407,24 @@ def ficha(id):
 
 
 @apoderado_bp.route("/abonos", methods=["GET"])
+@roles_accepted("apoderado", "admin")
 def abonos():
-    return render_template("apoderado/abonos.html")
+    apoderado = db.session.execute(db.select(Apoderado).filter_by(usuario=current_user)).scalar_one_or_none()
+    if not apoderado:
+        return redirect(url_for("core.index"))
+
+    abono_list = apoderado.abonos
+    codigos = [a.codigo for a in abono_list]
+    pagos_by_codigo = {}
+    if codigos:
+        pagos = db.session.execute(
+            db.select(Payment).where(Payment.session_id.in_(codigos))
+        ).scalars().all()
+        pagos_by_codigo = {p.session_id: p for p in pagos}
+
+    abonos_info = [{"abono": a, "pago": pagos_by_codigo.get(a.codigo)} for a in abono_list]
+
+    return render_template("apoderado/abonos.html", abonos_info=abonos_info, apoderado=apoderado)
 
 
 @apoderado_bp.route("/ajustes", methods=["GET", "POST"])
