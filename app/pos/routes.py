@@ -122,7 +122,7 @@ def pago_orden(orden):
             db.session.commit()
 
             # Enqueue apoderado notification (no admin copy)
-            from .tasks import send_notificacion_pedido_pendiente
+            from ..tasks import send_notificacion_pedido_pendiente
             pedido_url = url_for("pos.pago_orden", orden=pedido.codigo, _external=True)
             send_notificacion_pedido_pendiente.delay({
                 "pedido_codigo": pedido.codigo,
