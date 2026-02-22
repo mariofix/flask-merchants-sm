@@ -69,10 +69,29 @@ def pago_orden(orden):
     total = Decimal(0)
 
     if pedido:
+        # Collect all alumno IDs up-front to avoid N+1 queries
+        all_alumno_ids = [
+            int(a["id"])
+            for item in pedido.extra_attrs
+            for a in item.get("alumnos", [])
+        ]
+        alumnos_by_id = {}
+        if all_alumno_ids:
+            alumnos_by_id = {
+                a.id: a
+                for a in db.session.execute(
+                    db.select(Alumno).filter(Alumno.id.in_(all_alumno_ids))
+                ).scalars().all()
+            }
+
         for item in pedido.extra_attrs:
             menu = db.session.execute(db.select(MenuDiario).filter_by(slug=item["slug"])).scalar_one_or_none()
+            alumnos_item = [
+                alumnos_by_id.get(int(a["id"]), {"nombre": a.get("nombre", "—"), "curso": None})
+                for a in item.get("alumnos", [])
+            ]
             resumen.append(
-                {"fecha": item["date"], "menu": item["slug"], "nota": item["note"], "detalle_menu": menu}
+                {"fecha": item["date"], "menu": item["slug"], "nota": item["note"], "detalle_menu": menu, "alumnos": alumnos_item}
             )
         total = sum(item["detalle_menu"].precio for item in resumen)
 
@@ -112,6 +131,7 @@ def pago_orden(orden):
     return render_template(
         "pos/venta-web.html",
         pedido=resumen,
+        orden=pedido,
         total=total,
         pago=pago,
         display_code=display_code,
@@ -260,7 +280,49 @@ def completa_abono(codigo):
     return redirect(url_for("apoderado_cliente.abono_detalle", codigo=codigo))
 
 
-# @pos_bp.route("/reader", methods=["GET"])
+@pos_bp.route("/completa-pedido/<string:codigo>")
+def completa_pedido(codigo):
+    from flask_security import current_user
+
+    pedido = db.session.execute(db.select(Pedido).filter_by(codigo=codigo)).scalar_one_or_none()
+    pago = (
+        db.session.execute(db.select(Payment).filter_by(session_id=pedido.codigo_merchants)).scalar_one_or_none()
+        if pedido and pedido.codigo_merchants
+        else None
+    )
+
+    if (
+        pedido
+        and pago
+        and pago.state == "processing"
+        and (current_user.has_role("admin") or current_user.has_role("pos"))
+    ):
+        pago.state = "succeeded"
+        pedido.pagado = True
+        pedido.estado = EstadoPedido.PAGADO
+        pedido.fecha_pago = datetime.now()
+        db.session.commit()
+
+        # TODO: post-payment processing (to be designed)
+        # e.g. send confirmation email, update stock, notify kitchen, etc.
+        _process_payment_completion(pedido)
+
+    return redirect(url_for("pos.pago_orden", orden=codigo))
+
+
+def _process_payment_completion(pedido: Pedido) -> None:
+    """Placeholder for post-payment processing triggered after a pedido is marked as paid.
+
+    This function will be expanded once the process is designed. Possible steps:
+    - Send a confirmation notification to the apoderado
+    - Deduct stock from the relevant MenuDiario records
+    - Notify the kitchen / cafeteria staff
+    - Record the transaction in an audit log
+    """
+    pass
+
+
+
 # def reader():
 #     return render_template("pos/reader.html")
 
