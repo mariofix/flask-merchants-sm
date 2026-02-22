@@ -3,7 +3,7 @@ from decimal import Decimal, InvalidOperation
 import json
 from flask import Blueprint, current_app, flash, redirect, render_template, request, url_for
 from ..database import db
-from ..model import Apoderado, EstadoAlmuerzo, OrdenCasino, Settings, Alumno, Abono, Payment
+from ..model import Apoderado, EstadoAlmuerzo, OrdenCasino, Settings, Alumno, Abono, Payment, Pedido
 from .controller import ApoderadoController
 from slugify import slugify
 from flask_security import current_user, roles_required, roles_accepted, login_required  # type: ignore
@@ -322,8 +322,57 @@ def menu_casino():
 
 
 @apoderado_bp.route("/almuerzos", methods=["GET"])
+@roles_accepted("apoderado", "admin")
 def almuerzos():
-    return render_template("apoderado/abonos.html")
+    apoderado = db.session.execute(db.select(Apoderado).filter_by(usuario=current_user)).scalar_one_or_none()
+    if not apoderado:
+        return redirect(url_for("core.index"))
+
+    # Primary query: pedidos linked directly via apoderado_id
+    pedidos_directos = db.session.execute(
+        db.select(Pedido)
+        .filter_by(apoderado_id=apoderado.id)
+        .order_by(Pedido.fecha_pedido.desc())
+        .limit(30)
+    ).scalars().all()
+
+    # Fallback: legacy pedidos discoverable via OrdenCasino for any of the apoderado's alumnos
+    alumno_ids = [a.id for a in apoderado.alumnos]
+    codigos_directos = {p.codigo for p in pedidos_directos}
+    pedidos_legacy = []
+    if alumno_ids:
+        codigos_ordenes = db.session.execute(
+            db.select(OrdenCasino.pedido_codigo)
+            .where(OrdenCasino.alumno_id.in_(alumno_ids))
+            .distinct()
+        ).scalars().all()
+        codigos_legacy = [c for c in codigos_ordenes if c not in codigos_directos]
+        if codigos_legacy:
+            pedidos_legacy = db.session.execute(
+                db.select(Pedido).where(Pedido.codigo.in_(codigos_legacy))
+            ).scalars().all()
+
+    # Combine and sort by fecha_pedido descending
+    todos_pedidos = sorted(
+        list(pedidos_directos) + list(pedidos_legacy),
+        key=lambda p: p.fecha_pedido,
+        reverse=True,
+    )[:30]
+
+    # Build enriched list with payment info and related OrdenCasino records
+    pedidos_info = []
+    for pedido in todos_pedidos:
+        pago = None
+        if pedido.codigo_merchants:
+            pago = db.session.execute(
+                db.select(Payment).filter_by(session_id=pedido.codigo_merchants)
+            ).scalar_one_or_none()
+        ordenes = db.session.execute(
+            db.select(OrdenCasino).filter_by(pedido_codigo=pedido.codigo)
+        ).scalars().all()
+        pedidos_info.append({"pedido": pedido, "pago": pago, "ordenes": ordenes})
+
+    return render_template("apoderado/almuerzos.html", pedidos_info=pedidos_info, apoderado=apoderado)
 
 
 @apoderado_bp.route("/kiosko", methods=["GET"])

@@ -265,6 +265,9 @@ class Pedido(db.Model, Timestamp):
     # Metadata
     extra_attrs: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
 
+    # Apoderado that created this pedido (nullable for backwards-compatibility)
+    apoderado_id: Mapped[int | None] = mapped_column(ForeignKey("casino_apoderado.id"), nullable=True, index=True)
+
     payment: Mapped["Payment | None"] = relationship(
         "Payment",
         primaryjoin="foreign(Pedido.codigo_merchants) == Payment.session_id",
