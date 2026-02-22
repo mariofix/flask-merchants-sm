@@ -103,7 +103,11 @@ def pago_orden(orden):
             resumen.append(
                 {"fecha": item["date"], "menu": item["slug"], "nota": item["note"], "detalle_menu": menu, "alumnos": alumnos_item}
             )
-        total = sum(item["detalle_menu"].precio for item in resumen if item["detalle_menu"] is not None)
+        total = sum(
+            item["detalle_menu"].precio * len(item["alumnos"])
+            for item in resumen
+            if item["detalle_menu"] is not None
+        )
 
         if request.method == "POST":
             forma_pago = request.form.get("forma-de-pago", "cafeteria")
