@@ -3,9 +3,9 @@ from decimal import Decimal
 from flask import Blueprint, jsonify, render_template, request, url_for, redirect
 
 from ..database import db
-from ..model import Pedido, Abono, Payment, MenuDiario, Alumno
+from ..extensions import flask_merchants
+from ..model import EstadoPedido, Pedido, Abono, Payment, MenuDiario, Alumno
 
-# from flask_merchants.core import PaymentStatus
 from datetime import datetime
 
 # from .reader import registra_lectura
@@ -64,41 +64,57 @@ def valida_tag(serial: str):
 def pago_orden(orden):
     pedido = db.session.execute(db.select(Pedido).filter_by(codigo=orden)).scalar_one_or_none()
     resumen = []
-    pago = db.session.execute(db.select(Payment).filter_by(session_id=orden)).scalar_one_or_none()
+    pago = None
+    display_code = ""
+    total = Decimal(0)
+
     if pedido:
-        for orden in pedido.extra_attrs:
-            menu = db.session.execute(db.select(MenuDiario).filter_by(slug=orden["slug"])).scalar_one_or_none()
-
+        for item in pedido.extra_attrs:
+            menu = db.session.execute(db.select(MenuDiario).filter_by(slug=item["slug"])).scalar_one_or_none()
             resumen.append(
-                {"fecha": orden["date"], "menu": orden["slug"], "nota": orden["note"], "detalle_menu": menu}
+                {"fecha": item["date"], "menu": item["slug"], "nota": item["note"], "detalle_menu": menu}
             )
-        pago_process = None
-        # if request.method == "POST":
-        #     forma_pago = request.form["forma-de-pago"]
-        #     pago = Payment()
-        #     pago.merchants_token = orden["slug"]
-        #     pago.amount = Decimal(sum(item["detalle_menu"].precio for item in resumen))
-        #     pago.currency = "CLP"
-        #     pago.integration_slug = forma_pago
+        total = sum(item["detalle_menu"].precio for item in resumen)
 
-        #     db.session.add(pago)
-        #     db.session.commit()
+        if request.method == "POST":
+            forma_pago = request.form.get("forma-de-pago", "cafeteria")
+            session = flask_merchants.get_client(forma_pago).payments.create_checkout(
+                amount=total,
+                currency="CLP",
+                success_url=url_for("pos.pago_orden", orden=pedido.codigo, _external=True),
+                cancel_url=url_for("pos.pago_orden", orden=pedido.codigo, _external=True),
+                metadata={"pedido_codigo": pedido.codigo},
+            )
+            flask_merchants.save_session(
+                session,
+                model_class=Payment,
+                request_payload={
+                    "pedido_codigo": pedido.codigo,
+                    "monto": str(total),
+                    "currency": "CLP",
+                    "forma_pago": forma_pago,
+                },
+            )
+            pedido.codigo_merchants = session.session_id
+            pedido.precio_total = total
+            pedido.estado = EstadoPedido.PENDIENTE
+            if forma_pago == "cafeteria":
+                flask_merchants.update_state(session.session_id, "processing")
+            db.session.commit()
+            return redirect(url_for("pos.pago_orden", orden=pedido.codigo))
 
-        #     pago_process = pago.process()
-
-        #     if "transaction" in pago_process:
-        #         pago.status = PaymentStatus.processing
-        #         pago.integration_transaction = pago_process["transaction"]
-
-        #         db.session.commit()
-        #     if "url" in pago_process:
-        #         return redirect(pago_process["url"])
+        if pedido.codigo_merchants:
+            pago = db.session.execute(
+                db.select(Payment).filter_by(session_id=pedido.codigo_merchants)
+            ).scalar_one_or_none()
+            display_code = (pago.metadata_json or {}).get("display_code", "") if pago else ""
 
     return render_template(
         "pos/venta-web.html",
         pedido=resumen,
-        total=sum(item["detalle_menu"].precio for item in resumen),
+        total=total,
         pago=pago,
+        display_code=display_code,
     )
 
 
