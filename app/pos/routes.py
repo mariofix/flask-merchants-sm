@@ -136,8 +136,9 @@ def completa_abono(codigo):
         abono.apoderado.saldo_cuenta = saldo_actual + int(abono.monto)
         db.session.commit()
 
-        send_comprobante_abono.delay(abono_id=abono.id)
         send_notificacion_admin_abono.delay(abono_id=abono.id)
+        if abono.apoderado.comprobantes_transferencia:
+            send_comprobante_abono.delay(abono_id=abono.id)
 
     return redirect(url_for("apoderado_cliente.abono_detalle", codigo=codigo))
 

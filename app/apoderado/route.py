@@ -153,7 +153,17 @@ def abono():
                 "apoderado_id": str(nuevo_abono.apoderado.id),
             },
         )
-        flask_merchants.save_session(session, model_class=Payment)
+        flask_merchants.save_session(
+            session,
+            model_class=Payment,
+            request_payload={
+                "abono_codigo": nuevo_abono.codigo,
+                "monto": str(nuevo_abono.monto),
+                "currency": "CLP",
+                "apoderado_id": str(nuevo_abono.apoderado.id),
+                "forma_pago": forma_pago,
+            },
+        )
         # Marcar como "processing" – esperando pago presencial
         flask_merchants.update_state(nuevo_abono.codigo, "processing")
 

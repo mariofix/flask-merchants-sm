@@ -3,6 +3,7 @@ import os.path as op
 from flask import flash, request, redirect, abort, url_for, current_app
 from pathlib import Path
 from flask_admin import Admin
+from flask_admin.actions import action
 from flask_admin.contrib.fileadmin import FileAdmin
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.menu import MenuDivider
@@ -150,6 +151,26 @@ class AlumnoAdminView(SecureModelView):
     edit_template = "admin/alumno_edit.html"
 
 
+class AbonoAdminView(SecureModelView):
+    column_list = ["codigo", "apoderado", "monto", "forma_pago", "descripcion", "created"]
+
+    @action(
+        "enviar_comprobante",
+        "Enviar Comprobante",
+        "¿Enviar comprobante de pago a los apoderados seleccionados?",
+    )
+    def action_enviar_comprobante(self, ids):
+        from ..tasks import send_comprobante_abono
+
+        count = 0
+        for abono_id in ids:
+            abono = db.session.get(Abono, int(abono_id))
+            if abono:
+                send_comprobante_abono.delay(abono_id=abono.id)
+                count += 1
+        flash(f"Comprobante encolado para {count} abono(s).")
+
+
 admin.add_view(PlatoAdminView(Plato, db.session, category="Casino"))
 admin.add_view(
     FileView(
@@ -163,7 +184,7 @@ admin.add_view(MenuDiarioAdminView(MenuDiario, db.session, category="Casino"))
 admin.add_view(SecureModelView(OpcionMenuDia, db.session, category="Casino", name="Items MenuDiario"))
 admin.add_menu_item(MenuDivider(), target_category="Casino")
 admin.add_view(SecureModelView(Pedido, db.session, category="Casino", name="Pedidos"))
-admin.add_view(SecureModelView(Abono, db.session, category="Casino", name="Abonos"))
+admin.add_view(AbonoAdminView(Abono, db.session, category="Casino", name="Abonos"))
 
 admin.add_view(UserView(User, db.session, category="Usuarios y Roles", name="Usuarios"))
 admin.add_view(SecureModelView(Role, db.session, category="Usuarios y Roles", name="Roles"))
