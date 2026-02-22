@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from decimal import Decimal, InvalidOperation
 import json
 from flask import Blueprint, current_app, flash, redirect, render_template, request, url_for
@@ -292,13 +292,33 @@ def abono_detalle(codigo):
 @login_required
 def menu_casino():
     from sqlalchemy.orm import selectinload
+    from ..routes import get_casino_timelimits, TIMEZONE_SANTIAGO
+
     alumnos = []
     apoderado = db.session.execute(
         db.select(Apoderado).filter_by(usuario=current_user).options(selectinload(Apoderado.alumnos))
     ).scalar_one_or_none()
     if apoderado:
         alumnos = apoderado.alumnos
-    return render_template("apoderado/menu-casino.html", alumnos=alumnos)
+
+    hora_limite, hora_rezagados, _ = get_casino_timelimits()
+    ahora = datetime.now(TIMEZONE_SANTIAGO)
+    today_date = ahora.date()
+
+    # After the rezagados cutoff (e.g. 14:00) today is closed; move valid range to tomorrow
+    if ahora.time() >= hora_rezagados:
+        valid_range_start = (today_date + timedelta(days=1)).isoformat()
+    else:
+        valid_range_start = today_date.isoformat()
+
+    return render_template(
+        "apoderado/menu-casino.html",
+        alumnos=alumnos,
+        today=today_date.isoformat(),
+        valid_range_start=valid_range_start,
+        hora_limite_pedido=hora_limite.strftime("%H:%M"),
+        hora_limite_rezagados=hora_rezagados.strftime("%H:%M"),
+    )
 
 
 @apoderado_bp.route("/almuerzos", methods=["GET"])
