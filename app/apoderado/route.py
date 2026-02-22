@@ -111,6 +111,24 @@ def wizp3():
         db.session.commit()
 
         from ..tasks import send_notificacion_admin_nuevo_apoderado
+        from flask_merchants import merchants_audit
+        send_notificacion_admin_nuevo_apoderado.delay({
+            "nombre_apoderado": apoderado.nombre,
+            "email_apoderado": apoderado.usuario.email,
+            "alumnos": [{"nombre": a.nombre, "curso": a.curso} for a in apoderado.alumnos],
+        })
+        merchants_audit.info(
+            "nuevo_apoderado_creado: id=%s nombre=%r email=%r alumnos=%d",
+            apoderado.id,
+            apoderado.nombre,
+            apoderado.usuario.email,
+            len(apoderado.alumnos),
+        )
+        merchants_audit.info(
+            "nuevo_apoderado_notificado: id=%s nombre=%r email=%r",
+            apoderado.id,
+            apoderado.nombre,
+            apoderado.usuario.email,
 
         send_notificacion_admin_nuevo_apoderado.delay(
             {
