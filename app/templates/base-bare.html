@@ -50,6 +50,16 @@
 
         <!-- BEGIN PAGE BODY -->
         <main id="content" class="page-body">
+          {% for category, message in get_flashed_messages(with_categories=true) %}
+          <div class="container-xl pt-3">
+            <div class="alert alert-{{ category }} alert-dismissible" role="alert">
+              <div class="d-flex">
+                <div>{{ message }}</div>
+              </div>
+              <a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a>
+            </div>
+          </div>
+          {% endfor %}
           {% block page_body -%}
           {% endblock page_body -%}
         </main>

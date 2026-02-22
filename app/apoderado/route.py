@@ -1,4 +1,4 @@
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from flask import Blueprint, current_app, flash, redirect, render_template, request, url_for
 from ..database import db
 from ..model import Apoderado, Settings, Alumno, Abono, Payment
@@ -132,13 +132,27 @@ def wizp4():
     return render_template("apoderado/wizard-paso4.html", apoderado=apoderado)
 
 
+@apoderado_bp.route("/abono", methods=["GET"])
+@roles_accepted("apoderado", "admin")
+def abono_form():
+    return render_template("apoderado/abono.html")
+
+
 @apoderado_bp.route("/abono", methods=["POST"])
 @roles_accepted("apoderado", "admin")
 def abono():
-    monto = request.form["monto"]
-    forma_pago = request.form["forma-de-pago"]
+    monto = request.form.get("monto", "").strip()
+    forma_pago = request.form.get("forma-de-pago", "")
+    try:
+        monto_decimal = Decimal(monto)
+    except InvalidOperation:
+        if not monto:
+            flash("Por favor ingrese un monto.", "danger")
+        else:
+            flash("El monto ingresado no es válido. Por favor ingrese un valor numérico.", "danger")
+        return redirect(url_for("apoderado_cliente.abono_form"))
     nuevo_abono = Abono()
-    nuevo_abono.monto = Decimal(monto)
+    nuevo_abono.monto = monto_decimal
     nuevo_abono.apoderado = current_user.apoderado
     nuevo_abono.descripcion = "Abono Web"
     nuevo_abono.forma_pago = forma_pago
