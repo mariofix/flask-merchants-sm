@@ -160,13 +160,24 @@ class AbonoAdminView(SecureModelView):
         "¿Enviar comprobante de pago a los apoderados seleccionados?",
     )
     def action_enviar_comprobante(self, ids):
-        from ..tasks import send_comprobante_abono
+        from ..tasks import send_comprobante_abono, send_notificacion_admin_abono
 
         count = 0
         for abono_id in ids:
             abono = db.session.get(Abono, int(abono_id))
             if abono:
-                send_comprobante_abono.delay(abono_id=abono.id)
+                abono_info = {
+                    "id": abono.id,
+                    "codigo": abono.codigo,
+                    "monto": int(abono.monto),
+                    "forma_pago": abono.forma_pago,
+                    "descripcion": abono.descripcion,
+                    "apoderado_nombre": abono.apoderado.nombre,
+                    "apoderado_email": abono.apoderado.usuario.email,
+                    "saldo_cuenta": abono.apoderado.saldo_cuenta or 0,
+                }
+                send_comprobante_abono.delay(abono_info=abono_info)
+                send_notificacion_admin_abono.delay(abono_info=abono_info)
                 count += 1
         flash(f"Comprobante encolado para {count} abono(s).")
 
