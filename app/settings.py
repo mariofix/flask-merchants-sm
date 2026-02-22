@@ -6,7 +6,7 @@ SECRET_KEY: str
 DEBUG = True
 LOG_LEVEL = "DEBUG" if DEBUG else "INFO"
 TRUSTED_HOSTS = ["tardis.local", "192.168.110.133"]
-SESSION_COOKIE_NAME = "merchants"
+SESSION_COOKIE_NAME = "sabormirandiano"
 DIRECTORIO_FOTOS_PLATO = f"{BASE_DIR}/app/static/platos"
 
 SQLALCHEMY_DATABASE_URI = ""
@@ -39,7 +39,7 @@ SECURITY_PHONE_REGION_DEFAULT = "CL"
 BABEL_DEFAULT_LOCALE = "es"
 BABEL_DEFAULT_TIMEZONE = "America/Santiago"
 BABEL_DEFAULT_FOLDER = "store/translations"
-BABEL_DOMAIN = "merchants"
+BABEL_DOMAIN = "sabormirandiano"
 LANGUAGES = {
     "en": {"flag": "us", "name": "English"},
     "es": {"flag": "mx", "name": "Español"},
