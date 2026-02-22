@@ -16,6 +16,14 @@
 {% block page_body %}
 <main id="content" class="page-body">
   <div class="container-xl">
+    {% for category, message in get_flashed_messages(with_categories=true) %}
+    <div class="alert alert-{{ category }} alert-dismissible" role="alert">
+      <div class="d-flex">
+        <div>{{ message }}</div>
+      </div>
+      <a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a>
+    </div>
+    {% endfor %}
     <div class="row row-cards">
       <div class="col">
         <div class="row row-cards">
