@@ -129,6 +129,13 @@ def wizp3():
             apoderado.id,
             apoderado.nombre,
             apoderado.usuario.email,
+
+        send_notificacion_admin_nuevo_apoderado.delay(
+            {
+                "nombre_apoderado": apoderado.nombre,
+                "email_apoderado": apoderado.usuario.email,
+                "alumnos": [{"nombre": a.nombre, "curso": a.curso} for a in apoderado.alumnos],
+            }
         )
 
         return redirect(url_for(".wizp4"))
@@ -180,9 +187,7 @@ def abono():
         session = flask_merchants.get_client("cafeteria").payments.create_checkout(
             amount=nuevo_abono.monto,
             currency="CLP",
-            success_url=url_for(
-                "apoderado_cliente.abono_detalle", codigo=nuevo_abono.codigo, _external=True
-            ),
+            success_url=url_for("apoderado_cliente.abono_detalle", codigo=nuevo_abono.codigo, _external=True),
             cancel_url=url_for("apoderado_cliente.index", _external=True),
             metadata={
                 "abono_codigo": nuevo_abono.codigo,
@@ -204,15 +209,18 @@ def abono():
         flask_merchants.update_state(nuevo_abono.codigo, "processing")
 
         from ..tasks import send_notificacion_abono_creado
-        send_notificacion_abono_creado.delay(abono_info={
-            "codigo": nuevo_abono.codigo,
-            "monto": int(nuevo_abono.monto),
-            "forma_pago": nuevo_abono.forma_pago,
-            "descripcion": nuevo_abono.descripcion,
-            "apoderado_nombre": nuevo_abono.apoderado.nombre,
-            "apoderado_email": nuevo_abono.apoderado.usuario.email,
-            "saldo_cuenta": nuevo_abono.apoderado.saldo_cuenta or 0,
-        })
+
+        send_notificacion_abono_creado.delay(
+            abono_info={
+                "codigo": nuevo_abono.codigo,
+                "monto": int(nuevo_abono.monto),
+                "forma_pago": nuevo_abono.forma_pago,
+                "descripcion": nuevo_abono.descripcion,
+                "apoderado_nombre": nuevo_abono.apoderado.nombre,
+                "apoderado_email": nuevo_abono.apoderado.usuario.email,
+                "saldo_cuenta": nuevo_abono.apoderado.saldo_cuenta or 0,
+            }
+        )
 
     return redirect(url_for("apoderado_cliente.abono_detalle", codigo=nuevo_abono.codigo))
 
@@ -222,6 +230,7 @@ def abono_detalle(codigo):
     abono = db.session.execute(db.select(Abono).filter_by(codigo=codigo)).scalar_one_or_none()
     pago = db.session.execute(db.select(Payment).filter_by(session_id=codigo)).scalar_one_or_none()
     display_code = (pago.metadata_json or {}).get("display_code", "") if pago else ""
+    print(f"{abono=}")
     return render_template("apoderado/detalle-abono.html", abono=abono, pago=pago, display_code=display_code)
 
 
