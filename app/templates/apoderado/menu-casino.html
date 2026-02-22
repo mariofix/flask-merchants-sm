@@ -33,6 +33,22 @@
       <div class="modal-body" id="contenido-modal">
 
       </div>
+      {% if alumnos %}
+      <div class="modal-body border-top pt-3" id="alumnos-section">
+        <label class="form-label fw-bold">Alumnos</label>
+        {% for alumno in alumnos %}
+        <div class="form-check">
+          <input class="form-check-input alumno-check" type="checkbox"
+                 value="{{ alumno.id }}" id="alumno_{{ alumno.id }}"
+                 data-nombre="{{ alumno.nombre }}">
+          <label class="form-check-label" for="alumno_{{ alumno.id }}">
+            {{ alumno.nombre }}
+            <span class="text-muted small">({{ alumno.curso }})</span>
+          </label>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
       <div class="modal-footer">
         <button type="button" class="btn me-auto" onclick="closeModalDia()" data-bs-dismiss="modal">Cerrar</button>
         <button type="button" class="btn btn-primary" onclick="handleEventMenu()">Agregar al menú</button>
@@ -142,6 +158,9 @@
     var dia = form.querySelector('input[name="dia"]').value;
     var info = form.querySelector('textarea[name="info"]').value;
 
+    var alumnos = Array.from(document.querySelectorAll('.alumno-check:checked')).map(function(checkbox) {
+      return { id: checkbox.value, nombre: checkbox.dataset.nombre };
+    });
 
     if (selectedMenu) {
       calendar.addEvent({
@@ -151,10 +170,12 @@
         extendedProps: {
           slug: selectedMenu.value,
           note: info,
+          alumnos: alumnos,
         }
       });
       console.log("Menu:", selectedMenu.value);
       console.log("Info:", info);
+      console.log("Alumnos:", alumnos);
     }
     closeModalDia();
   }
@@ -162,7 +183,8 @@
     return calendar.getEvents().map(e => ({
       date: e.startStr,
       slug: e.extendedProps.slug,
-      note: e.extendedProps.note || ''
+      note: e.extendedProps.note || '',
+      alumnos: e.extendedProps.alumnos || []
     }))
   }
   document.getElementById('btn-pedido').addEventListener('click', () => {

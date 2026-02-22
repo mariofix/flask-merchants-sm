@@ -257,8 +257,16 @@ def abono_detalle(codigo):
 
 
 @apoderado_bp.route("/menu-casino", methods=["GET"])
+@login_required
 def menu_casino():
-    return render_template("apoderado/menu-casino.html")
+    from sqlalchemy.orm import selectinload
+    alumnos = []
+    apoderado = db.session.execute(
+        db.select(Apoderado).filter_by(usuario=current_user).options(selectinload(Apoderado.alumnos))
+    ).scalar_one_or_none()
+    if apoderado:
+        alumnos = apoderado.alumnos
+    return render_template("apoderado/menu-casino.html", alumnos=alumnos)
 
 
 @apoderado_bp.route("/almuerzos", methods=["GET"])
