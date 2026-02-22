@@ -212,6 +212,16 @@ def completa_abono(codigo):
         abono.apoderado.saldo_cuenta = nuevo_saldo
         db.session.commit()
 
+        from flask_merchants import merchants_audit
+        merchants_audit.info(
+            "abono_aprobado: codigo=%s apoderado_id=%s email=%r monto=%s nuevo_saldo=%s",
+            abono.codigo,
+            abono.apoderado.id,
+            abono.apoderado.usuario.email,
+            int(abono.monto),
+            nuevo_saldo,
+        )
+
         abono_info = {
             "id": abono.id,
             "codigo": abono.codigo,

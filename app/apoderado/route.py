@@ -96,7 +96,7 @@ def wizp3():
         apoderado.maximo_diario = int(monto_diario)
         apoderado.maximo_semanal = int(monto_semanal)
         apoderado.limite_notificacion = int(limite_notificaciones)
-        apoderado.saldo_cuenta = 1
+        apoderado.saldo_cuenta = 0
 
         for alumno in apoderado.alumnos:
             alumno.maximo_diario = apoderado.maximo_diario
@@ -181,6 +181,16 @@ def abono():
 
     db.session.add(nuevo_abono)
     db.session.commit()
+
+    from flask_merchants import merchants_audit
+    merchants_audit.info(
+        "abono_creado: codigo=%s apoderado_id=%s email=%r monto=%s forma_pago=%r",
+        nuevo_abono.codigo,
+        nuevo_abono.apoderado.id,
+        nuevo_abono.apoderado.usuario.email,
+        nuevo_abono.monto,
+        nuevo_abono.forma_pago,
+    )
 
     if forma_pago == "cafeteria":
         from ..extensions import flask_merchants

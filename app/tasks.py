@@ -2,6 +2,7 @@ from celery import shared_task
 from flask import current_app, render_template, url_for
 from flask_mailman import EmailMultiAlternatives
 from flask_security.mail_util import MailUtil
+from flask_merchants import merchants_audit
 import re
 
 from .extensions import mail
@@ -49,6 +50,12 @@ def send_flask_mail(*args, **kwargs):
             if html:
                 msg.attach_alternative(html, "text/html")
                 msg.send()
+                merchants_audit.info(
+                    "email_sent: from=%r to=%r subject=%r",
+                    kwargs.get("from_email"),
+                    kwargs.get("to"),
+                    kwargs.get("subject"),
+                )
 
 
 @shared_task(bind=True, ignore_result=False)
@@ -93,6 +100,12 @@ def send_comprobante_abono(self, abono_info: dict):
             )
             msg.attach_alternative(html, "text/html")
             msg.send()
+            merchants_audit.info(
+                "email_sent: from=%r to=%r subject=%r",
+                from_email,
+                [abono_info["apoderado_email"]],
+                subject,
+            )
 
 
 @shared_task(bind=True, ignore_result=False)
@@ -113,7 +126,7 @@ def send_notificacion_admin_abono(self, abono_info: dict):
 
         display_code = _get_display_code(pago)
         abono_url = url_for("apoderado_cliente.abono_detalle", codigo=abono_info["codigo"], _external=True)
-        subject = f"Abono aprobado – {abono_info['apoderado_nombre']} ${abono_info['monto']:,}"
+        subject = f"[admin] Abono aprobado – {abono_info['apoderado_nombre']} ${abono_info['monto']:,}"
         body = (
             f"Se aprobó un abono en la cafetería.\n\n"
             f"Apoderado: {abono_info['apoderado_nombre']} ({abono_info['apoderado_email']})\n"
@@ -157,6 +170,12 @@ def send_notificacion_admin_abono(self, abono_info: dict):
             )
             msg.attach_alternative(html, "text/html")
             msg.send()
+            merchants_audit.info(
+                "email_sent: from=%r to=%r subject=%r",
+                from_email,
+                admin_emails,
+                subject,
+            )
 
 
 @shared_task(bind=True, ignore_result=False)
@@ -206,6 +225,12 @@ def send_copia_notificaciones_abono(self, abono_info: dict):
                 )
                 msg.attach_alternative(html, "text/html")
                 msg.send()
+                merchants_audit.info(
+                    "email_sent: from=%r to=%r subject=%r",
+                    from_email,
+                    [email],
+                    subject,
+                )
 
 
 @shared_task(bind=True, ignore_result=False)
@@ -253,12 +278,18 @@ def send_notificacion_abono_creado(self, abono_info: dict):
             )
             msg.attach_alternative(html_apoderado, "text/html")
             msg.send()
+            merchants_audit.info(
+                "email_sent: from=%r to=%r subject=%r",
+                from_email,
+                [abono_info["apoderado_email"]],
+                subject_apoderado,
+            )
 
         # --- Email a los administradores (código generado, abono pendiente) ---
         admin_role = db.session.execute(db.select(Role).filter_by(name="admin")).scalar_one_or_none()
         admin_emails = [u.email for u in admin_role.users if u.email] if admin_role else []
         if admin_emails:
-            subject_admin = f"Nuevo abono pendiente – {abono_info['apoderado_nombre']} ${abono_info['monto']:,}"
+            subject_admin = f"[admin] Nuevo abono pendiente – {abono_info['apoderado_nombre']} ${abono_info['monto']:,}"
             body_admin = (
                 f"Se ha generado un código de abono en la cafetería.\n\n"
                 f"Apoderado: {abono_info['apoderado_nombre']} ({abono_info['apoderado_email']})\n"
@@ -294,6 +325,12 @@ def send_notificacion_abono_creado(self, abono_info: dict):
                 )
                 msg.attach_alternative(html_admin, "text/html")
                 msg.send()
+                merchants_audit.info(
+                    "email_sent: from=%r to=%r subject=%r",
+                    from_email,
+                    admin_emails,
+                    subject_admin,
+                )
 
 
 @shared_task(bind=True, ignore_result=False)
@@ -310,7 +347,7 @@ def send_notificacion_admin_nuevo_apoderado(self, apoderado_info: dict):
         if not admin_emails:
             return
 
-        subject = f"Nuevo apoderado registrado – {apoderado_info['nombre_apoderado']}"
+        subject = f"[admin] Nuevo apoderado registrado – {apoderado_info['nombre_apoderado']}"
         body = (
             f"Se ha registrado un nuevo apoderado en la plataforma.\n\n"
             f"Nombre: {apoderado_info['nombre_apoderado']}\n"
@@ -337,3 +374,9 @@ def send_notificacion_admin_nuevo_apoderado(self, apoderado_info: dict):
             )
             msg.attach_alternative(html, "text/html")
             msg.send()
+            merchants_audit.info(
+                "email_sent: from=%r to=%r subject=%r",
+                from_email,
+                admin_emails,
+                subject,
+            )

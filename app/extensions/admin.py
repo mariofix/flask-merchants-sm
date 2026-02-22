@@ -162,6 +162,7 @@ class AbonoAdminView(SecureModelView):
     def action_aprobar_abono(self, ids):
         from ..tasks import send_comprobante_abono, send_notificacion_admin_abono, send_copia_notificaciones_abono
         from ..model import Payment
+        from flask_merchants import merchants_audit
 
         count = 0
         for abono_id in ids:
@@ -177,6 +178,14 @@ class AbonoAdminView(SecureModelView):
             nuevo_saldo = saldo_actual + int(abono.monto)
             abono.apoderado.saldo_cuenta = nuevo_saldo
             db.session.commit()
+            merchants_audit.info(
+                "abono_aprobado: codigo=%s apoderado_id=%s email=%r monto=%s nuevo_saldo=%s",
+                abono.codigo,
+                abono.apoderado.id,
+                abono.apoderado.usuario.email,
+                int(abono.monto),
+                nuevo_saldo,
+            )
 
             abono_info = {
                 "id": abono.id,
