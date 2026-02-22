@@ -259,7 +259,7 @@
                   </a>
                 </li>
                 {# <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('.kiosko') }}">
+            <a class="nav-link" href="{{ url_for('apoderado_cliente.kiosko') }}">
               <span class="nav-link-icon d-md-none d-lg-inline-block">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-cookie">
                   <path stroke="none" d="M0 0h24v24H0z" fill="none" />
@@ -437,7 +437,7 @@
       </div>
     </div>
     <div class="modal modal-blur fade" id="modal-abono" tabindex="-1" role="dialog" aria-hidden="true">
-      <form action="{{ url_for('.abono') }}" method="post" class="needs-validation" novalidate>
+      <form action="{{ url_for('apoderado_cliente.abono') }}" method="post" class="needs-validation" novalidate>
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <div class="modal-dialog modal-lg" role="document">
           <div class="modal-content">

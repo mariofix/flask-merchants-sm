@@ -430,13 +430,13 @@
               <td class="text-secondary">$0/${{ alumno.maximo_diario }}</td>
               <td class="text-secondary">$0/${{ alumno.maximo_semanal }}</td>
               <td class="text-end">
-                <a href="{{ url_for('.ficha', id=alumno.id)}}" class="btn btn-info btn-sm">Resumen</a>
+                <a href="{{ url_for('apoderado_cliente.ficha', id=alumno.id)}}" class="btn btn-info btn-sm">Resumen</a>
                 {% if alumno.activo %}
                 <a href="." class="btn btn-danger btn-sm">Bloquear</a>
                 {% else %}
                 <a href="." class="btn btn-success">Habilitar</a>
                 {% endif %}
-                <a href="{{ url_for('.ficha', id=alumno.id)}}#restricciones" class="btn btn-warning btn-sm">Alergias</a>
+                <a href="{{ url_for('apoderado_cliente.ficha', id=alumno.id)}}#restricciones" class="btn btn-warning btn-sm">Alergias</a>
               </td>
             </tr>
 

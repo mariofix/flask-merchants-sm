@@ -18,11 +18,11 @@ def index():
     if current_user.has_role("apoderado"):
         apoderado = db.session.execute(db.select(Apoderado).filter_by(usuario=current_user)).scalar_one_or_none()
     if not apoderado and current_user.has_role("admin"):
-        return redirect(url_for(".wizp1"))
+        return redirect(url_for("apoderado_cliente.wizp1"))
     if not apoderado and not current_user.has_role("admin"):
         return redirect(url_for("core.index"))
     if not apoderado and current_user.has_role("apoderado"):
-        return redirect(url_for(".wizp1"))
+        return redirect(url_for("apoderado_cliente.wizp1"))
     return render_template("apoderado/dashboard.html", apoderado=apoderado)
 
 
@@ -46,7 +46,7 @@ def wizp1():
 
         db.session.commit()
 
-        return redirect(url_for(".wizp2"))
+        return redirect(url_for("apoderado_cliente.wizp2"))
 
     return render_template("apoderado/wizard-paso1.html")
 
@@ -79,7 +79,7 @@ def wizp2():
             db.session.add(nuevo)
             del nuevo
         db.session.commit()
-        return redirect(url_for(".wizp3"))
+        return redirect(url_for("apoderado_cliente.wizp3"))
 
     return render_template("apoderado/wizard-paso2.html", apoderado=apoderado, cursos=cursos.value)
 
@@ -148,7 +148,7 @@ def wizp3():
             }
         )
 
-        return redirect(url_for(".wizp4"))
+        return redirect(url_for("apoderado_cliente.wizp4"))
 
     return render_template("apoderado/wizard-paso3.html")
 
@@ -308,11 +308,10 @@ def ajustes():
         if phone:
             current_user.username = phone
         db.session.commit()
-        return redirect(url_for(".ajustes"))
+        return redirect(url_for("apoderado_cliente.ajustes"))
 
     return render_template(
         "core/configuracion.html",
         apoderado=apoderado,
         current_user=current_user,
-        configuracion_action=url_for(".ajustes"),
     )

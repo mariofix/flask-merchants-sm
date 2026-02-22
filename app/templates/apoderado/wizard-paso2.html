@@ -1,7 +1,7 @@
 {% extends "base-bare.html" %}
 
 {% block page_body %}
-<form class="space-y needs-validation" novalidate action="{{ url_for('.wizp2') }}" method="post">
+<form class="space-y needs-validation" novalidate action="{{ url_for('apoderado_cliente.wizp2') }}" method="post">
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <div class="container py-4">
     <div class="card card-md">
