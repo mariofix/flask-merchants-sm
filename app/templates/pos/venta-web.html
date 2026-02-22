@@ -75,10 +75,12 @@
                             <div class="text-secondary">Presenta este código en la cafeteria del colegio para confirmar tu pedido.</div>
                             <div class="mb-3 row">
                                 <!-- Codigo QR -->
+                                {% if display_code %}
                                 <div id="codigo-pago"></div>
                                 <div class="alert alert-success mt-3" role="alert">
-                                    <strong>{{ pago.integration_transaction }}</strong>
+                                    <strong>{{ display_code }}</strong>
                                 </div>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
@@ -148,10 +150,11 @@
         el.querySelector('i:last-child').className = 'ti ti-circle-check text-primary fs-4';
     }
 </script>
+{% if pago and display_code %}
 <script src="{{ url_for('static', filename='tabler/libs/qrcodejs/qrcode.min.js', v=app_version)}}"></script>
 <script>
     var qrcode = new QRCode("codigo-pago", {
-        text: "{{ pago.integration_transaction }}",
+        text: "{{ display_code }}",
         width: 300,
         height: 300,
         colorDark: "#000000",
@@ -159,6 +162,7 @@
         correctLevel: QRCode.CorrectLevel.H
     });
 </script>
+{% endif %}
 {% endblock %}
 
 
