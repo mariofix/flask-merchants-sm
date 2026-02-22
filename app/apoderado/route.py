@@ -156,7 +156,7 @@ def abono():
 @apoderado_bp.route("/abono-detalle/<string:codigo>", methods=["GET"])
 def abono_detalle(codigo):
     abono = db.session.execute(db.select(Abono).filter_by(codigo=codigo)).scalar_one_or_none()
-    pago = db.session.execute(db.select(Payment).filter_by(merchants_token=codigo)).scalar_one_or_none()
+    pago = db.session.execute(db.select(Payment).filter_by(session_id=codigo)).scalar_one_or_none()
     pago_process = None
 
     # if (

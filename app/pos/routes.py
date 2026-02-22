@@ -64,7 +64,7 @@ def valida_tag(serial: str):
 def pago_orden(orden):
     pedido = db.session.execute(db.select(Pedido).filter_by(codigo=orden)).scalar_one_or_none()
     resumen = []
-    pago = db.session.execute(db.select(Payment).filter_by(merchants_token=orden)).scalar_one_or_none()
+    pago = db.session.execute(db.select(Payment).filter_by(session_id=orden)).scalar_one_or_none()
     if pedido:
         for orden in pedido.extra_attrs:
             menu = db.session.execute(db.select(MenuDiario).filter_by(slug=orden["slug"])).scalar_one_or_none()
