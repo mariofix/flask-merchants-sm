@@ -23,10 +23,12 @@ def index():
     return render_template("pos/dashboard.html", alumnos_sin_tag=alumnos_sin_tag)
 
 
-def creaOrden(payload):
+def creaOrden(payload, apoderado_id=None):
     orden = Pedido()
     orden.extra_attrs = payload
     orden.precio_total = Decimal(0)
+    if apoderado_id is not None:
+        orden.apoderado_id = apoderado_id
     db.session.add(orden)
     db.session.commit()
 
@@ -38,7 +40,15 @@ def ordenweb():
     payload = request.get_json(force=True)
     ordenes = payload["purchases"]
 
-    nueva_orden = creaOrden(ordenes)
+    apoderado_id = None
+    if current_user.is_authenticated:
+        apoderado = db.session.execute(
+            db.select(Apoderado).filter_by(usuario=current_user)
+        ).scalar_one_or_none()
+        if apoderado:
+            apoderado_id = apoderado.id
+
+    nueva_orden = creaOrden(ordenes, apoderado_id=apoderado_id)
 
     return jsonify(
         {
