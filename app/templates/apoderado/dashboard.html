@@ -12,7 +12,7 @@
       <!-- Page title actions -->
       <div class="col-auto ms-auto">
         <div class="btn-list">
-          {% if apoderado.saldo_cuenta < apoderado.limite_notificacion %}
+          {% if apoderado.saldo_cuenta is not none and apoderado.saldo_cuenta < apoderado.limite_notificacion %}
           <span class="btn btn-pink btn-5">
             {% else %}
             <span class="btn btn-success btn-5">
@@ -37,7 +37,7 @@
           <div class="row gy-3">
             <div class="col-12 col-sm d-flex flex-column">
               <h3 class="h2">Hola {{ apoderado.nombre }}!</h3>
-              {% if apoderado.saldo_cuenta < apoderado.limite_notificacion %}
+              {% if apoderado.saldo_cuenta is not none and apoderado.saldo_cuenta < apoderado.limite_notificacion %}
               <p class="text-danger">Tu saldo está bajo el umbral de ${{ apoderado.limite_notificacion }} definido en tu configuracion.</p>
               <p><a href="#" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modal-abono" aria-label="Nuevo Abono">Abonar</a></p>
               {% endif %}
@@ -70,7 +70,7 @@
                   <div class="d-flex align-items-baseline">
                     <div class="h3 me-2">${{ apoderado.saldo_cuenta}}</div>
                     <div class="me-auto">
-                      {% if apoderado.saldo_cuenta < apoderado.limite_notificacion %}
+                      {% if apoderado.saldo_cuenta is not none and apoderado.saldo_cuenta < apoderado.limite_notificacion %}
                       <span class="text-red d-inline-flex align-items-center lh-1">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-alert-octagon">
                           <path stroke="none" d="M0 0h24v24H0z" fill="none" />
