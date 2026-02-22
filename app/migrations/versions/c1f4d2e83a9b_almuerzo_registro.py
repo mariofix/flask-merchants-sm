@@ -28,7 +28,7 @@ def upgrade():
         sa.Column("nota", sa.String(length=255), nullable=True),
         sa.Column(
             "estado",
-            sa.Enum("PENDIENTE", "ENTREGADO_PARCIAL", "ENTREGADO", "CANCELADO", name="estadoalmuerzo"),
+            sa.Enum("PENDIENTE", "ENTREGADO", "CANCELADO", name="estadoalmuerzo"),
             nullable=False,
         ),
         sa.Column("fecha_entrega", sa.DateTime(), nullable=True),

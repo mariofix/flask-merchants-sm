@@ -31,7 +31,6 @@ class EstadoPedido(PyEnum):
 
 class EstadoAlmuerzo(PyEnum):
     PENDIENTE = "pendiente"
-    ENTREGADO_PARCIAL = "entregado-parcial"
     ENTREGADO = "entregado"
     CANCELADO = "cancelado"
 
