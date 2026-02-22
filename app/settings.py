@@ -74,17 +74,24 @@ MAIL_PASSWORD = ""
 MAIL_TIMEOUT = 5
 MAIL_USE_LOCALTIME = True
 
-# MERCHANTS_ALLOWED_INTEGRATIONS = [
-#     "merchants.integrations.KhipuProvider",
-#     "merchants.integrations.CasinoProvider",
-# ]
-# MERCHANTS_PAYMENT_MODEL = "model.store.Payment"
-# MERCHANTS_INTEGRATION_MODEL = "model.store.Integration"
-# MERCHANTS_INTEGRATIONS = {
-#     "test_provider": {
-#         "class": "app.extensions.TestProvider",
-#     }
-# }
+# Payment provider authentication
+# These can be overridden by environment variables prefixed with FLASK_
+# e.g. export FLASK_KHIPU_API_KEY=your-real-key
+KHIPU_API_KEY = ""
+
+# UI display labels shown in the payment modal (modal-abono).
+# Keys must match the provider key registered in flask_merchants.
+# Falls back to provider.name / provider.description when a key is absent.
+MERCHANTS_PROVIDER_LABELS = {
+    "khipu": {
+        "title": "Transferencia Electrónica",
+        "subtitle": "Validación automática de abonos, procesado por Khipu",
+    },
+    "cafeteria": {
+        "title": "Efectivo/Tarjetas",
+        "subtitle": "Presencialmente en la Cafeteria del colegio",
+    },
+}
 
 # STORE_SOCIALS = {
 #     "youtube": "https://www.youtube.com/channel/channel-name",

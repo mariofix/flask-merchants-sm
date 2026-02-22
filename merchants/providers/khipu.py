@@ -51,9 +51,13 @@ class KhipuProvider(Provider):
         self,
         api_key: str,
         *,
+        key: str | None = None,
+        name: str | None = None,
+        description: str | None = None,
         subject: str = "Order",
         notify_url: str = "",
     ) -> None:
+        super().__init__(key=key, name=name, description=description)
         self._api_key = api_key
         self._subject = subject
         self._notify_url = notify_url

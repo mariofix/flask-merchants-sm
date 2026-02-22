@@ -442,34 +442,22 @@
               </div>
               <label class="form-label required">Forma de Pago</label>
               <div class="form-selectgroup-boxes row mb-3">
+                {% for provider in payment_providers %}
                 <div class="col-lg-6">
                   <label class="form-selectgroup-item">
-                    <input type="radio" name="forma-de-pago" value="khipu" class="form-selectgroup-input" />
+                    <input type="radio" name="forma-de-pago" value="{{ provider.key }}" class="form-selectgroup-input" {% if loop.first %}checked{% endif %} />
                     <span class="form-selectgroup-label d-flex align-items-center p-3">
                       <span class="me-3">
                         <span class="form-selectgroup-check"></span>
                       </span>
                       <span class="form-selectgroup-label-content">
-                        <span class="form-selectgroup-title strong mb-1">Transferencia Electrónica</span>
-                        <span class="d-block text-secondary">Validación automática de abonos, procesado por Khipu</span>
+                        <span class="form-selectgroup-title strong mb-1">{{ provider.title }}</span>
+                        <span class="d-block text-secondary">{{ provider.subtitle }}</span>
                       </span>
                     </span>
                   </label>
                 </div>
-                <div class="col-lg-6">
-                  <label class="form-selectgroup-item">
-                    <input type="radio" name="forma-de-pago" value="cafeteria" class="form-selectgroup-input" checked />
-                    <span class="form-selectgroup-label d-flex align-items-center p-3">
-                      <span class="me-3">
-                        <span class="form-selectgroup-check"></span>
-                      </span>
-                      <span class="form-selectgroup-label-content">
-                        <span class="form-selectgroup-title strong mb-1">Efectivo/Tarjetas</span>
-                        <span class="d-block text-secondary">Presencialmente en la Cafeteria del colegio</span>
-                      </span>
-                    </span>
-                  </label>
-                </div>
+                {% endfor %}
               </div>
             </div>
             <div class="modal-footer">

@@ -1,5 +1,6 @@
 import os
 
+import merchants as _merchants
 from dotenv import load_dotenv
 from flask import Flask, url_for
 from flask_admin import helpers as admin_helpers
@@ -14,6 +15,7 @@ from .extensions import babel, csrf, flask_merchants, mail
 from .extensions.admin import admin
 from .model import *  # noqa: F403
 from .pos.routes import pos_bp
+from .providers.cafeteria import CafeteriaProvider
 from .routes import core_bp
 from .tasks import MyMailUtil
 from .version import __version__
@@ -60,14 +62,36 @@ def create_app():
             get_url=url_for,
         )
 
+    # Build payment providers from config/env
+    providers = []
+    khipu_api_key = app.config.get("KHIPU_API_KEY", "")
+    if khipu_api_key:
+        # Only register Khipu when a real API key is configured.
+        from merchants.providers.khipu import KhipuProvider
+        providers.append(KhipuProvider(api_key=khipu_api_key))
+    providers.append(CafeteriaProvider())
+
+    # merchants
+    flask_merchants.init_app(app=app, db=db, models=[Payment], admin=admin, providers=providers)
+
+    # Build the providers context once (providers don't change after init).
+    _labels = app.config.get("MERCHANTS_PROVIDER_LABELS", {})
+    _providers_ctx = []
+    for p in _merchants.describe_providers():
+        label = _labels.get(p.key, {})
+        _providers_ctx.append({
+            "key": p.key,
+            "title": label.get("title", p.name),
+            "subtitle": label.get("subtitle", p.description),
+        })
+
     @app.context_processor
     def default_data():
         return {
             "app_version": __version__,
+            "payment_providers": _providers_ctx,
         }
 
-    # merchants
-    flask_merchants.init_app(app=app, db=db, models=[Payment], admin=admin)
     app.register_blueprint(core_bp)
     app.register_blueprint(apoderado_bp, url_prefix="/apoderado")
     app.register_blueprint(pos_bp, url_prefix="/pos")
