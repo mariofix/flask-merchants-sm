@@ -209,6 +209,94 @@ def send_copia_notificaciones_abono(self, abono_info: dict):
 
 
 @shared_task(bind=True, ignore_result=False)
+def send_notificacion_abono_creado(self, abono_info: dict):
+    """Notifica al apoderado que su abono fue recibido y le entrega el código de pago.
+    También notifica a los administradores que hay un abono pendiente con el código generado."""
+    with current_app.app_context():
+        from .database import db
+        from .model import Payment, Role
+
+        pago = db.session.execute(db.select(Payment).filter_by(session_id=abono_info["codigo"])).scalar_one_or_none()
+        display_code = _get_display_code(pago)
+        abono_url = url_for("apoderado_cliente.abono_detalle", codigo=abono_info["codigo"], _external=True)
+        from_email = _get_from_email()
+
+        # --- Email al apoderado ---
+        subject_apoderado = f"Solicitud de abono recibida – ${abono_info['monto']:,}"
+        body_apoderado = (
+            f"Hola {abono_info['apoderado_nombre']},\n\n"
+            f"Tu solicitud de abono ha sido recibida.\n\n"
+            f"Código: {abono_info['codigo'][:8].upper()}\n"
+            f"Monto: ${abono_info['monto']:,}\n"
+            f"Forma de pago: {abono_info['forma_pago']}\n"
+        )
+        if display_code:
+            body_apoderado += f"\nPresenta este código en la cafetería del colegio: {display_code}\n"
+        body_apoderado += f"\nVer detalle: {abono_url}\n\nSaludos,\nCafetería SaborMirandiano"
+        html_apoderado = render_template(
+            "core/emails/nuevo_abono_apoderado.html",
+            nombre_apoderado=abono_info["apoderado_nombre"],
+            monto=abono_info["monto"],
+            forma_pago=abono_info["forma_pago"],
+            codigo=abono_info["codigo"][:8].upper(),
+            display_code=display_code,
+            saldo_cuenta=abono_info.get("saldo_cuenta", 0),
+            abono_url=abono_url,
+        )
+        with mail.get_connection() as connection:
+            msg = EmailMultiAlternatives(
+                subject=subject_apoderado,
+                body=body_apoderado,
+                from_email=from_email,
+                to=[abono_info["apoderado_email"]],
+                connection=connection,
+            )
+            msg.attach_alternative(html_apoderado, "text/html")
+            msg.send()
+
+        # --- Email a los administradores (código generado, abono pendiente) ---
+        admin_role = db.session.execute(db.select(Role).filter_by(name="admin")).scalar_one_or_none()
+        admin_emails = [u.email for u in admin_role.users if u.email] if admin_role else []
+        if admin_emails:
+            subject_admin = f"Nuevo abono pendiente – {abono_info['apoderado_nombre']} ${abono_info['monto']:,}"
+            body_admin = (
+                f"Se ha generado un código de abono en la cafetería.\n\n"
+                f"Apoderado: {abono_info['apoderado_nombre']} ({abono_info['apoderado_email']})\n"
+                f"Código abono: {abono_info['codigo']}\n"
+                f"Monto: ${abono_info['monto']:,}\n"
+                f"Forma de pago: {abono_info['forma_pago']}\n"
+            )
+            if display_code:
+                body_admin += f"Código de pago: {display_code}\n"
+            body_admin += f"\nVer detalle: {abono_url}"
+            html_admin = render_template(
+                "core/emails/nuevo_abono_admin.html",
+                nombre_apoderado=abono_info["apoderado_nombre"],
+                email_apoderado=abono_info["apoderado_email"],
+                monto=abono_info["monto"],
+                forma_pago=abono_info["forma_pago"],
+                codigo=abono_info["codigo"],
+                descripcion=abono_info.get("descripcion"),
+                saldo_cuenta=abono_info.get("saldo_cuenta", 0),
+                pago_proveedor=pago.provider if pago else None,
+                pago_estado=pago.state if pago else None,
+                display_code=display_code,
+                session_id=pago.session_id if pago else None,
+                abono_url=abono_url,
+            )
+            with mail.get_connection() as connection:
+                msg = EmailMultiAlternatives(
+                    subject=subject_admin,
+                    body=body_admin,
+                    from_email=from_email,
+                    to=admin_emails,
+                    connection=connection,
+                )
+                msg.attach_alternative(html_admin, "text/html")
+                msg.send()
+
+
+@shared_task(bind=True, ignore_result=False)
 def send_notificacion_admin_nuevo_apoderado(self, apoderado_info: dict):
     """Notifica a los administradores sobre un nuevo apoderado registrado."""
     with current_app.app_context():

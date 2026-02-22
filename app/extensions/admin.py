@@ -155,6 +155,51 @@ class AbonoAdminView(SecureModelView):
     column_list = ["codigo", "apoderado", "monto", "forma_pago", "descripcion", "created"]
 
     @action(
+        "aprobar_abono",
+        "Aprobar Abono",
+        "¿Aprobar los abonos seleccionados? Esto actualizará el saldo del apoderado.",
+    )
+    def action_aprobar_abono(self, ids):
+        from ..tasks import send_comprobante_abono, send_notificacion_admin_abono, send_copia_notificaciones_abono
+        from ..model import Payment
+
+        count = 0
+        for abono_id in ids:
+            abono = db.session.get(Abono, int(abono_id))
+            if not abono:
+                continue
+            pago = db.session.execute(db.select(Payment).filter_by(session_id=abono.codigo)).scalar_one_or_none()
+            if not (pago and pago.state == "processing"):
+                flash(f"Abono {abono.codigo[:8].upper()} no está pendiente de aprobación.", "warning")
+                continue
+            pago.state = "succeeded"
+            saldo_actual = abono.apoderado.saldo_cuenta or 0
+            nuevo_saldo = saldo_actual + int(abono.monto)
+            abono.apoderado.saldo_cuenta = nuevo_saldo
+            db.session.commit()
+
+            abono_info = {
+                "id": abono.id,
+                "codigo": abono.codigo,
+                "monto": int(abono.monto),
+                "forma_pago": abono.forma_pago,
+                "descripcion": abono.descripcion,
+                "apoderado_nombre": abono.apoderado.nombre,
+                "apoderado_email": abono.apoderado.usuario.email,
+                "saldo_cuenta": nuevo_saldo,
+                "copia_notificaciones": abono.apoderado.copia_notificaciones,
+            }
+            # Admins are notified at code creation for cafeteria; only notify on approval for other providers.
+            if abono.forma_pago != "cafeteria":
+                send_notificacion_admin_abono.delay(abono_info=abono_info)
+            if abono.apoderado.comprobantes_transferencia:
+                send_comprobante_abono.delay(abono_info=abono_info)
+                if abono.apoderado.copia_notificaciones:
+                    send_copia_notificaciones_abono.delay(abono_info=abono_info)
+            count += 1
+        flash(f"{count} abono(s) aprobado(s) exitosamente.")
+
+    @action(
         "enviar_comprobante",
         "Enviar Comprobante",
         "¿Enviar comprobante de pago a los apoderados seleccionados?",
