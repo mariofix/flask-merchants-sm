@@ -120,6 +120,36 @@ def pago_orden(orden):
             if forma_pago == "cafeteria":
                 flask_merchants.update_state(session.session_id, "processing")
             db.session.commit()
+
+            # Enqueue apoderado notification (no admin copy)
+            from .tasks import send_notificacion_pedido_pendiente
+            pedido_url = url_for("pos.pago_orden", orden=pedido.codigo, _external=True)
+            send_notificacion_pedido_pendiente.delay({
+                "pedido_codigo": pedido.codigo,
+                "session_id": session.session_id,
+                "forma_pago": forma_pago,
+                "total": int(total),
+                "redirect_url": session.redirect_url if forma_pago != "cafeteria" else "",
+                "pedido_url": pedido_url,
+                "items": [
+                    {
+                        "descripcion": item["detalle_menu"].descripcion if item.get("detalle_menu") else item["menu"],
+                        "fecha": item["fecha"],
+                        "nota": item.get("nota", ""),
+                        "precio": int(item["detalle_menu"].precio) if item.get("detalle_menu") else 0,
+                        "alumnos_str": ", ".join(
+                            a.nombre if hasattr(a, "nombre") else a.get("nombre", "")
+                            for a in item.get("alumnos", [])
+                        ),
+                        "alumnos": [
+                            {"id": a.id if hasattr(a, "id") else a.get("id")}
+                            for a in item.get("alumnos", [])
+                        ],
+                    }
+                    for item in resumen
+                ],
+            })
+
             return redirect(url_for("pos.pago_orden", orden=pedido.codigo))
 
         if pedido.codigo_merchants:

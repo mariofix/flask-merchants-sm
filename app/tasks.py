@@ -354,6 +354,105 @@ def send_notificacion_abono_creado(self, abono_info: dict):
 
 
 @shared_task(bind=True, ignore_result=False)
+def send_notificacion_pedido_pendiente(self, pedido_info: dict):
+    """Notifica al apoderado que su pedido fue recibido y está pendiente de pago.
+
+    Si la forma de pago es cafetería se incluyen instrucciones y el código QR.
+    Si el proveedor genera una URL de redirección (p. ej. Khipu) se incluye un
+    botón para completar el pago.  No se envían copias a administradores.
+    """
+    with current_app.app_context():
+        from .database import db
+        from .model import Alumno, Apoderado, Payment
+
+        # Resolve apoderados from alumno IDs stored in the pedido items
+        alumno_ids = [
+            int(a["id"])
+            for item in pedido_info.get("items", [])
+            for a in item.get("alumnos", [])
+        ]
+        apoderados: dict[int, Apoderado] = {}
+        if alumno_ids:
+            alumnos = (
+                db.session.execute(db.select(Alumno).filter(Alumno.id.in_(alumno_ids)))
+                .scalars()
+                .all()
+            )
+            for alumno in alumnos:
+                ap = alumno.apoderado
+                if ap and ap.id not in apoderados:
+                    apoderados[ap.id] = ap
+
+        if not apoderados:
+            return
+
+        # Resolve payment for display_code
+        pago = db.session.execute(
+            db.select(Payment).filter_by(session_id=pedido_info.get("session_id", ""))
+        ).scalar_one_or_none()
+        display_code = _get_display_code(pago)
+        redirect_url = pedido_info.get("redirect_url", "")
+        forma_pago = pedido_info.get("forma_pago", "")
+        total = pedido_info.get("total", 0)
+        pedido_codigo = pedido_info.get("pedido_codigo", "")
+        pedido_codigo_short = pedido_codigo[:8].upper()
+        pedido_url = pedido_info.get("pedido_url", "")
+
+        from_email = _get_from_email()
+
+        for apoderado in apoderados.values():
+            if not apoderado.notificacion_compra:
+                continue
+            email = apoderado.usuario.email if apoderado.usuario else None
+            if not email:
+                continue
+
+            subject = f"Pedido recibido #{pedido_codigo_short} – ${int(total):,}"
+            body = (
+                f"Hola {apoderado.nombre},\n\n"
+                f"Hemos recibido tu pedido de menús por un total de ${int(total):,}.\n\n"
+                f"N° de pedido: {pedido_codigo_short}\n"
+                f"Forma de pago: {forma_pago}\n"
+            )
+            if forma_pago == "cafeteria" and display_code:
+                body += (
+                    f"\nDirígete a la cafetería del colegio y presenta el código: {display_code}\n"
+                )
+            elif redirect_url:
+                body += f"\nCompleta tu pago en: {redirect_url}\n"
+            body += f"\nVer detalle: {pedido_url}\n\nSaludos,\nCafetería Sabor Mirandiano"
+
+            html = render_template(
+                "core/emails/order-nueva-compra/compiled.html",
+                nombre_apoderado=apoderado.nombre,
+                pedido_codigo=pedido_codigo_short,
+                items=pedido_info.get("items", []),
+                total=total,
+                forma_pago=forma_pago,
+                display_code=display_code,
+                redirect_url=redirect_url,
+                pedido_url=pedido_url,
+            )
+            with mail.get_connection() as connection:
+                msg = EmailMultiAlternatives(
+                    subject=subject,
+                    body=body,
+                    from_email=from_email,
+                    to=[email],
+                    connection=connection,
+                )
+                msg.attach_alternative(html, "text/html")
+                msg.send()
+                merchants_audit.info(
+                    "email_sent: from=%r to=%r subject=%r",
+                    from_email,
+                    [email],
+                    subject,
+                )
+
+
+
+@shared_task(bind=True, ignore_result=False)
 def send_notificacion_admin_nuevo_apoderado(self, apoderado_info: dict):
     """Notifica a los administradores sobre un nuevo apoderado registrado."""
     with current_app.app_context():
