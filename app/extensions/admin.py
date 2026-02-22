@@ -12,7 +12,19 @@ from slugify import slugify
 from flask_security import current_user  # type: ignore
 from .. import settings
 from ..database import db
-from ..model import Alumno, Apoderado, MenuDiario, OpcionMenuDia, Pedido, Plato, Role, Settings, User, Abono
+from ..model import (
+    Alumno,
+    Apoderado,
+    MenuDiario,
+    OpcionMenuDia,
+    Pedido,
+    Plato,
+    Role,
+    Settings,
+    User,
+    Abono,
+    OrdenCasino,
+)
 from wtforms import SelectMultipleField
 from flask_admin.form import Select2Widget
 from wtforms import StringField
@@ -254,6 +266,8 @@ admin.add_view(SecureModelView(OpcionMenuDia, db.session, category="Casino", nam
 admin.add_menu_item(MenuDivider(), target_category="Casino")
 admin.add_view(SecureModelView(Pedido, db.session, category="Casino", name="Pedidos"))
 admin.add_view(AbonoAdminView(Abono, db.session, category="Casino", name="Abonos"))
+admin.add_view(SecureModelView(OrdenCasino, db.session, category="Casino", name="Ordenes"))
+
 
 admin.add_view(UserView(User, db.session, category="Usuarios y Roles", name="Usuarios"))
 admin.add_view(SecureModelView(Role, db.session, category="Usuarios y Roles", name="Roles"))
