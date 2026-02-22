@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from decimal import Decimal
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 
 from merchants.models import CheckoutSession, PaymentState, PaymentStatus, WebhookEvent
 
@@ -41,6 +41,12 @@ class ProviderInfo(BaseModel):
     description: str = ""
     url: str = ""
 
+    @model_validator(mode="after")
+    def _set_default_description(self) -> "ProviderInfo":
+        if not self.description:
+            self.description = self.name
+        return self
+
 
 class Provider(ABC):
     """Abstract base class for payment provider integrations."""
@@ -57,6 +63,17 @@ class Provider(ABC):
     description: str = ""
     #: Documentation or homepage URL.
     url: str = ""
+
+    def __init__(
+        self,
+        *,
+        key: str | None = None,
+        name: str | None = None,
+        description: str | None = None,
+    ) -> None:
+        for attr, value in (("key", key), ("name", name), ("description", description)):
+            if value is not None:
+                setattr(self, attr, value)
 
     def get_info(self) -> ProviderInfo:
         """Return a :class:`ProviderInfo` populated from this provider's class attributes."""
