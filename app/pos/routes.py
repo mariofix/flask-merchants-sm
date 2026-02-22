@@ -133,12 +133,23 @@ def completa_abono(codigo):
     ):
         pago.state = "succeeded"
         saldo_actual = abono.apoderado.saldo_cuenta or 0
-        abono.apoderado.saldo_cuenta = saldo_actual + int(abono.monto)
+        nuevo_saldo = saldo_actual + int(abono.monto)
+        abono.apoderado.saldo_cuenta = nuevo_saldo
         db.session.commit()
 
-        send_notificacion_admin_abono.delay(abono_id=abono.id)
+        abono_info = {
+            "id": abono.id,
+            "codigo": abono.codigo,
+            "monto": int(abono.monto),
+            "forma_pago": abono.forma_pago,
+            "descripcion": abono.descripcion,
+            "apoderado_nombre": abono.apoderado.nombre,
+            "apoderado_email": abono.apoderado.usuario.email,
+            "saldo_cuenta": nuevo_saldo,
+        }
+        send_notificacion_admin_abono.delay(abono_info=abono_info)
         if abono.apoderado.comprobantes_transferencia:
-            send_comprobante_abono.delay(abono_id=abono.id)
+            send_comprobante_abono.delay(abono_info=abono_info)
 
     return redirect(url_for("apoderado_cliente.abono_detalle", codigo=codigo))
 

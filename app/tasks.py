@@ -45,39 +45,34 @@ def send_flask_mail(*args, **kwargs):
 
 
 @shared_task(bind=True, ignore_result=False)
-def send_comprobante_abono(self, abono_id: int):
+def send_comprobante_abono(self, abono_info: dict):
     """Envía comprobante de abono al apoderado."""
     with current_app.app_context():
         from .database import db
-        from .model import Abono, Payment
+        from .model import Payment
 
-        abono = db.session.get(Abono, abono_id)
-        if not abono:
-            return
-        pago = db.session.execute(db.select(Payment).filter_by(session_id=abono.codigo)).scalar_one_or_none()
-        apoderado = abono.apoderado
-        email = apoderado.usuario.email
+        pago = db.session.execute(db.select(Payment).filter_by(session_id=abono_info["codigo"])).scalar_one_or_none()
         display_code = _get_display_code(pago)
-        abono_url = url_for("apoderado_cliente.abono_detalle", codigo=abono.codigo, _external=True)
-        subject = f"Comprobante de abono #{abono.codigo[:8].upper()}"
+        abono_url = url_for("apoderado_cliente.abono_detalle", codigo=abono_info["codigo"], _external=True)
+        subject = f"Comprobante de abono #{abono_info['codigo'][:8].upper()}"
         body = (
-            f"Hola {apoderado.nombre},\n\n"
+            f"Hola {abono_info['apoderado_nombre']},\n\n"
             f"Tu abono ha sido procesado exitosamente.\n\n"
-            f"Código: {abono.codigo[:8].upper()}\n"
-            f"Monto: ${int(abono.monto):,}\n"
-            f"Forma de pago: {abono.forma_pago}\n"
+            f"Código: {abono_info['codigo'][:8].upper()}\n"
+            f"Monto: ${abono_info['monto']:,}\n"
+            f"Forma de pago: {abono_info['forma_pago']}\n"
         )
         if display_code:
             body += f"Código de pago: {display_code}\n"
-        body += f"\nNuevo saldo en cuenta: ${int(apoderado.saldo_cuenta or 0):,}\n\nSaludos,\nCafetería SaborMirandiano"
+        body += f"\nNuevo saldo en cuenta: ${abono_info['saldo_cuenta']:,}\n\nSaludos,\nCafetería SaborMirandiano"
         html = render_template(
             "core/emails/nuevo_abono_apoderado.html",
-            nombre_apoderado=apoderado.nombre,
-            monto=abono.monto,
-            forma_pago=abono.forma_pago,
-            codigo=abono.codigo[:8].upper(),
+            nombre_apoderado=abono_info["apoderado_nombre"],
+            monto=abono_info["monto"],
+            forma_pago=abono_info["forma_pago"],
+            codigo=abono_info["codigo"][:8].upper(),
             display_code=display_code,
-            saldo_cuenta=apoderado.saldo_cuenta or 0,
+            saldo_cuenta=abono_info["saldo_cuenta"],
             abono_url=abono_url,
         )
         from_email = _get_from_email()
@@ -86,7 +81,7 @@ def send_comprobante_abono(self, abono_id: int):
                 subject=subject,
                 body=body,
                 from_email=from_email,
-                to=[email],
+                to=[abono_info["apoderado_email"]],
                 connection=connection,
             )
             msg.attach_alternative(html, "text/html")
@@ -94,17 +89,13 @@ def send_comprobante_abono(self, abono_id: int):
 
 
 @shared_task(bind=True, ignore_result=False)
-def send_notificacion_admin_abono(self, abono_id: int):
+def send_notificacion_admin_abono(self, abono_info: dict):
     """Notifica a los administradores sobre un abono aprobado."""
     with current_app.app_context():
         from .database import db
-        from .model import Abono, Payment, Role, User
+        from .model import Payment, Role
 
-        abono = db.session.get(Abono, abono_id)
-        if not abono:
-            return
-        pago = db.session.execute(db.select(Payment).filter_by(session_id=abono.codigo)).scalar_one_or_none()
-        apoderado = abono.apoderado
+        pago = db.session.execute(db.select(Payment).filter_by(session_id=abono_info["codigo"])).scalar_one_or_none()
 
         admin_role = db.session.execute(db.select(Role).filter_by(name="admin")).scalar_one_or_none()
         if not admin_role:
@@ -114,15 +105,15 @@ def send_notificacion_admin_abono(self, abono_id: int):
             return
 
         display_code = _get_display_code(pago)
-        abono_url = url_for("apoderado_cliente.abono_detalle", codigo=abono.codigo, _external=True)
-        subject = f"Abono aprobado – {apoderado.nombre} ${int(abono.monto):,}"
+        abono_url = url_for("apoderado_cliente.abono_detalle", codigo=abono_info["codigo"], _external=True)
+        subject = f"Abono aprobado – {abono_info['apoderado_nombre']} ${abono_info['monto']:,}"
         body = (
             f"Se aprobó un abono en la cafetería.\n\n"
-            f"Apoderado: {apoderado.nombre} ({apoderado.usuario.email})\n"
-            f"Código abono: {abono.codigo}\n"
-            f"Monto: ${int(abono.monto):,}\n"
-            f"Forma de pago: {abono.forma_pago}\n"
-            f"Descripción: {abono.descripcion}\n"
+            f"Apoderado: {abono_info['apoderado_nombre']} ({abono_info['apoderado_email']})\n"
+            f"Código abono: {abono_info['codigo']}\n"
+            f"Monto: ${abono_info['monto']:,}\n"
+            f"Forma de pago: {abono_info['forma_pago']}\n"
+            f"Descripción: {abono_info['descripcion']}\n"
         )
         if pago:
             body += (
@@ -132,16 +123,16 @@ def send_notificacion_admin_abono(self, abono_id: int):
                 f"  Código de pago: {display_code}\n"
                 f"  Session ID: {pago.session_id}\n"
             )
-        body += f"\nSaldo actual del apoderado: ${int(apoderado.saldo_cuenta or 0):,}"
+        body += f"\nSaldo actual del apoderado: ${abono_info['saldo_cuenta']:,}"
         html = render_template(
             "core/emails/nuevo_abono_admin.html",
-            nombre_apoderado=apoderado.nombre,
-            email_apoderado=apoderado.usuario.email,
-            monto=abono.monto,
-            forma_pago=abono.forma_pago,
-            codigo=abono.codigo,
-            descripcion=abono.descripcion,
-            saldo_cuenta=apoderado.saldo_cuenta or 0,
+            nombre_apoderado=abono_info["apoderado_nombre"],
+            email_apoderado=abono_info["apoderado_email"],
+            monto=abono_info["monto"],
+            forma_pago=abono_info["forma_pago"],
+            codigo=abono_info["codigo"],
+            descripcion=abono_info["descripcion"],
+            saldo_cuenta=abono_info["saldo_cuenta"],
             pago_proveedor=pago.provider if pago else None,
             pago_estado=pago.state if pago else None,
             display_code=display_code,
