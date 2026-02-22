@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import logging
+import os
+from logging.handlers import TimedRotatingFileHandler
 from typing import Any
 
 import merchants
@@ -10,7 +13,42 @@ from merchants.providers.dummy import DummyProvider
 from flask_merchants.views import create_blueprint
 from flask_merchants.version import __version__
 
-__all__ = ["FlaskMerchants"]
+__all__ = ["FlaskMerchants", "merchants_audit"]
+
+# ---------------------------------------------------------------------------
+# Audit logger – writes one rotating file per day, keeps 14 days of history.
+# File name format: logs/merchants_audit.YYYY-MM-DD.log
+# ---------------------------------------------------------------------------
+
+def _setup_audit_logger(log_dir: str = "logs") -> logging.Logger:
+    """Return the ``merchants_audit`` logger, configuring it on first call."""
+    logger = logging.getLogger("merchants_audit")
+    if logger.handlers:
+        return logger
+
+    logger.setLevel(logging.INFO)
+    os.makedirs(log_dir, exist_ok=True)
+
+    base_path = os.path.join(log_dir, "merchants_audit.log")
+    handler = TimedRotatingFileHandler(
+        base_path,
+        when="midnight",
+        interval=1,
+        backupCount=14,
+        encoding="utf-8",
+        utc=False,
+    )
+    # Append the date to the rotated files: merchants_audit.log.YYYY-MM-DD
+    handler.suffix = "%Y-%m-%d"
+    handler.setFormatter(
+        logging.Formatter("%(asctime)s [%(levelname)s] %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
+    )
+    logger.addHandler(handler)
+    logger.propagate = False
+    return logger
+
+
+merchants_audit: logging.Logger = _setup_audit_logger()
 
 
 def _is_quart_app(app) -> bool:
