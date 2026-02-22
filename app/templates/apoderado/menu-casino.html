@@ -15,6 +15,18 @@
 
 {% block page_body %}
 <div class="container-xl">
+    <div class="alert alert-info mb-3">
+      <div class="d-flex">
+        <div>
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon alert-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12.01" y2="8"/><polyline points="11 12 12 12 12 16 13 16"/></svg>
+        </div>
+        <div>
+          Horario de compra: antes de las <strong>{{ hora_limite_pedido }}</strong> se muestran los menús del día.
+          Entre las <strong>{{ hora_limite_pedido }}</strong> y las <strong>{{ hora_limite_rezagados }}</strong> solo está disponible el Menú Rezagados.
+          Después de las <strong>{{ hora_limite_rezagados }}</strong> solo puedes comprar para el día siguiente.
+        </div>
+      </div>
+    </div>
     <div class="card">
       <div class="card-body">
         <div id="calendar-default"></div>
@@ -65,11 +77,12 @@
 <script src="{{ url_for('static', filename='tabler/libs/fullcalendar/index.global.js', v=app_version)}}"></script>
 <script>
   var calendarEl = document.getElementById("calendar-default");
+  var horaLimitePedido = "{{ hora_limite_pedido }}";
+  var horaLimiteRezagados = "{{ hora_limite_rezagados }}";
+  var today = "{{ today }}";
   calendar = null
   function obtieneMenu(dia) {
-    const baseUrl = "{{ url_for('core.consulta', dia=today) }}";
-
-    fetch(`${baseUrl}/${dia}`)
+    fetch(`/consulta/${dia}`)
       .then(response => {
         if (!response.ok) throw new Error('Error en la consulta');
         return response.text();
@@ -107,7 +120,7 @@
       buttonText: { today: "Volver a Hoy", },
       timeZone: "America/Santiago",
       validRange: {
-        start: '2026-03-02',
+        start: '{{ valid_range_start }}',
         end: '2026-12-25'
       },
       businessHours: {

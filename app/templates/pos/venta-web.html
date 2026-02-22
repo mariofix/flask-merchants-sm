@@ -65,7 +65,12 @@
                             </div>
                             {% endif %}
                         </div>
-                        <div class="fw-semibold text-nowrap">${{ "{:,.0f}".format(item.detalle_menu.precio) | replace(",", ".") }}</div>
+                        <div class="fw-semibold text-nowrap">
+                            ${{ "{:,.0f}".format(item.detalle_menu.precio * (item.alumnos | length)) | replace(",", ".") }}
+                            {% if (item.alumnos | length) > 1 %}
+                            <div class="text-muted small">${{ "{:,.0f}".format(item.detalle_menu.precio) | replace(",", ".") }} × {{ item.alumnos | length }}</div>
+                            {% endif %}
+                        </div>
                     </div>
                     {% endfor %}
                 </div>

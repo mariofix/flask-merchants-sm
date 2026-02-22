@@ -84,8 +84,18 @@ def pago_orden(orden):
                 ).scalars().all()
             }
 
+        from ..routes import get_casino_timelimits
+        _, _, menu_rezagados_cfg = get_casino_timelimits()
+
         for item in pedido.extra_attrs:
             menu = db.session.execute(db.select(MenuDiario).filter_by(slug=item["slug"])).scalar_one_or_none()
+            if menu is None and item["slug"] == menu_rezagados_cfg["slug"]:
+                from types import SimpleNamespace
+                menu = SimpleNamespace(
+                    slug=menu_rezagados_cfg["slug"],
+                    descripcion=menu_rezagados_cfg["descripcion"],
+                    precio=menu_rezagados_cfg["precio"],
+                )
             alumnos_item = [
                 alumnos_by_id.get(int(a["id"]), {"nombre": a.get("nombre", "—"), "curso": None})
                 for a in item.get("alumnos", [])
@@ -93,7 +103,11 @@ def pago_orden(orden):
             resumen.append(
                 {"fecha": item["date"], "menu": item["slug"], "nota": item["note"], "detalle_menu": menu, "alumnos": alumnos_item}
             )
-        total = sum(item["detalle_menu"].precio for item in resumen)
+        total = sum(
+            item["detalle_menu"].precio * len(item["alumnos"])
+            for item in resumen
+            if item["detalle_menu"] is not None
+        )
 
         if request.method == "POST":
             forma_pago = request.form.get("forma-de-pago", "cafeteria")
@@ -369,14 +383,24 @@ def _process_payment_completion(pedido: Pedido) -> None:
         menu = db.session.execute(
             db.select(MenuDiario).filter_by(slug=slug)
         ).scalar_one_or_none()
-        if not menu:
-            from flask_merchants import merchants_audit
-            merchants_audit.warning(
-                "ordencasino_menu_not_found: pedido=%s slug=%r date=%r",
-                pedido.codigo,
-                slug,
-                fecha_str,
-            )
+        if menu is None:
+            from ..routes import get_casino_timelimits
+            _, _, menu_rezagados_cfg = get_casino_timelimits()
+            if slug == menu_rezagados_cfg["slug"]:
+                from types import SimpleNamespace
+                menu = SimpleNamespace(
+                    slug=menu_rezagados_cfg["slug"],
+                    descripcion=menu_rezagados_cfg["descripcion"],
+                    precio=menu_rezagados_cfg["precio"],
+                )
+            else:
+                from flask_merchants import merchants_audit
+                merchants_audit.warning(
+                    "ordencasino_menu_not_found: pedido=%s slug=%r date=%r",
+                    pedido.codigo,
+                    slug,
+                    fecha_str,
+                )
 
         for alumno_data in alumnos_list:
             try:
