@@ -13,8 +13,7 @@
 {% endblock page_header -%}
 
 {% block page_body %}
-<main id="content" class="page-body">
-  <div class="container-xl">
+<div class="container-xl">
     {% if not abono %}
     <div class="alert alert-danger">Abono no encontrado.</div>
     {% else %}
@@ -143,7 +142,7 @@
     </div>
     {% endif %}
   </div>
-</main>
+</div>
 {% endblock page_body %}
 
 {% block page_scripts %}
