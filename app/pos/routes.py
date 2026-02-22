@@ -120,7 +120,7 @@ def casino():
 @pos_bp.route("/completa-abono/<string:codigo>")
 def completa_abono(codigo):
     from flask_security import current_user, roles_accepted
-    from ..tasks import send_comprobante_abono, send_notificacion_admin_abono
+    from ..tasks import send_comprobante_abono, send_notificacion_admin_abono, send_copia_notificaciones_abono
 
     abono = db.session.execute(db.select(Abono).filter_by(codigo=codigo)).scalar_one_or_none()
     pago = db.session.execute(db.select(Payment).filter_by(session_id=codigo)).scalar_one_or_none()
@@ -146,10 +146,13 @@ def completa_abono(codigo):
             "apoderado_nombre": abono.apoderado.nombre,
             "apoderado_email": abono.apoderado.usuario.email,
             "saldo_cuenta": nuevo_saldo,
+            "copia_notificaciones": abono.apoderado.copia_notificaciones,
         }
         send_notificacion_admin_abono.delay(abono_info=abono_info)
         if abono.apoderado.comprobantes_transferencia:
             send_comprobante_abono.delay(abono_info=abono_info)
+            if abono.apoderado.copia_notificaciones:
+                send_copia_notificaciones_abono.delay(abono_info=abono_info)
 
     return redirect(url_for("apoderado_cliente.abono_detalle", codigo=codigo))
 
