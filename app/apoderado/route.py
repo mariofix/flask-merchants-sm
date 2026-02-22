@@ -96,7 +96,7 @@ def wizp3():
         apoderado.maximo_diario = int(monto_diario)
         apoderado.maximo_semanal = int(monto_semanal)
         apoderado.limite_notificacion = int(limite_notificaciones)
-        apoderado.saldo_cuenta = 1
+        apoderado.saldo_cuenta = 0
 
         for alumno in apoderado.alumnos:
             alumno.maximo_diario = apoderado.maximo_diario
