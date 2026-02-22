@@ -2,6 +2,7 @@ from celery import shared_task
 from flask import current_app, render_template, url_for
 from flask_mailman import EmailMultiAlternatives
 from flask_security.mail_util import MailUtil
+import re
 
 from .extensions import mail
 
@@ -11,6 +12,12 @@ def _get_display_code(pago) -> str:
     if pago is None:
         return ""
     return (pago.metadata_json or {}).get("display_code", "")
+
+
+def _parse_copia_emails(raw: str) -> list[str]:
+    """Parsea uno o varios correos separados por coma o punto y coma."""
+    emails = [e.strip() for e in re.split(r"[,;]", raw) if e.strip()]
+    return emails
 
 
 def _get_from_email() -> str:
@@ -150,3 +157,52 @@ def send_notificacion_admin_abono(self, abono_info: dict):
             )
             msg.attach_alternative(html, "text/html")
             msg.send()
+
+
+@shared_task(bind=True, ignore_result=False)
+def send_copia_notificaciones_abono(self, abono_info: dict):
+    """Envía copia del comprobante de abono a los correos de copia_notificaciones."""
+    copia_raw = abono_info.get("copia_notificaciones") or ""
+    copia_emails = _parse_copia_emails(copia_raw)
+    if not copia_emails:
+        return
+    with current_app.app_context():
+        from .database import db
+        from .model import Payment
+
+        pago = db.session.execute(db.select(Payment).filter_by(session_id=abono_info["codigo"])).scalar_one_or_none()
+        display_code = _get_display_code(pago)
+        abono_url = url_for("apoderado_cliente.abono_detalle", codigo=abono_info["codigo"], _external=True)
+        subject = f"Comprobante de abono #{abono_info['codigo'][:8].upper()}"
+        body = (
+            f"Hola {abono_info['apoderado_nombre']},\n\n"
+            f"Tu abono ha sido procesado exitosamente.\n\n"
+            f"Código: {abono_info['codigo'][:8].upper()}\n"
+            f"Monto: ${abono_info['monto']:,}\n"
+            f"Forma de pago: {abono_info['forma_pago']}\n"
+        )
+        if display_code:
+            body += f"Código de pago: {display_code}\n"
+        body += f"\nNuevo saldo en cuenta: ${abono_info['saldo_cuenta']:,}\n\nSaludos,\nCafetería SaborMirandiano"
+        html = render_template(
+            "core/emails/nuevo_abono_apoderado.html",
+            nombre_apoderado=abono_info["apoderado_nombre"],
+            monto=abono_info["monto"],
+            forma_pago=abono_info["forma_pago"],
+            codigo=abono_info["codigo"][:8].upper(),
+            display_code=display_code,
+            saldo_cuenta=abono_info["saldo_cuenta"],
+            abono_url=abono_url,
+        )
+        from_email = _get_from_email()
+        with mail.get_connection() as connection:
+            for email in copia_emails:
+                msg = EmailMultiAlternatives(
+                    subject=subject,
+                    body=body,
+                    from_email=from_email,
+                    to=[email],
+                    connection=connection,
+                )
+                msg.attach_alternative(html, "text/html")
+                msg.send()
