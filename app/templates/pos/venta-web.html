@@ -1,162 +1,196 @@
 {% extends "base.html" %}
 
+{% macro alumno_badge(alumno) %}
+{%- if alumno is mapping %}
+  <span class="badge bg-blue-lt me-1"><i class="ti ti-user me-1"></i>{{ alumno.get('nombre', '—') }}{% if alumno.get('curso') %} <span class="text-muted">({{ alumno['curso'] }})</span>{% endif %}</span>
+{%- else %}
+  <span class="badge bg-blue-lt me-1"><i class="ti ti-user me-1"></i>{{ alumno.nombre }}{% if alumno.curso %} <span class="text-muted">({{ alumno.curso }})</span>{% endif %}</span>
+{%- endif %}
+{% endmacro %}
+
 {% block page_header -%}
 <div class="page-header d-print-none text-white">
     <div class="container-xl">
         <div class="row g-2 align-items-center">
             <div class="col">
-                <!-- Page pre-title -->
-                <h1 class="page-title">Detalle Pedido Web </h1>
+                <h1 class="page-title">Detalle Pedido Web</h1>
+                {% if orden %}
+                <div class="page-pretitle font-monospace">{{ orden.codigo }}</div>
+                {% endif %}
             </div>
+            {% if orden %}
+            <div class="col-auto">
+                {% if orden.estado.value == 'pagado' %}
+                <span class="badge bg-success fs-5">✔ Pagado</span>
+                {% elif orden.estado.value == 'pendiente' %}
+                <span class="badge bg-yellow text-dark fs-5">⏳ Pendiente</span>
+                {% else %}
+                <span class="badge bg-secondary fs-5">{{ orden.estado.value | capitalize }}</span>
+                {% endif %}
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>
 {% endblock page_header -%}
 
 {% block page_body %}
-
 <div class="container-xl">
-        <div class="row row-cards">
-            <div class="row g-4">
+    <div class="row g-4">
 
-                <!-- LEFT: Order Items -->
-                <div class="col-lg-8">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">Menús en el pedido </h3>
-                            <div class="card-options">
-                                <span class="badge bg-primary-lt">{{ pedido|count }} items</span>
-                            </div>
-                        </div>
-                        <div class="card-body py-0">
-                            {% for item in pedido %}
-                            <div class="order-item">
-                                <div class="order-item-img">MP</div>
-                                <div class="flex-fill">
-                                    <div class="order-item-name">{{ item.detalle_menu.descripcion }}</div>
-                                    <div class="order-item-meta">Fecha: {{ item.fecha }} · Notas: {{ item.nota }}</div>
-                                </div>
-                                <div class="fw-semibold">${{ "{:,.0f}".format(item.detalle_menu.precio) | replace(",", ".") }}</div>
-                            </div>
-                            {% endfor %}
-                        </div>
+        <!-- LEFT: Order Items -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Menús en el pedido</h3>
+                    <div class="card-options">
+                        <span class="badge bg-primary-lt">{{ pedido|count }} items</span>
                     </div>
                 </div>
-
-                <!-- RIGHT: Summary + Payment -->
-                <div class="col-lg-4">
-
-                    <!-- Totals -->
-                    <div class="card mb-3">
-                        <div class="card-header">
-                            <h3 class="card-title">Totales</h3>
+                <div class="card-body py-0">
+                    {% for item in pedido %}
+                    <div class="order-item">
+                        <div class="order-item-img">
+                            <i class="ti ti-bowl-chopsticks fs-3 text-muted"></i>
                         </div>
-                        <div class="card-body">
-                            <table class="totals-table w-100 table table-borderless mb-0">
-                                <tbody>
-                                    <tr>
-                                        <td class="text-muted ps-0">Subtotal</td>
-                                        <td class="text-end pe-0">${{ "{:,.0f}".format(total) | replace(",", ".") }}</td>
-                                    </tr>
-                                    <tr class="grand-total">
-                                        <td class="ps-0">Total</td>
-                                        <td class="text-end pe-0 text-primary">${{ "{:,.0f}".format(total) | replace(",", ".") }}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        <div class="flex-fill">
+                            <div class="order-item-name">{{ item.detalle_menu.descripcion }}</div>
+                            <div class="order-item-meta">
+                                <i class="ti ti-calendar-event me-1"></i>{{ item.fecha }}
+                                {% if item.nota %} · <i class="ti ti-note me-1"></i>{{ item.nota }}{% endif %}
+                            </div>
+                            {% if item.alumnos %}
+                            <div class="mt-1">
+                                {% for alumno in item.alumnos %}{{ alumno_badge(alumno) }}{% endfor %}
+                            </div>
+                            {% endif %}
                         </div>
+                        <div class="fw-semibold text-nowrap">${{ "{:,.0f}".format(item.detalle_menu.precio) | replace(",", ".") }}</div>
                     </div>
-                    {% if pago %}
-                    <div class="card mb-3">
-                        <div class="card-header">
-                            <h3 class="card-title">Informacion de pago</h3>
-                        </div>
-                        <div class="card-body">
-                            <div class="text-secondary">Presenta este código en la cafeteria del colegio para confirmar tu pedido.</div>
-                            <div class="mb-3 row">
-                                <!-- Codigo QR -->
-                                {% if display_code %}
-                                <div id="codigo-pago"></div>
-                                <div class="alert alert-success mt-3" role="alert">
-                                    <strong>{{ display_code }}</strong>
-                                </div>
-                                {% endif %}
-                            </div>
-                        </div>
+                    {% endfor %}
+                </div>
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Total</span>
+                        <span class="fw-bold fs-4 text-primary">${{ "{:,.0f}".format(total) | replace(",", ".") }}</span>
                     </div>
-                    {% else %}
-                    <form class="card" action="#" method="post">
-                        <!-- Payment -->
-                        <div class="card mb-3">
-                            <div class="card-header">
-                                <h3 class="card-title">Forma de Pago</h3>
-                            </div>
-                            <div class="card-body">
-                                <div class="mb-3 row">
-                                    <div class="col">
-                                        <div class="form-selectgroup form-selectgroup-boxes d-flex flex-column">
-                                            <label class="form-selectgroup-item flex-fill">
-                                                <input type="radio" name="forma-de-pago" value="khipu" class="form-selectgroup-input" />
-                                                <div class="form-selectgroup-label d-flex align-items-center p-3">
-                                                    <div class="me-3">
-                                                        <span class="form-selectgroup-check"></span>
-                                                    </div>
-                                                    <div>
-                                                        <span class="payment payment-provider-khalti payment-xs me-2"></span>
-                                                        Transferencia Bancaria via <strong>Khipu</strong>
-                                                    </div>
-                                                </div>
-                                            </label>
-                                            <label class="form-selectgroup-item flex-fill">
-                                                <input type="radio" name="forma-de-pago" value="cafeteria" class="form-selectgroup-input" checked />
-                                                <div class="form-selectgroup-label d-flex align-items-center p-3">
-                                                    <div class="me-3">
-                                                        <span class="form-selectgroup-check"></span>
-                                                    </div>
-                                                    <div>
-                                                        <span class="payment payment-provider-mastercard payment-xs me-2"></span>
-                                                        Efectivo/Tarjetas presencialmente en la cafeteria
-                                                    </div>
-                                                </div>
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                        <button class="btn btn-primary w-100 pay-btn" type="submit">
-                            <i class="ti ti-check me-2"></i>Pagar ${{ "{:,.0f}".format(total) | replace(",", ".") }}
-                        </button>
-                    </form>
-                    {% endif %}
                 </div>
             </div>
-
         </div>
+
+        <!-- RIGHT: Payment -->
+        <div class="col-lg-4">
+            {% if pago %}
+            <div class="card">
+                <div class="card-status-top {% if pago.state == 'succeeded' %}bg-success{% elif pago.state == 'processing' %}bg-yellow{% else %}bg-secondary{% endif %}"></div>
+                <div class="card-header">
+                    <h3 class="card-title">Información de pago</h3>
+                </div>
+                <div class="card-body text-center">
+                    <p class="text-secondary small mb-3">
+                        {% if pago.state == 'processing' %}
+                            Presenta este código en la cafetería del colegio para confirmar tu pedido.
+                        {% elif pago.state == 'succeeded' %}
+                            ¡Tu pago fue confirmado!
+                        {% else %}
+                            Procesando tu solicitud...
+                        {% endif %}
+                    </p>
+
+                    {% if display_code %}
+                    <div id="codigo-pago" class="mx-auto mb-3" style="display:inline-block;"></div>
+                    <div class="alert alert-info py-2 mt-2">
+                        <div class="small text-muted mb-1">Código de pago</div>
+                        <strong class="fs-2 font-monospace">{{ display_code }}</strong>
+                    </div>
+                    {% endif %}
+
+                    <div class="mb-2">
+                        {% if pago.state == 'succeeded' %}
+                        <span class="badge bg-success fs-5">✔ Pagado</span>
+                        {% elif pago.state == 'processing' %}
+                        <span class="badge bg-yellow text-dark fs-5">⏳ Pendiente</span>
+                        {% elif pago.state == 'cancelled' %}
+                        <span class="badge bg-danger fs-5">✗ Cancelado</span>
+                        {% else %}
+                        <span class="badge bg-secondary fs-5">{{ pago.state }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="d-flex justify-content-end align-items-center">
+                        {% if pago.state == 'processing' and (current_user.has_role('admin') or current_user.has_role('pos')) %}
+                        <a href="{{ url_for('pos.completa_pedido', codigo=orden.codigo) }}" class="btn btn-success">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon me-1" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                                <path d="M5 12l5 5l10 -10" />
+                            </svg>
+                            Marcar como Pagado
+                        </a>
+                        {% elif pago.state == 'succeeded' %}
+                        <span class="text-success fw-bold">✔ Pago aprobado</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <form class="card" action="#" method="post">
+                <div class="card-header">
+                    <h3 class="card-title">Forma de Pago</h3>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="form-selectgroup form-selectgroup-boxes d-flex flex-column">
+                            <label class="form-selectgroup-item flex-fill">
+                                <input type="radio" name="forma-de-pago" value="khipu" class="form-selectgroup-input" />
+                                <div class="form-selectgroup-label d-flex align-items-center p-3">
+                                    <div class="me-3">
+                                        <span class="form-selectgroup-check"></span>
+                                    </div>
+                                    <div>
+                                        <span class="payment payment-provider-khalti payment-xs me-2"></span>
+                                        Transferencia Bancaria via <strong>Khipu</strong>
+                                    </div>
+                                </div>
+                            </label>
+                            <label class="form-selectgroup-item flex-fill">
+                                <input type="radio" name="forma-de-pago" value="cafeteria" class="form-selectgroup-input" checked />
+                                <div class="form-selectgroup-label d-flex align-items-center p-3">
+                                    <div class="me-3">
+                                        <span class="form-selectgroup-check"></span>
+                                    </div>
+                                    <div>
+                                        <span class="payment payment-provider-mastercard payment-xs me-2"></span>
+                                        Efectivo/Tarjetas presencialmente en la cafetería
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <div class="card-footer">
+                    <button class="btn btn-primary w-100 pay-btn" type="submit">
+                        <i class="ti ti-check me-2"></i>Pagar ${{ "{:,.0f}".format(total) | replace(",", ".") }}
+                    </button>
+                </div>
+            </form>
+            {% endif %}
+        </div>
+
     </div>
 </div>
 
 {% endblock page_body %}
 
 {% block page_scripts %}
-<script>
-    function selectMethod(el) {
-        document.querySelectorAll('.method-card').forEach(c => {
-            c.classList.remove('selected');
-            c.querySelector('i:last-child').className = 'ti ti-circle text-muted fs-4';
-        });
-        el.classList.add('selected');
-        el.querySelector('i:last-child').className = 'ti ti-circle-check text-primary fs-4';
-    }
-</script>
 {% if pago and display_code %}
 <script src="{{ url_for('static', filename='tabler/libs/qrcodejs/qrcode.min.js', v=app_version)}}"></script>
 <script>
-    var qrcode = new QRCode("codigo-pago", {
+    new QRCode(document.getElementById("codigo-pago"), {
         text: "{{ display_code }}",
-        width: 300,
-        height: 300,
+        width: 200,
+        height: 200,
         colorDark: "#000000",
         colorLight: "#ffffff",
         correctLevel: QRCode.CorrectLevel.H
@@ -198,61 +232,6 @@
 
     .order-item-meta {
         font-size: .78rem;
-        color: var(--tblr-muted);
-    }
-
-    .totals-table td {
-        padding: .3rem 0;
-        font-size: .9rem;
-    }
-
-    .totals-table tr.grand-total td {
-        font-weight: 700;
-        font-size: 1rem;
-        padding-top: .7rem;
-        border-top: 2px solid var(--tblr-border-color);
-    }
-
-    .method-card {
-        border: 2px solid var(--tblr-border-color);
-        border-radius: 8px;
-        padding: .9rem 1.1rem;
-        cursor: pointer;
-        transition: border-color .15s, background .15s;
-        display: flex;
-        align-items: center;
-        gap: .85rem;
-    }
-
-    .method-card:hover {
-        border-color: var(--tblr-primary);
-    }
-
-    .method-card.selected {
-        border-color: var(--tblr-primary);
-        background: #f0f6ff;
-    }
-
-    .method-icon {
-        width: 34px;
-        height: 34px;
-        border-radius: 6px;
-        background: var(--tblr-primary-lt);
-        color: var(--tblr-primary);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1rem;
-        flex-shrink: 0;
-    }
-
-    .method-label {
-        font-weight: 600;
-        font-size: .88rem;
-    }
-
-    .method-sub {
-        font-size: .76rem;
         color: var(--tblr-muted);
     }
 
