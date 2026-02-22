@@ -1,4 +1,5 @@
 from decimal import Decimal, InvalidOperation
+import json
 from flask import Blueprint, current_app, flash, redirect, render_template, request, url_for
 from ..database import db
 from ..model import Apoderado, Settings, Alumno, Abono, Payment
@@ -17,11 +18,11 @@ def index():
     if current_user.has_role("apoderado"):
         apoderado = db.session.execute(db.select(Apoderado).filter_by(usuario=current_user)).scalar_one_or_none()
     if not apoderado and current_user.has_role("admin"):
-        return redirect(url_for(".wizp1"))
+        return redirect(url_for("apoderado_cliente.wizp1"))
     if not apoderado and not current_user.has_role("admin"):
         return redirect(url_for("core.index"))
     if not apoderado and current_user.has_role("apoderado"):
-        return redirect(url_for(".wizp1"))
+        return redirect(url_for("apoderado_cliente.wizp1"))
     return render_template("apoderado/dashboard.html", apoderado=apoderado)
 
 
@@ -45,7 +46,7 @@ def wizp1():
 
         db.session.commit()
 
-        return redirect(url_for(".wizp2"))
+        return redirect(url_for("apoderado_cliente.wizp2"))
 
     return render_template("apoderado/wizard-paso1.html")
 
@@ -57,6 +58,13 @@ def wizp2():
     cursos = db.session.execute(db.select(Settings).filter_by(slug="cursos")).scalar_one()
     if request.method == "POST":
         for num in range(1, apoderado.alumnos_registro + 1):
+            restricciones_raw = request.form.get(f"restricciones_json_{num}", "[]")
+            try:
+                restricciones = json.loads(restricciones_raw)
+                if not isinstance(restricciones, list):
+                    restricciones = []
+            except (json.JSONDecodeError, ValueError):
+                restricciones = []
             nuevo_arr = {
                 "nombre": request.form[f"nombre_alumno_{num}"],
                 "curso": request.form[f"curso_alumno_{num}"],
@@ -67,10 +75,11 @@ def wizp2():
             nuevo.nombre = nuevo_arr.get("nombre", "")
             nuevo.curso = nuevo_arr.get("curso", "")
             nuevo.apoderado = apoderado
+            nuevo.restricciones = restricciones
             db.session.add(nuevo)
             del nuevo
         db.session.commit()
-        return redirect(url_for(".wizp3"))
+        return redirect(url_for("apoderado_cliente.wizp3"))
 
     return render_template("apoderado/wizard-paso2.html", apoderado=apoderado, cursos=cursos.value)
 
@@ -139,7 +148,7 @@ def wizp3():
             }
         )
 
-        return redirect(url_for(".wizp4"))
+        return redirect(url_for("apoderado_cliente.wizp4"))
 
     return render_template("apoderado/wizard-paso3.html")
 
@@ -269,3 +278,40 @@ def ficha(id):
 @apoderado_bp.route("/abonos", methods=["GET"])
 def abonos():
     return render_template("apoderado/abonos.html")
+
+
+@apoderado_bp.route("/ajustes", methods=["GET", "POST"])
+@login_required
+def ajustes():
+    apoderado = db.session.execute(db.select(Apoderado).filter_by(usuario=current_user)).scalar_one_or_none()
+
+    if request.method == "POST":
+        if apoderado:
+            apoderado.nombre = request.form.get("nombre", apoderado.nombre)
+            apoderado.comprobantes_transferencia = bool(request.form.get("comprobantes_transferencia"))
+            apoderado.notificacion_compra = bool(request.form.get("notificacion_compra"))
+            apoderado.informe_semanal = bool(request.form.get("informe_semanal"))
+            apoderado.copia_notificaciones = request.form.get("copia_notificaciones", apoderado.copia_notificaciones)
+            monto_diario = request.form.get("maximo_diario")
+            if monto_diario:
+                try:
+                    apoderado.maximo_diario = int(monto_diario)
+                except ValueError:
+                    pass
+            monto_semanal = request.form.get("maximo_semanal")
+            if monto_semanal:
+                try:
+                    apoderado.maximo_semanal = int(monto_semanal)
+                except ValueError:
+                    pass
+        phone = request.form.get("phone")
+        if phone:
+            current_user.username = phone
+        db.session.commit()
+        return redirect(url_for("apoderado_cliente.ajustes"))
+
+    return render_template(
+        "core/configuracion.html",
+        apoderado=apoderado,
+        current_user=current_user,
+    )

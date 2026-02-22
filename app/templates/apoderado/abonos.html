@@ -57,7 +57,7 @@
           <div class="card timeline-event-card">
             <div class="card-body">
               <div class="text-secondary float-end">{{ abono.created }}</div>
-              <a href="{{ url_for(".abono_detalle", codigo=abono.codigo) }}" class="h4 link">{{ abono.descripcion }} {{ abono.codigo }}</a>
+              <a href="{{ url_for('apoderado_cliente.abono_detalle', codigo=abono.codigo) }}" class="h4 link">{{ abono.descripcion }} {{ abono.codigo }}</a>
               <p class="text-secondary">${{ "{:,.0f}".format(abono.monto) | replace(",", ".") }}</p>
             </div>
           </div>

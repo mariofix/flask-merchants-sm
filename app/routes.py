@@ -1,10 +1,10 @@
-from flask import Blueprint, abort, redirect, render_template, request, url_for
+from flask import Blueprint, abort, render_template
 from .model import MenuDiario
 from .database import db
 from datetime import date, datetime
 from collections import OrderedDict
 from sqlalchemy import and_, or_, select
-from flask_login import login_required, current_user
+from flask_login import login_required
 from flask_security.decorators import roles_required
 import locale
 
@@ -38,40 +38,6 @@ def admin():
 @core_bp.route("/aiuda", methods=["GET"])
 def ayuda():
     return render_template("core/ayuda.html")
-
-
-@core_bp.route("/configuracion", methods=["GET", "POST"])
-@login_required
-def configuracion():
-    from .model import Apoderado
-    apoderado = db.session.execute(db.select(Apoderado).filter_by(usuario=current_user)).scalar_one_or_none()
-
-    if request.method == "POST":
-        if apoderado:
-            apoderado.nombre = request.form.get("nombre", apoderado.nombre)
-            apoderado.comprobantes_transferencia = bool(request.form.get("comprobantes_transferencia"))
-            apoderado.notificacion_compra = bool(request.form.get("notificacion_compra"))
-            apoderado.informe_semanal = bool(request.form.get("informe_semanal"))
-            apoderado.copia_notificaciones = request.form.get("copia_notificaciones", apoderado.copia_notificaciones)
-            monto_diario = request.form.get("maximo_diario")
-            if monto_diario:
-                try:
-                    apoderado.maximo_diario = int(monto_diario)
-                except ValueError:
-                    pass
-            monto_semanal = request.form.get("maximo_semanal")
-            if monto_semanal:
-                try:
-                    apoderado.maximo_semanal = int(monto_semanal)
-                except ValueError:
-                    pass
-        phone = request.form.get("phone")
-        if phone:
-            current_user.username = phone
-        db.session.commit()
-        return redirect(url_for("core.configuracion"))
-
-    return render_template("core/configuracion.html", apoderado=apoderado, current_user=current_user)
 
 
 def obtiene_menues(dia):
