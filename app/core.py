@@ -1,5 +1,6 @@
 import os
 
+import merchants as _merchants
 from dotenv import load_dotenv
 from flask import Flask, url_for
 from flask_admin import helpers as admin_helpers
@@ -64,6 +65,7 @@ def create_app():
     def default_data():
         return {
             "app_version": __version__,
+            "payment_providers": _merchants.describe_providers(),
         }
 
     # merchants
