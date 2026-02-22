@@ -6,8 +6,6 @@ from .controller import ApoderadoController
 from slugify import slugify
 from flask_security import current_user, roles_required, roles_accepted, login_required  # type: ignore
 
-# from flask_merchants.core import PaymentStatus
-
 apoderado_bp = Blueprint("apoderado_cliente", __name__)
 apoderado_controller = ApoderadoController()
 
@@ -131,51 +129,53 @@ def wizp4():
 def abono():
     monto = request.form["monto"]
     forma_pago = request.form["forma-de-pago"]
-    abono = Abono()
-    abono.monto = Decimal(monto)
-    abono.apoderado = current_user.apoderado
-    abono.descripcion = "Abono Web"
-    abono.forma_pago = forma_pago
+    nuevo_abono = Abono()
+    nuevo_abono.monto = Decimal(monto)
+    nuevo_abono.apoderado = current_user.apoderado
+    nuevo_abono.descripcion = "Abono Web"
+    nuevo_abono.forma_pago = forma_pago
 
-    db.session.add(abono)
+    db.session.add(nuevo_abono)
     db.session.commit()
 
-    # pago = Payment()
-    # pago.merchants_token = abono.codigo
-    # pago.amount = abono.monto
-    # pago.currency = "CLP"
-    # pago.integration_slug = abono.forma_pago
+    if forma_pago == "cafeteria":
+        from ..extensions import flask_merchants
 
-    # db.session.add(pago)
-    # db.session.commit()
+        session = flask_merchants.get_client("cafeteria").payments.create_checkout(
+            amount=nuevo_abono.monto,
+            currency="CLP",
+            success_url=url_for(
+                "apoderado_cliente.abono_detalle", codigo=nuevo_abono.codigo, _external=True
+            ),
+            cancel_url=url_for("apoderado_cliente.index", _external=True),
+            metadata={
+                "abono_codigo": nuevo_abono.codigo,
+                "apoderado_id": str(nuevo_abono.apoderado.id),
+            },
+        )
+        flask_merchants.save_session(
+            session,
+            model_class=Payment,
+            request_payload={
+                "abono_codigo": nuevo_abono.codigo,
+                "monto": str(nuevo_abono.monto),
+                "currency": "CLP",
+                "apoderado_id": str(nuevo_abono.apoderado.id),
+                "forma_pago": forma_pago,
+            },
+        )
+        # Marcar como "processing" – esperando pago presencial
+        flask_merchants.update_state(nuevo_abono.codigo, "processing")
 
-    # Para evitar el re-POST, el procesamiento se hace en el detalle, antes de mostrar algo
-    return redirect(f"abono-detalle/{abono.codigo}")
+    return redirect(url_for("apoderado_cliente.abono_detalle", codigo=nuevo_abono.codigo))
 
 
 @apoderado_bp.route("/abono-detalle/<string:codigo>", methods=["GET"])
 def abono_detalle(codigo):
     abono = db.session.execute(db.select(Abono).filter_by(codigo=codigo)).scalar_one_or_none()
     pago = db.session.execute(db.select(Payment).filter_by(session_id=codigo)).scalar_one_or_none()
-    pago_process = None
-
-    # if (
-    #     pago
-    #     and abono
-    #     and pago.integration.slug == abono.forma_pago
-    #     and pago.amount == abono.monto
-    #     and pago.status == PaymentStatus.created
-    # ):
-    #     pago_process = pago.process()
-
-    #     if "transaction" in pago_process:
-    #         pago.status = PaymentStatus.processing
-
-    #         db.session.commit()
-    #     if "url" in pago_process:
-    #         return redirect(pago_process["url"])
-
-    return render_template("apoderado/detalle-abono.html", abono=abono, pago=pago)
+    display_code = (pago.metadata_json or {}).get("display_code", "") if pago else ""
+    return render_template("apoderado/detalle-abono.html", abono=abono, pago=pago, display_code=display_code)
 
 
 @apoderado_bp.route("/menu-casino", methods=["GET"])

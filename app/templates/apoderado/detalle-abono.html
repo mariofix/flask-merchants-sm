@@ -5,8 +5,7 @@
   <div class="container-xl">
     <div class="row g-2 align-items-center">
       <div class="col">
-        <!-- Page pre-title -->
-        <h1 class="page-title">Detalle Abono </h1>
+        <h1 class="page-title">Detalle Abono</h1>
       </div>
     </div>
   </div>
@@ -14,116 +13,151 @@
 {% endblock page_header -%}
 
 {% block page_body %}
-
-
 <main id="content" class="page-body">
   <div class="container-xl">
+    {% if not abono %}
+    <div class="alert alert-danger">Abono no encontrado.</div>
+    {% else %}
     <div class="row row-cards">
-      <div class="col-md-6 col-lg-3 mb-5">
+
+      {# Columna izquierda: QR + código de pago #}
+      <div class="col-md-5 col-lg-4">
         <div class="card">
-          <div class="card-status-bottom bg-pink"></div>
-          <div class="card-body">
-            <h3 class="card-title">Informacion para Pago</h3>
-            {% if pago.status == PaymentStatus.processing %}
-            <p class="text-secondary">
-              Presenta este codigo en la cafeteria del colegio para completar tu pago.
+          <div class="card-status-top {% if pago and pago.state == 'succeeded' %}bg-success{% elif pago and pago.state == 'processing' %}bg-yellow{% else %}bg-secondary{% endif %}"></div>
+          <div class="card-body text-center">
+            <h3 class="card-title mb-1">Información de Pago</h3>
+            <p class="text-secondary small mb-3">
+              {% if pago and pago.state == 'processing' %}
+                Presenta este código en la cafetería del colegio para completar tu pago.
+              {% elif pago and pago.state == 'succeeded' %}
+                ¡Tu pago fue confirmado! El saldo ya está disponible en tu cuenta.
+              {% else %}
+                Procesando tu solicitud de abono...
+              {% endif %}
             </p>
+
+            {% if pago %}
+              {# Código QR #}
+              <div id="codigo-pago" class="mx-auto mb-3" style="display:inline-block;"></div>
+
+              {# Badge de estado #}
+              <div class="mb-3">
+                {% if pago.state == 'succeeded' %}
+                  <span class="badge bg-success fs-4">✔ Pagado</span>
+                {% elif pago.state == 'processing' %}
+                  <span class="badge bg-yellow text-dark fs-5">⏳ Pendiente</span>
+                {% elif pago.state == 'cancelled' %}
+                  <span class="badge bg-danger fs-5">✗ Cancelado</span>
+                {% else %}
+                  <span class="badge bg-secondary fs-5">{{ pago.state }}</span>
+                {% endif %}
+              </div>
+
+              {% if display_code %}
+              <div class="alert alert-info mt-2 py-2" role="alert">
+                <div class="small text-muted mb-1">Código de pago</div>
+                <strong class="fs-2 font-monospace">{{ display_code }}</strong>
+              </div>
+              {% endif %}
+            {% else %}
+              <p class="text-muted">Sin información de pago.</p>
             {% endif %}
-            <!-- Codigo QR -->
-            <div id="codigo-pago"></div>
-
-            <div class="alert alert-success mt-3" role="alert">
-              <strong>{{ pago.integration_transaction }}</strong>
-            </div>
-
           </div>
         </div>
       </div>
-      <div class="row row-cards">
-        <div class="col">
-          <div class="row row-cards">
-            <div class="col-12">
-              <form class="card h-100" action="#" method="post">
-                <div class="card-header">
-                  <h3 class="card-title">Código: {{ abono.codigo }}</h3>
-                </div>
-                <div class="card-body">
 
-                  <div class="mb-3 row">
-                    <label class="col-3 col-form-label">Monto Abonado</label>
-                    <div class="col">
-                      <input class="form-control" value="{{ abono.monto }}" readonly />
-                    </div>
-                  </div>
+      {# Columna derecha: detalles del abono y acción de aprobación #}
+      <div class="col-md-7 col-lg-8">
+        <div class="card h-100">
+          <div class="card-header">
+            <h3 class="card-title">Abono <span class="font-monospace text-muted small">{{ abono.codigo[:8].upper() }}</span></h3>
+          </div>
+          <div class="card-body">
 
-                  <div class="mb-3 row">
-                    <label class="col-3 col-form-label">Estado</label>
-                    <div class="col">
-                      <input class="form-control" value="{{ pago.status }}" readonly />
-                    </div>
-                  </div>
+            <div class="mb-3 row">
+              <label class="col-4 col-form-label text-muted">Monto</label>
+              <div class="col">
+                <input class="form-control fw-bold" value="${{ '{:,.0f}'.format(abono.monto) }}" readonly />
+              </div>
+            </div>
 
-                  <div class="mb-3 row">
-                    <label class="col-3 col-form-label">Descripcion</label>
-                    <div class="col">
-                      <input class="form-control" value="{{ abono.descripcion }}" readonly />
-                    </div>
-                  </div>
+            <div class="mb-3 row">
+              <label class="col-4 col-form-label text-muted">Forma de pago</label>
+              <div class="col">
+                <input class="form-control" value="{{ abono.forma_pago | capitalize }}" readonly />
+              </div>
+            </div>
 
-                  <div class="mb-3 row">
-                    <label class="col-3 col-form-label">Transaccion</label>
-                    <div class="col">
-                      <input class="form-control" value="{{ pago.integration_transaction }}" readonly />
-                    </div>
-                  </div>
+            <div class="mb-3 row">
+              <label class="col-4 col-form-label text-muted">Descripción</label>
+              <div class="col">
+                <input class="form-control" value="{{ abono.descripcion or '—' }}" readonly />
+              </div>
+            </div>
 
-                  <div class="mb-3 row">
-                    <label class="col-3 col-form-label">Forma de Pago</label>
-                    <div class="col">
-                      <div class="form-selectgroup form-selectgroup-boxes d-flex flex-column">
-                        <label class="form-selectgroup-item flex-fill">
-                          <input type="radio" class="form-selectgroup-input" checked disabled />
-                          <div class="form-selectgroup-label d-flex align-items-center p-3">
-                            <div class="me-3">
-                              <span class="form-selectgroup-check"></span>
-                            </div>
-                            <div>
-                              <span class="payment payment-provider-mastercard payment-xs me-2"></span>
-                              Efectivo/Tarjetas presencialmente en la cafeteria
-                            </div>
-                          </div>
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div class="card-footer">
-                  <div class="text-end">
-                    {% if current_user.has_role('pos') or current_user.has_role('admin') and pago.status == PaymentStatus.processing %}
-                    <a href="{{ url_for("pos.completa_abono", codigo=abono.codigo) }}" class="btn btn-success">Completar Abono</a>
-                    {% endif %}
-                  </div>
-                </div>
-              </form>
+            <div class="mb-3 row">
+              <label class="col-4 col-form-label text-muted">Fecha</label>
+              <div class="col">
+                <input class="form-control" value="{{ abono.created.strftime('%d/%m/%Y %H:%M') if abono.created else '—' }}" readonly />
+              </div>
+            </div>
+
+            {% if pago %}
+            <div class="mb-3 row">
+              <label class="col-4 col-form-label text-muted">Estado pago</label>
+              <div class="col">
+                <input class="form-control" value="{{ pago.state }}" readonly />
+              </div>
+            </div>
+            {% if display_code %}
+            <div class="mb-3 row">
+              <label class="col-4 col-form-label text-muted">Código</label>
+              <div class="col">
+                <input class="form-control font-monospace fw-bold" value="{{ display_code }}" readonly />
+              </div>
+            </div>
+            {% endif %}
+            {% endif %}
+
+          </div>
+
+          <div class="card-footer">
+            <div class="d-flex justify-content-between align-items-center">
+              <a href="{{ url_for('apoderado_cliente.abonos') }}" class="btn btn-link">← Volver</a>
+              {% if pago and pago.state == 'processing' and (current_user.has_role('admin') or current_user.has_role('pos')) %}
+              <a href="{{ url_for('pos.completa_abono', codigo=abono.codigo) }}" class="btn btn-success">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon me-1" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                  <path d="M5 12l5 5l10 -10" />
+                </svg>
+                Aprobar Pago
+              </a>
+              {% elif pago and pago.state == 'succeeded' %}
+              <span class="text-success fw-bold">✔ Pago aprobado</span>
+              {% endif %}
             </div>
           </div>
         </div>
       </div>
+
     </div>
+    {% endif %}
+  </div>
 </main>
-
 {% endblock page_body %}
 
 {% block page_scripts %}
+{% if pago and display_code %}
 <script src="{{ url_for('static', filename='tabler/libs/qrcodejs/qrcode.min.js', v=app_version)}}"></script>
 <script>
-  var qrcode = new QRCode("codigo-pago", {
-    text: "{{ pago.integration_transaction }}",
-    width: 300,
-    height: 300,
+  new QRCode(document.getElementById("codigo-pago"), {
+    text: "{{ display_code }}",
+    width: 200,
+    height: 200,
     colorDark: "#000000",
     colorLight: "#ffffff",
     correctLevel: QRCode.CorrectLevel.H
   });
 </script>
+{% endif %}
 {% endblock %}
