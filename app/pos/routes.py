@@ -201,6 +201,8 @@ def pago_orden(orden):
                 ],
             })
 
+            if forma_pago != "cafeteria" and session.redirect_url:
+                return redirect(session.redirect_url)
             return redirect(url_for("pos.pago_orden", orden=pedido.codigo))
 
         if pedido.codigo_merchants:
