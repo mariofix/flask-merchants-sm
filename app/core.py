@@ -10,6 +10,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 
 from .apoderado.route import apoderado_bp
 from .celery import celery_init_app
+from .docs import docs_bp
 from .database import db, migrations
 from .extensions import babel, csrf, flask_merchants, mail
 from .extensions.admin import admin
@@ -95,6 +96,7 @@ def create_app():
     app.register_blueprint(core_bp)
     app.register_blueprint(apoderado_bp, url_prefix="/apoderado")
     app.register_blueprint(pos_bp, url_prefix="/pos")
+    app.register_blueprint(docs_bp)
 
     # Celery
     celery_init_app(app)
