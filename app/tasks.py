@@ -1,9 +1,24 @@
 from celery import shared_task
-from flask import current_app, render_template
+from flask import current_app, render_template, url_for
 from flask_mailman import EmailMultiAlternatives
 from flask_security.mail_util import MailUtil
 
 from .extensions import mail
+
+
+def _get_display_code(pago) -> str:
+    """Extrae el código de display del pago, si existe."""
+    if pago is None:
+        return ""
+    return (pago.metadata_json or {}).get("display_code", "")
+
+
+def _get_from_email() -> str:
+    """Retorna el remitente configurado en MAIL_USERNAME o el valor por defecto."""
+    return current_app.config.get(
+        "MAIL_USERNAME",
+        current_app.config.get("MAIL_DEFAULT_SENDER", "no-reply@sabormirandiano.cl"),
+    )
 
 
 class MyMailUtil(MailUtil):
@@ -42,6 +57,8 @@ def send_comprobante_abono(self, abono_id: int):
         pago = db.session.execute(db.select(Payment).filter_by(session_id=abono.codigo)).scalar_one_or_none()
         apoderado = abono.apoderado
         email = apoderado.usuario.email
+        display_code = _get_display_code(pago)
+        abono_url = url_for("apoderado_cliente.abono_detalle", codigo=abono.codigo, _external=True)
         subject = f"Comprobante de abono #{abono.codigo[:8].upper()}"
         body = (
             f"Hola {apoderado.nombre},\n\n"
@@ -50,19 +67,29 @@ def send_comprobante_abono(self, abono_id: int):
             f"Monto: ${int(abono.monto):,}\n"
             f"Forma de pago: {abono.forma_pago}\n"
         )
-        if pago:
-            display_code = (pago.metadata_json or {}).get("display_code", "")
-            if display_code:
-                body += f"Código de pago: {display_code}\n"
+        if display_code:
+            body += f"Código de pago: {display_code}\n"
         body += f"\nNuevo saldo en cuenta: ${int(apoderado.saldo_cuenta or 0):,}\n\nSaludos,\nCafetería SaborMirandiano"
+        html = render_template(
+            "core/emails/nuevo_abono_apoderado.html",
+            nombre_apoderado=apoderado.nombre,
+            monto=abono.monto,
+            forma_pago=abono.forma_pago,
+            codigo=abono.codigo[:8].upper(),
+            display_code=display_code,
+            saldo_cuenta=apoderado.saldo_cuenta or 0,
+            abono_url=abono_url,
+        )
+        from_email = _get_from_email()
         with mail.get_connection() as connection:
             msg = EmailMultiAlternatives(
                 subject=subject,
                 body=body,
-                from_email=current_app.config.get("MAIL_DEFAULT_SENDER", "no-reply@sabormirandiano.cl"),
+                from_email=from_email,
                 to=[email],
                 connection=connection,
             )
+            msg.attach_alternative(html, "text/html")
             msg.send()
 
 
@@ -86,6 +113,8 @@ def send_notificacion_admin_abono(self, abono_id: int):
         if not admin_emails:
             return
 
+        display_code = _get_display_code(pago)
+        abono_url = url_for("apoderado_cliente.abono_detalle", codigo=abono.codigo, _external=True)
         subject = f"Abono aprobado – {apoderado.nombre} ${int(abono.monto):,}"
         body = (
             f"Se aprobó un abono en la cafetería.\n\n"
@@ -96,7 +125,6 @@ def send_notificacion_admin_abono(self, abono_id: int):
             f"Descripción: {abono.descripcion}\n"
         )
         if pago:
-            display_code = (pago.metadata_json or {}).get("display_code", "")
             body += (
                 f"\nDetalle del pago:\n"
                 f"  Proveedor: {pago.provider}\n"
@@ -105,12 +133,29 @@ def send_notificacion_admin_abono(self, abono_id: int):
                 f"  Session ID: {pago.session_id}\n"
             )
         body += f"\nSaldo actual del apoderado: ${int(apoderado.saldo_cuenta or 0):,}"
+        html = render_template(
+            "core/emails/nuevo_abono_admin.html",
+            nombre_apoderado=apoderado.nombre,
+            email_apoderado=apoderado.usuario.email,
+            monto=abono.monto,
+            forma_pago=abono.forma_pago,
+            codigo=abono.codigo,
+            descripcion=abono.descripcion,
+            saldo_cuenta=apoderado.saldo_cuenta or 0,
+            pago_proveedor=pago.provider if pago else None,
+            pago_estado=pago.state if pago else None,
+            display_code=display_code,
+            session_id=pago.session_id if pago else None,
+            abono_url=abono_url,
+        )
+        from_email = _get_from_email()
         with mail.get_connection() as connection:
             msg = EmailMultiAlternatives(
                 subject=subject,
                 body=body,
-                from_email=current_app.config.get("MAIL_DEFAULT_SENDER", "no-reply@sabormirandiano.cl"),
+                from_email=from_email,
                 to=admin_emails,
                 connection=connection,
             )
+            msg.attach_alternative(html, "text/html")
             msg.send()
