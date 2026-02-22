@@ -95,7 +95,7 @@ def wizp3():
         apoderado.copia_notificaciones = correo_alternativo
         apoderado.maximo_diario = int(monto_diario)
         apoderado.maximo_semanal = int(monto_semanal)
-        apoderado.limite_notificaciones = int(limite_notificaciones)
+        apoderado.limite_notificacion = int(limite_notificaciones)
         apoderado.saldo_cuenta = 1
 
         for alumno in apoderado.alumnos:
@@ -109,6 +109,14 @@ def wizp3():
         # db.session.add(wizard_completado)
 
         db.session.commit()
+
+        from ..tasks import send_notificacion_admin_nuevo_apoderado
+        send_notificacion_admin_nuevo_apoderado.delay({
+            "nombre_apoderado": apoderado.nombre,
+            "email_apoderado": apoderado.usuario.email,
+            "alumnos": [{"nombre": a.nombre, "curso": a.curso} for a in apoderado.alumnos],
+        })
+
         return redirect(url_for(".wizp4"))
 
     return render_template("apoderado/wizard-paso3.html")

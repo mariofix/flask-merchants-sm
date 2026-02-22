@@ -206,3 +206,46 @@ def send_copia_notificaciones_abono(self, abono_info: dict):
                 )
                 msg.attach_alternative(html, "text/html")
                 msg.send()
+
+
+@shared_task(bind=True, ignore_result=False)
+def send_notificacion_admin_nuevo_apoderado(self, apoderado_info: dict):
+    """Notifica a los administradores sobre un nuevo apoderado registrado."""
+    with current_app.app_context():
+        from .database import db
+        from .model import Role
+
+        admin_role = db.session.execute(db.select(Role).filter_by(name="admin")).scalar_one_or_none()
+        if not admin_role:
+            return
+        admin_emails = [u.email for u in admin_role.users if u.email]
+        if not admin_emails:
+            return
+
+        subject = f"Nuevo apoderado registrado – {apoderado_info['nombre_apoderado']}"
+        body = (
+            f"Se ha registrado un nuevo apoderado en la plataforma.\n\n"
+            f"Nombre: {apoderado_info['nombre_apoderado']}\n"
+            f"Correo: {apoderado_info['email_apoderado']}\n"
+            f"Alumnos registrados: {len(apoderado_info.get('alumnos', []))}\n"
+        )
+        for alumno in apoderado_info.get("alumnos", []):
+            body += f"  - {alumno['nombre']} ({alumno['curso']})\n"
+
+        html = render_template(
+            "core/emails/nuevo_apoderado.html",
+            nombre_apoderado=apoderado_info["nombre_apoderado"],
+            email_apoderado=apoderado_info["email_apoderado"],
+            alumnos=apoderado_info.get("alumnos", []),
+        )
+        from_email = _get_from_email()
+        with mail.get_connection() as connection:
+            msg = EmailMultiAlternatives(
+                subject=subject,
+                body=body,
+                from_email=from_email,
+                to=admin_emails,
+                connection=connection,
+            )
+            msg.attach_alternative(html, "text/html")
+            msg.send()
