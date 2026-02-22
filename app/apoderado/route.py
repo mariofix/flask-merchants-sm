@@ -182,6 +182,16 @@ def abono():
     db.session.add(nuevo_abono)
     db.session.commit()
 
+    from flask_merchants import merchants_audit
+    merchants_audit.info(
+        "abono_creado: codigo=%s apoderado_id=%s email=%r monto=%s forma_pago=%r",
+        nuevo_abono.codigo,
+        nuevo_abono.apoderado.id,
+        nuevo_abono.apoderado.usuario.email,
+        nuevo_abono.monto,
+        nuevo_abono.forma_pago,
+    )
+
     if forma_pago == "cafeteria":
         from ..extensions import flask_merchants
 

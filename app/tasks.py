@@ -225,6 +225,12 @@ def send_copia_notificaciones_abono(self, abono_info: dict):
                 )
                 msg.attach_alternative(html, "text/html")
                 msg.send()
+                merchants_audit.info(
+                    "email_sent: from=%r to=%r subject=%r",
+                    from_email,
+                    [email],
+                    subject,
+                )
 
 
 @shared_task(bind=True, ignore_result=False)
@@ -272,6 +278,12 @@ def send_notificacion_abono_creado(self, abono_info: dict):
             )
             msg.attach_alternative(html_apoderado, "text/html")
             msg.send()
+            merchants_audit.info(
+                "email_sent: from=%r to=%r subject=%r",
+                from_email,
+                [abono_info["apoderado_email"]],
+                subject_apoderado,
+            )
 
         # --- Email a los administradores (código generado, abono pendiente) ---
         admin_role = db.session.execute(db.select(Role).filter_by(name="admin")).scalar_one_or_none()
@@ -313,6 +325,12 @@ def send_notificacion_abono_creado(self, abono_info: dict):
                 )
                 msg.attach_alternative(html_admin, "text/html")
                 msg.send()
+                merchants_audit.info(
+                    "email_sent: from=%r to=%r subject=%r",
+                    from_email,
+                    admin_emails,
+                    subject_admin,
+                )
 
 
 @shared_task(bind=True, ignore_result=False)
@@ -356,3 +374,9 @@ def send_notificacion_admin_nuevo_apoderado(self, apoderado_info: dict):
             )
             msg.attach_alternative(html, "text/html")
             msg.send()
+            merchants_audit.info(
+                "email_sent: from=%r to=%r subject=%r",
+                from_email,
+                admin_emails,
+                subject,
+            )
