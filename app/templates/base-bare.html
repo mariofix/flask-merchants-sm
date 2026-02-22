@@ -51,8 +51,9 @@
         <!-- BEGIN PAGE BODY -->
         <main id="content" class="page-body">
           {% for category, message in get_flashed_messages(with_categories=true) %}
+          {% set alert_class = {'message': 'info', 'error': 'danger'}.get(category, category) %}
           <div class="container-xl pt-3">
-            <div class="alert alert-{{ category }} alert-dismissible" role="alert">
+            <div class="alert alert-{{ alert_class }} alert-dismissible" role="alert">
               <div class="d-flex">
                 <div>{{ message }}</div>
               </div>
