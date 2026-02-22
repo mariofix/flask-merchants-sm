@@ -8,6 +8,10 @@
 {%- endif %}
 {% endmacro %}
 
+{% macro icon_warning() %}<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1" aria-hidden="true"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9v4"/><path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z"/><path d="M12 16h.01"/></svg>{% endmacro %}
+
+{% macro icon_info() %}<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1" aria-hidden="true"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12.01" y2="8"/><polyline points="11 12 12 12 12 16 13 16"/></svg>{% endmacro %}
+
 {% block page_header -%}
 <div class="page-header d-print-none text-white">
     <div class="container-xl">
@@ -62,6 +66,21 @@
                             {% if item.alumnos %}
                             <div class="mt-1">
                                 {% for alumno in item.alumnos %}{{ alumno_badge(alumno) }}{% endfor %}
+                            </div>
+                            {% endif %}
+                            {% if item.advertencias %}
+                            <div class="mt-2">
+                                {% for adv in item.advertencias %}
+                                {% if adv.tipo == 'warning' %}
+                                <span class="badge bg-warning text-dark me-1 mb-1">
+                                    {{ icon_warning() }}{{ adv.mensaje }}
+                                </span>
+                                {% else %}
+                                <span class="badge bg-success-lt text-success me-1 mb-1">
+                                    {{ icon_info() }}{{ adv.mensaje }}
+                                </span>
+                                {% endif %}
+                                {% endfor %}
                             </div>
                             {% endif %}
                         </div>

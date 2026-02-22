@@ -118,7 +118,14 @@ def pago_orden(orden):
                 for a in item.get("alumnos", [])
             ]
             resumen.append(
-                {"fecha": item["date"], "menu": item["slug"], "nota": item["note"], "detalle_menu": menu, "alumnos": alumnos_item}
+                {
+                    "fecha": item["date"],
+                    "menu": item["slug"],
+                    "nota": item["note"],
+                    "detalle_menu": menu,
+                    "alumnos": alumnos_item,
+                    "advertencias": _compute_advertencias(menu, alumnos_item),
+                }
             )
         total = sum(
             item["detalle_menu"].precio * len(item["alumnos"])
@@ -400,6 +407,79 @@ def completa_pedido(codigo):
         _process_payment_completion(pedido)
 
     return redirect(url_for("pos.pago_orden", orden=codigo))
+
+
+def _compute_advertencias(menu, alumnos_item: list) -> list:
+    """Return a list of warning dicts for a menu item and its assigned alumnos.
+
+    Warns when a dish property (contiene_alergenos, es_vegano, es_vegetariano)
+    is relevant to a student's declared dietary restrictions.  The purchase is
+    never blocked – these are informational alerts only.
+    """
+    advertencias = []
+
+    # Virtual / rezagados menus are SimpleNamespace objects without opciones
+    if not hasattr(menu, "opciones"):
+        return advertencias
+
+    platos = [opcion.plato for opcion in menu.opciones]
+    menu_contiene_alergenos = any(getattr(p, "contiene_alergenos", False) for p in platos)
+    menu_es_vegano = any(getattr(p, "es_vegano", False) for p in platos)
+    menu_es_vegetariano = any(getattr(p, "es_vegetariano", False) for p in platos)
+
+    for alumno in alumnos_item:
+        # Only real Alumno ORM objects carry restricciones
+        if not hasattr(alumno, "restricciones") or not alumno.restricciones:
+            continue
+        restricciones = alumno.restricciones
+        if not isinstance(restricciones, list):
+            continue
+
+        alergias = []
+        nombres_lower = []
+        tiene_vegano = False
+        tiene_vegetariano = False
+        for r in restricciones:
+            nombre = r.get("nombre", "")
+            motivo = r.get("motivo", "")
+            if motivo == "Alergia":
+                alergias.append(nombre)
+            nombre_lower = nombre.lower()
+            nombres_lower.append(nombre_lower)
+            if "vegano" in nombre_lower or "vegan" in nombre_lower:
+                tiene_vegano = True
+            if "vegetariano" in nombre_lower or "vegetarian" in nombre_lower:
+                tiene_vegetariano = True
+
+        if menu_contiene_alergenos and alergias:
+            advertencias.append({
+                "alumno": alumno.nombre,
+                "tipo": "warning",
+                "mensaje": f"{alumno.nombre} tiene alergias declaradas ({', '.join(alergias)}) y este menú contiene alérgenos.",
+            })
+
+        if menu_es_vegano and tiene_vegano:
+            advertencias.append({
+                "alumno": alumno.nombre,
+                "tipo": "info",
+                "mensaje": f"Este menú incluye un plato vegano (aplica a {alumno.nombre}).",
+            })
+        elif menu_es_vegetariano and tiene_vegetariano:
+            advertencias.append({
+                "alumno": alumno.nombre,
+                "tipo": "info",
+                "mensaje": f"Este menú incluye una opción vegetariana (aplica a {alumno.nombre}).",
+            })
+
+    # Deduplicate while preserving order
+    seen: set = set()
+    result = []
+    for adv in advertencias:
+        key = (adv["alumno"], adv["tipo"], adv["mensaje"])
+        if key not in seen:
+            seen.add(key)
+            result.append(adv)
+    return result
 
 
 def _process_payment_completion(pedido: Pedido) -> None:
