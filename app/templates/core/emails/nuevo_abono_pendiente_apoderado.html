@@ -3,7 +3,7 @@
 
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Notificación de Abono – Administración</title>
+    <title>Solicitud de Abono Recibida</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta content="telephone=no" name="format-detection" />
     <meta name="x-apple-disable-message-reformatting" />
@@ -65,7 +65,7 @@
                     <table border="0" cellspacing="0" cellpadding="0"><tr><td align="center" valign="top" width="640">
                     <![endif]-->
 
-                    <span style="font-size: 0; display: none; max-height: 0; mso-hide: all; line-height: 0; color: transparent; height: 0; max-width: 0; opacity: 0; overflow: hidden; visibility: hidden; width: 0; padding: 0;">Abono aprobado – {{ nombre_apoderado }} ${{ "{:,}".format(monto|int) }}</span>
+                    <span style="font-size: 0; display: none; max-height: 0; mso-hide: all; line-height: 0; color: transparent; height: 0; max-width: 0; opacity: 0; overflow: hidden; visibility: hidden; width: 0; padding: 0;">Solicitud de abono recibida – ${{ "{:,}".format(monto|int) }} – Cafetería Sabor Mirandiano</span>
 
                     <table cellspacing="0" cellpadding="0" role="presentation" style="font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; border-collapse: collapse; width: 100%; max-width: 640px; text-align: left;">
                         <tr>
@@ -100,13 +100,13 @@
                                                         <tr>
                                                             <td align="center" style="font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; padding: 48px 48px 0;">
                                                                 <!--[if mso]>
-                                                                <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" style="height:64px;v-text-anchor:middle;width:64px;" arcsize="100%" stroke="f" fillcolor="#2ca73f">
+                                                                <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" style="height:64px;v-text-anchor:middle;width:64px;" arcsize="100%" stroke="f" fillcolor="#f59e0b">
                                                                     <w:anchorlock/>
-                                                                    <center style="color:#ffffff;font-family:sans-serif;font-size:28px;font-weight:bold;">$</center>
+                                                                    <center style="color:#ffffff;font-family:sans-serif;font-size:28px;font-weight:bold;">!</center>
                                                                 </v:roundrect>
                                                                 <![endif]-->
                                                                 <!--[if !mso]> <!-->
-                                                                <table cellspacing="0" cellpadding="0" role="presentation" style="font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; border-collapse: separate; width: 64px; border-radius: 50%; line-height: 100%; font-weight: 300; height: 64px; font-size: 28px; text-align: center; color: #ffffff; padding: 0;" bgcolor="#2ca73f">
+                                                                <table cellspacing="0" cellpadding="0" role="presentation" style="font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; border-collapse: separate; width: 64px; border-radius: 50%; line-height: 100%; font-weight: 300; height: 64px; font-size: 28px; text-align: center; color: #ffffff; padding: 0;" bgcolor="#f59e0b">
                                                                     <tr>
                                                                         <td valign="middle" align="center" style="font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; color: #ffffff; font-size: 28px; font-weight: bold;">$</td>
                                                                     </tr>
@@ -114,49 +114,40 @@
                                                                 <!-- <![endif]-->
 
                                                                 <h1 style="font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; font-weight: 600; mso-line-height-rule: exactly; color: #111827; font-size: 30px; line-height: 126%; margin: 16px 0 0; text-align: center;">
-                                                                    Abono aprobado
+                                                                    Solicitud de abono recibida
                                                                 </h1>
                                                             </td>
                                                         </tr>
 
                                                         <tr>
-                                                            <td align="center" style="font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; padding: 48px;">
-                                                                <p style="font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; margin: 0 0 24px;">Se aprobó un abono de <strong style="font-weight: 600;">${{ "{:,}".format(monto|int) }}</strong> para el apoderado <strong style="font-weight: 600;">{{ nombre_apoderado }}</strong>.</p>
+                                                            <td align="center" style="font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; padding: 32px 48px 0;">
+                                                                <p style="font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; margin: 0;">Hola <strong style="font-weight: 600;">{{ nombre_apoderado }}</strong>, hemos recibido tu solicitud de abono de <strong style="font-weight: 600;">${{ "{:,}".format(monto|int) }}</strong>.</p>
                                                             </td>
                                                         </tr>
 
+                                                        <!-- INSTRUCCIONES CAFETERIA -->
                                                         <tr>
-                                                            <td align="center" style="font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; border-top-width: 1px; border-top-color: #e8ebee; border-top-style: solid; padding: 48px;">
-                                                                <h4 style="font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; font-weight: 500; mso-line-height-rule: exactly; color: #111827; font-size: 16px; margin: 0 0 0.5em;">Datos del Apoderado</h4>
-                                                                <table cellspacing="0" cellpadding="0" style="font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; border-collapse: collapse; width: 100%; text-align: left;">
+                                                            <td align="center" style="font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; padding: 24px 48px;">
+                                                                <table cellspacing="0" cellpadding="0" style="font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; border-collapse: collapse; width: 100%; background-color: #fffbeb; border-radius: 8px; border: 1px solid #fcd34d;">
                                                                     <tr>
-                                                                        <td style="font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; padding: 4px 12px 4px 0;">Nombre</td>
-                                                                        <td align="right" style="font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; padding: 4px 0 4px 12px;"><strong style="font-weight: 600;">{{ nombre_apoderado }}</strong></td>
-                                                                    </tr>
-                                                                    <tr>
-                                                                        <td style="font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; padding: 4px 12px 4px 0;">Correo</td>
-                                                                        <td align="right" style="font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; padding: 4px 0 4px 12px;"><strong style="font-weight: 600;">{{ email_apoderado }}</strong></td>
-                                                                    </tr>
-                                                                    {% if saldo_anterior is not none %}
-                                                                    <tr>
-                                                                        <td style="font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; padding: 4px 12px 4px 0;">Saldo anterior</td>
-                                                                        <td align="right" style="font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; padding: 4px 0 4px 12px;"><strong style="font-weight: 600;">${{ "{:,}".format(saldo_anterior|int) }}</strong></td>
-                                                                    </tr>
-                                                                    {% endif %}
-                                                                    <tr>
-                                                                        <td style="font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; padding: 4px 12px 4px 0;">Saldo actual</td>
-                                                                        <td align="right" style="font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; padding: 4px 0 4px 12px;"><strong style="font-weight: 600;">${{ "{:,}".format(saldo_cuenta|int) }}</strong></td>
+                                                                        <td style="padding: 20px 24px;">
+                                                                            <p style="font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; margin: 0 0 8px; font-weight: 600; color: #92400e; font-size: 15px;">📍 Instrucciones para completar el pago</p>
+                                                                            <p style="font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; margin: 0; color: #78350f; font-size: 14px; line-height: 160%;">
+                                                                                Dirígete a la cafetería del colegio y presenta el código indicado más abajo para realizar el pago de <strong>${{ "{:,}".format(monto|int) }}</strong>. El personal de la cafetería procesará tu abono al recibir el pago.
+                                                                            </p>
+                                                                        </td>
                                                                     </tr>
                                                                 </table>
                                                             </td>
                                                         </tr>
+                                                        <!-- /INSTRUCCIONES CAFETERIA -->
 
                                                         <tr>
                                                             <td align="center" style="font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; border-top-width: 1px; border-top-color: #e8ebee; border-top-style: solid; padding: 48px;">
                                                                 <h4 style="font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; font-weight: 500; mso-line-height-rule: exactly; color: #111827; font-size: 16px; margin: 0 0 0.5em;">Detalle del Abono</h4>
                                                                 <table cellspacing="0" cellpadding="0" style="font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; border-collapse: collapse; width: 100%; text-align: left;">
                                                                     <tr>
-                                                                        <td style="font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; padding: 4px 12px 4px 0;">Monto</td>
+                                                                        <td style="font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; padding: 4px 12px 4px 0;">Monto del abono</td>
                                                                         <td align="right" style="font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; padding: 4px 0 4px 12px;"><strong style="font-weight: 600;">${{ "{:,}".format(monto|int) }}</strong></td>
                                                                     </tr>
                                                                     <tr>
@@ -167,39 +158,28 @@
                                                                         <td style="font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; padding: 4px 12px 4px 0;">Código de abono</td>
                                                                         <td align="right" style="font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; padding: 4px 0 4px 12px;"><strong style="font-weight: 600;">{{ codigo }}</strong></td>
                                                                     </tr>
-                                                                    {% if descripcion %}
-                                                                    <tr>
-                                                                        <td style="font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; padding: 4px 12px 4px 0;">Descripción</td>
-                                                                        <td align="right" style="font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; padding: 4px 0 4px 12px;"><strong style="font-weight: 600;">{{ descripcion }}</strong></td>
-                                                                    </tr>
-                                                                    {% endif %}
-                                                                    {% if pago_proveedor %}
-                                                                    <tr>
-                                                                        <td style="font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; padding: 4px 12px 4px 0;">Proveedor de pago</td>
-                                                                        <td align="right" style="font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; padding: 4px 0 4px 12px;"><strong style="font-weight: 600;">{{ pago_proveedor }}</strong></td>
-                                                                    </tr>
-                                                                    {% endif %}
-                                                                    {% if pago_estado %}
-                                                                    <tr>
-                                                                        <td style="font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; padding: 4px 12px 4px 0;">Estado del pago</td>
-                                                                        <td align="right" style="font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; padding: 4px 0 4px 12px;"><strong style="font-weight: 600;">{{ pago_estado }}</strong></td>
-                                                                    </tr>
-                                                                    {% endif %}
-                                                                    {% if display_code %}
-                                                                    <tr>
-                                                                        <td style="font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; padding: 4px 12px 4px 0;">Código de pago</td>
-                                                                        <td align="right" style="font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; padding: 4px 0 4px 12px;"><strong style="font-weight: 600;">{{ display_code }}</strong></td>
-                                                                    </tr>
-                                                                    {% endif %}
-                                                                    {% if session_id %}
-                                                                    <tr>
-                                                                        <td style="font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; padding: 4px 12px 4px 0;">Session ID</td>
-                                                                        <td align="right" style="font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; padding: 4px 0 4px 12px;"><strong style="font-weight: 600;">{{ session_id }}</strong></td>
-                                                                    </tr>
-                                                                    {% endif %}
                                                                 </table>
                                                             </td>
                                                         </tr>
+
+                                                        {% if display_code %}
+                                                        <!-- CODIGO DESTACADO -->
+                                                        <tr>
+                                                            <td align="center" style="font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; border-top-width: 1px; border-top-color: #e8ebee; border-top-style: solid; padding: 48px;">
+                                                                <h4 style="font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; font-weight: 500; mso-line-height-rule: exactly; color: #111827; font-size: 16px; margin: 0 0 16px;">Presenta este código en la cafetería</h4>
+                                                                <table cellspacing="0" cellpadding="0" style="font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; border-collapse: collapse; border-radius: 8px; background-color: #1e3a5f; margin: 0 auto 24px;" bgcolor="#1e3a5f">
+                                                                    <tr>
+                                                                        <td style="padding: 16px 32px; text-align: center;">
+                                                                            <span style="font-family: 'Courier New', Courier, monospace; font-size: 32px; font-weight: 700; color: #ffffff; letter-spacing: 6px;">{{ display_code }}</span>
+                                                                        </td>
+                                                                    </tr>
+                                                                </table>
+                                                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={{ display_code | urlencode }}&bgcolor=ffffff&color=1e3a5f&margin=10" alt="Código QR: {{ display_code }}" width="180" height="180" style="display: block; margin: 0 auto; border: 4px solid #e8ebee; border-radius: 8px;" />
+                                                                <p style="font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; margin: 16px 0 0; font-size: 13px; color: #667382;">Puedes mostrar este código QR o el número directamente al personal de la cafetería.</p>
+                                                            </td>
+                                                        </tr>
+                                                        <!-- /CODIGO DESTACADO -->
+                                                        {% endif %}
 
                                                     </table>
                                                 </td>
@@ -215,7 +195,7 @@
                                             <table cellspacing="0" cellpadding="0" style="font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; border-collapse: collapse; width: 100%; color: #667382; text-align: center;">
                                                 <tr>
                                                     <td style="font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; padding-top: 16px;">
-                                                        Correo de notificación automática del sistema – Administración Cafetería Sabor Mirandiano.
+                                                        Si tienes alguna consulta, contáctanos respondiendo este correo.
                                                     </td>
                                                 </tr>
                                                 <tr>
