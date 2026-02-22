@@ -6,6 +6,7 @@ SECRET_KEY: str
 DEBUG = True
 LOG_LEVEL = "DEBUG" if DEBUG else "INFO"
 TRUSTED_HOSTS = ["tardis.local", "192.168.110.133"]
+SERVER_NAME = TRUSTED_HOSTS[0]
 SESSION_COOKIE_NAME = "sabormirandiano"
 DIRECTORIO_FOTOS_PLATO = f"{BASE_DIR}/app/static/platos"
 
@@ -46,7 +47,7 @@ LANGUAGES = {
 }
 
 # Flask Debugtoolbar
-DEBUG_TB_ENABLED = DEBUG
+DEBUG_TB_ENABLED = False
 DEBUG_TB_INTERCEPT_REDIRECTS = DEBUG
 DEBUG_TB_PANELS = (
     "flask_debugtoolbar.panels.versions.VersionDebugPanel",
