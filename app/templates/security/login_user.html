@@ -20,13 +20,7 @@
           <label class="form-label">Contraseña</label>
           <div class="input-group input-group-flat mb-2">
             <input type="password" class="form-control" placeholder="Contraseña" autocomplete="off" name="password" required />
-            <span class="input-group-text">
-              <a href="#" class="link-secondary" title="Show password" data-bs-toggle="tooltip"><!-- Download SVG icon from http://tabler.io/icons/icon/eye -->
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" class="icon icon-1">
-                  <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
-                  <path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" />
-                </svg></a>
-            </span>
+            <button id="toggle-password" type="button" class="d-none" aria-label="Show password as plain text. Warning: this will display your password on the screen."></button>
           </div>
           {{ render_field_errors(login_user_form.password) }}
         </div>
@@ -65,10 +59,12 @@
 
 {% endblock content %}
 
-
-
-{# {% block content %}
-  {% include "security/_messages.html" %}
+{% block head_styles %}
+<link href="{{ url_for('static', filename='tabler/libs/password-toggle/css/show-password-toggle.min.css', v=app_version)}}" rel="stylesheet" />
+{% endblock %}
+{% block page_scripts %}
+<script src="{{ url_for('static', filename='tabler/libs/password-toggle/js/show-password-toggle.min.js', v=app_version)}}"></script>
+{% endblock %}
   <h1>{{ _fsdomain('Login') }}</h1>
   <form action="{{ url_for_security('login') }}{{ prop_next() }}" method="post" name="login_user_form">
     {{ login_user_form.hidden_tag() }}

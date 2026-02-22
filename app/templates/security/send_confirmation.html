@@ -1,0 +1,41 @@
+{% set title = title|default(_fsdomain('Send Confirmation')) %}
+{% extends "base-security.html" %}
+{% from "security/_macros.html" import render_field_with_errors, render_field, render_form_errors, render_field_errors %}
+
+{% block content %}
+<div class="row g-0 flex-fill">
+  <div class="col-12 col-lg-6 col-xl-4 border-top-wide border-primary d-flex flex-column justify-content-center">
+    <div class="container container-tight my-5 px-lg-5">
+
+      <h2 class="h3 text-center mb-3">Bienvenido a Sabor Mirandiano</h2>
+      <div class="text-center my-4">
+        <h3 class="h4">Revisa tu correo electrónico</h3>
+        <p class="text-secondary">
+          Te hemos enviado un enlace de confirmación.<br />
+          Por favor, haz clic en el enlace para confirmar tu dirección de correo.
+        </p>
+      </div>
+      <form action="{{ url_for_security('send_confirmation') }}" method="post" autocomplete="off" name="send_confirmation_form" class="needs-validation" novalidate>
+        {{ send_confirmation_form.hidden_tag() }}
+        {{ render_form_errors(send_confirmation_form) }}
+        <div class="mb-3">
+          <label class="form-label">Correo Electrónico</label>
+          <input type="email" class="form-control" placeholder="correo@email.com" name="email" required />
+          {{ render_field_errors(send_confirmation_form.email) }}
+        </div>
+        <div class="form-footer">
+          {{ render_field_errors(send_confirmation_form.csrf_token) }}
+          <button type="submit" class="btn btn-primary w-100">Reenviar Confirmación</button>
+        </div>
+      </form>
+      <div class="text-center text-secondary mt-3">
+        ¿Ya tienes una cuenta confirmada? <a href="{{ url_for_security('login') }}" tabindex="-1">Ingresar</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-6 col-xl-8 d-none d-lg-block">
+    <!-- Photo -->
+    <div class="bg-cover h-100 min-vh-100" style="background-image: url(/static/img/login-cover.webp)"></div>
+  </div>
+</div>
+{% endblock content %}

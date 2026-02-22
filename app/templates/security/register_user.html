@@ -27,20 +27,14 @@
           <label class="form-label">Contraseña</label>
           <div class="input-group input-group-flat mb-2">
             <input type="password" class="form-control" placeholder="Contraseña" autocomplete="off" name="password" required />
-            <span class="input-group-text">
-              <a id="toggle-password" href="#" class="link-secondary" title="Show password" data-bs-toggle="tooltip"><!-- Download SVG icon from http://tabler.io/icons/icon/eye -->
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" class="icon icon-1">
-                  <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
-                  <path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" />
-                </svg></a>
-            </span>
+            <button id="toggle-password" type="button" class="d-none" aria-label="Show password as plain text. Warning: this will display your password on the screen."></button>
           </div>
           {{ render_field_errors(register_user_form.password) }}
           <label class="form-label">Confirmar Contraseña</label>
           <div class="input-group input-group-flat">
-            <input type="password" class="form-control" placeholder="Misma Contraseña" autocomplete="off" name="password_confirm" required />
+            <input type="password" id="password_confirm" class="form-control" placeholder="Misma Contraseña" autocomplete="off" name="password_confirm" required />
             <span class="input-group-text">
-              <a href="#" class="link-secondary" title="Show password" data-bs-toggle="tooltip"><!-- Download SVG icon from http://tabler.io/icons/icon/eye -->
+              <a href="#" class="link-secondary" title="Show password" aria-label="Show password as plain text. Warning: this will display your password on the screen." onclick="return toggleConfirmPassword(this);"><!-- Download SVG icon from http://tabler.io/icons/icon/eye -->
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" class="icon icon-1">
                   <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
                   <path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" />
@@ -81,7 +75,20 @@
 <link href="{{ url_for('static', filename='tabler/libs/password-toggle/css/show-password-toggle.min.css', v=app_version)}}" rel="stylesheet" />
 {% endblock %}
 {% block page_scripts %}
-<link href="{{ url_for('static', filename='tabler/libs/password-toggle/js/show-password-toggle.min.js', v=app_version)}}" rel="stylesheet" />
+<script src="{{ url_for('static', filename='tabler/libs/password-toggle/js/show-password-toggle.min.js', v=app_version)}}"></script>
+<script>
+  function toggleConfirmPassword(btn) {
+    var input = document.getElementById('password_confirm');
+    if (input.type === 'password') {
+      input.type = 'text';
+      btn.setAttribute('aria-label', 'Hide password.');
+    } else {
+      input.type = 'password';
+      btn.setAttribute('aria-label', 'Show password as plain text. Warning: this will display your password on the screen.');
+    }
+    return false;
+  }
+</script>
 {% endblock %}
 {#
 {% from "security/_macros.html" import render_field_with_errors, render_field, render_form_errors, render_field_errors %}
