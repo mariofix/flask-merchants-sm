@@ -119,15 +119,25 @@ def casino():
 
 @pos_bp.route("/completa-abono/<string:codigo>")
 def completa_abono(codigo):
-    # abono = db.session.execute(db.select(Abono).filter_by(codigo=codigo)).scalar_one_or_none()
-    # pago = db.session.execute(db.select(Payment).filter_by(merchants_token=codigo)).scalar_one_or_none()
-    # if pago and abono and pago.status == PaymentStatus.processing:
-    #     pago.status = PaymentStatus.paid
-    #     pago.integration_response = {"fecha_pago": datetime.now().isoformat()}
+    from flask_security import current_user, roles_accepted
+    from ..tasks import send_comprobante_abono, send_notificacion_admin_abono
 
-    #     abono.apoderado.saldo_cuenta = int(abono.apoderado.saldo_cuenta + abono.monto)
+    abono = db.session.execute(db.select(Abono).filter_by(codigo=codigo)).scalar_one_or_none()
+    pago = db.session.execute(db.select(Payment).filter_by(session_id=codigo)).scalar_one_or_none()
 
-    #     db.session.commit()
+    if (
+        abono
+        and pago
+        and pago.state == "processing"
+        and (current_user.has_role("admin") or current_user.has_role("pos"))
+    ):
+        pago.state = "succeeded"
+        saldo_actual = abono.apoderado.saldo_cuenta or 0
+        abono.apoderado.saldo_cuenta = saldo_actual + int(abono.monto)
+        db.session.commit()
+
+        send_comprobante_abono.delay(abono_id=abono.id)
+        send_notificacion_admin_abono.delay(abono_id=abono.id)
 
     return redirect(url_for("apoderado_cliente.abono_detalle", codigo=codigo))
 
