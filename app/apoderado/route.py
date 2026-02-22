@@ -239,6 +239,8 @@ def abono():
                 "apoderado_nombre": nuevo_abono.apoderado.nombre,
                 "apoderado_email": nuevo_abono.apoderado.usuario.email,
                 "saldo_cuenta": nuevo_abono.apoderado.saldo_cuenta or 0,
+                "comprobantes_transferencia": nuevo_abono.apoderado.comprobantes_transferencia,
+                "copia_notificaciones": nuevo_abono.apoderado.copia_notificaciones,
             }
         )
 
