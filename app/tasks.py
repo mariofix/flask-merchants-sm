@@ -2,6 +2,7 @@ from celery import shared_task
 from flask import current_app, render_template, url_for
 from flask_mailman import EmailMultiAlternatives
 from flask_security.mail_util import MailUtil
+from flask_merchants import merchants_audit
 import re
 
 from .extensions import mail
@@ -49,6 +50,12 @@ def send_flask_mail(*args, **kwargs):
             if html:
                 msg.attach_alternative(html, "text/html")
                 msg.send()
+                merchants_audit.info(
+                    "email_sent: from=%r to=%r subject=%r",
+                    kwargs.get("from_email"),
+                    kwargs.get("to"),
+                    kwargs.get("subject"),
+                )
 
 
 @shared_task(bind=True, ignore_result=False)
@@ -93,6 +100,12 @@ def send_comprobante_abono(self, abono_info: dict):
             )
             msg.attach_alternative(html, "text/html")
             msg.send()
+            merchants_audit.info(
+                "email_sent: from=%r to=%r subject=%r",
+                from_email,
+                [abono_info["apoderado_email"]],
+                subject,
+            )
 
 
 @shared_task(bind=True, ignore_result=False)
@@ -157,6 +170,12 @@ def send_notificacion_admin_abono(self, abono_info: dict):
             )
             msg.attach_alternative(html, "text/html")
             msg.send()
+            merchants_audit.info(
+                "email_sent: from=%r to=%r subject=%r",
+                from_email,
+                admin_emails,
+                subject,
+            )
 
 
 @shared_task(bind=True, ignore_result=False)
