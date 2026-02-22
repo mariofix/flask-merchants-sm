@@ -129,6 +129,7 @@ def wizp3():
             apoderado.id,
             apoderado.nombre,
             apoderado.usuario.email,
+        )
 
         send_notificacion_admin_nuevo_apoderado.delay(
             {
