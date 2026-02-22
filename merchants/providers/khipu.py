@@ -11,7 +11,6 @@ from merchants.providers import Provider, UserError
 
 try:
     import khipu_tools
-    from khipu_tools import KhipuClient
 except ImportError as exc:  # pragma: no cover
     raise ImportError(
         "khipu-tools is required for KhipuProvider. Install it with: pip install khipu-tools"
@@ -62,9 +61,6 @@ class KhipuProvider(Provider):
         self._subject = subject
         self._notify_url = notify_url
 
-    def _client(self) -> KhipuClient:
-        return KhipuClient(api_key=self._api_key)
-
     def create_checkout(
         self,
         amount: Decimal,
@@ -87,7 +83,7 @@ class KhipuProvider(Provider):
             params["transaction_id"] = str(metadata["order_id"])
 
         try:
-            result = self._client().payments.create(**params)
+            result = khipu_tools.Payments.create(api_key=self._api_key, **params)
         except Exception as exc:
             raise UserError(str(exc)) from exc
 
@@ -105,7 +101,7 @@ class KhipuProvider(Provider):
 
     def get_payment(self, payment_id: str) -> PaymentStatus:
         try:
-            result = self._client().payments.get(payment_id=payment_id)
+            result = khipu_tools.Payments.get(api_key=self._api_key, payment_id=payment_id)
         except Exception as exc:
             raise UserError(str(exc)) from exc
 
