@@ -189,6 +189,17 @@ def abono():
         # Marcar como "processing" – esperando pago presencial
         flask_merchants.update_state(nuevo_abono.codigo, "processing")
 
+        from ..tasks import send_notificacion_abono_creado
+        send_notificacion_abono_creado.delay(abono_info={
+            "codigo": nuevo_abono.codigo,
+            "monto": int(nuevo_abono.monto),
+            "forma_pago": nuevo_abono.forma_pago,
+            "descripcion": nuevo_abono.descripcion,
+            "apoderado_nombre": nuevo_abono.apoderado.nombre,
+            "apoderado_email": nuevo_abono.apoderado.usuario.email,
+            "saldo_cuenta": nuevo_abono.apoderado.saldo_cuenta or 0,
+        })
+
     return redirect(url_for("apoderado_cliente.abono_detalle", codigo=nuevo_abono.codigo))
 
 

@@ -1,0 +1,228 @@
+{% extends "base-pos.html" %}
+
+{% block head_styles %}
+<style>
+  #qr-reader {
+    width: 100%;
+    border: 1.5px solid #b2b2b2 !important;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  #qr-reader img[alt="Info icon"] { display: none; }
+  video { width: 100% !important; border-radius: 0.25em; }
+</style>
+{% endblock head_styles %}
+
+{% block page_header -%}
+<div class="page-header d-print-none text-white">
+  <div class="container-xl">
+    <div class="row g-2 align-items-center">
+      <div class="col">
+        <h1 class="page-title">Buscar Abono</h1>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock page_header -%}
+
+{% block page_body %}
+<div class="container-xl">
+  <div class="row row-deck row-cards">
+
+    {# Search / Scanner card #}
+    <div class="col-md-5 col-lg-4">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Ingresar Código</h3>
+        </div>
+        <div class="card-body">
+          <form method="post" id="search-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <div class="mb-3">
+              <label class="form-label">Código de abono</label>
+              <div class="input-group">
+                <input
+                  type="text"
+                  class="form-control font-monospace text-uppercase"
+                  name="codigo"
+                  id="codigo-input"
+                  placeholder="Ej: AB12CD"
+                  value="{{ codigo_buscado }}"
+                  autocomplete="off"
+                  autofocus
+                />
+                <button type="submit" class="btn btn-primary">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                    <circle cx="10" cy="10" r="7" />
+                    <path d="M21 21l-6 -6" />
+                  </svg>
+                  Buscar
+                </button>
+              </div>
+              <div class="form-text">Ingresa el código de 6 caracteres o el código completo del abono.</div>
+            </div>
+          </form>
+
+          <hr class="my-3" />
+
+          <div class="mb-2">
+            <button class="btn btn-outline-secondary w-100" id="btn-scan">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon me-1" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                <path d="M4 4m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
+                <path d="M7 17l0 .01" /><path d="M14 4m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
+                <path d="M7 7l0 .01" /><path d="M4 14m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
+                <path d="M17 7l0 .01" /><path d="M14 14l3 0" /><path d="M20 14l0 .01" /><path d="M14 14l0 3" /><path d="M14 20l3 0" /><path d="M17 17l3 0" /><path d="M20 17l0 3" />
+              </svg>
+              Escanear QR con Cámara
+            </button>
+          </div>
+          <div id="qr-reader" style="display:none;"></div>
+          <div id="qr-status" class="text-muted small mt-1"></div>
+        </div>
+      </div>
+    </div>
+
+    {# Result card #}
+    <div class="col-md-7 col-lg-8">
+      {% if codigo_buscado and not abono %}
+      <div class="alert alert-danger">
+        No se encontró un abono con el código <strong>{{ codigo_buscado }}</strong>.
+      </div>
+      {% endif %}
+
+      {% if abono %}
+      <div class="card h-100">
+        <div class="card-status-top {% if pago and pago.state == 'succeeded' %}bg-success{% elif pago and pago.state == 'processing' %}bg-yellow{% else %}bg-secondary{% endif %}"></div>
+        <div class="card-header">
+          <h3 class="card-title">
+            Abono <span class="font-monospace text-muted small">{{ abono.codigo[:8].upper() }}</span>
+          </h3>
+        </div>
+        <div class="card-body">
+
+          <div class="mb-3 row">
+            <label class="col-4 col-form-label text-muted">Apoderado</label>
+            <div class="col">
+              <input class="form-control" value="{{ abono.apoderado.nombre }}" readonly />
+            </div>
+          </div>
+
+          <div class="mb-3 row">
+            <label class="col-4 col-form-label text-muted">Monto</label>
+            <div class="col">
+              <input class="form-control fw-bold" value="${{ '{:,.0f}'.format(abono.monto) }}" readonly />
+            </div>
+          </div>
+
+          <div class="mb-3 row">
+            <label class="col-4 col-form-label text-muted">Forma de pago</label>
+            <div class="col">
+              <input class="form-control" value="{{ abono.forma_pago | capitalize }}" readonly />
+            </div>
+          </div>
+
+          <div class="mb-3 row">
+            <label class="col-4 col-form-label text-muted">Descripción</label>
+            <div class="col">
+              <input class="form-control" value="{{ abono.descripcion or '—' }}" readonly />
+            </div>
+          </div>
+
+          <div class="mb-3 row">
+            <label class="col-4 col-form-label text-muted">Fecha</label>
+            <div class="col">
+              <input class="form-control" value="{{ abono.created.strftime('%d/%m/%Y %H:%M') if abono.created else '—' }}" readonly />
+            </div>
+          </div>
+
+          {% if pago %}
+          <div class="mb-3 row">
+            <label class="col-4 col-form-label text-muted">Estado</label>
+            <div class="col">
+              {% if pago.state == 'succeeded' %}
+                <span class="badge bg-success fs-5">✔ Pagado</span>
+              {% elif pago.state == 'processing' %}
+                <span class="badge bg-yellow text-dark fs-5">⏳ Pendiente</span>
+              {% elif pago.state == 'cancelled' %}
+                <span class="badge bg-danger fs-5">✗ Cancelado</span>
+              {% else %}
+                <span class="badge bg-secondary fs-5">{{ pago.state }}</span>
+              {% endif %}
+            </div>
+          </div>
+          {% if display_code %}
+          <div class="mb-3 row">
+            <label class="col-4 col-form-label text-muted">Código</label>
+            <div class="col">
+              <input class="form-control font-monospace fw-bold" value="{{ display_code }}" readonly />
+            </div>
+          </div>
+          {% endif %}
+          {% endif %}
+
+        </div>
+        <div class="card-footer">
+          <div class="d-flex justify-content-between align-items-center">
+            <a href="{{ url_for('apoderado_cliente.abono_detalle', codigo=abono.codigo) }}" class="btn btn-link" target="_blank">Ver detalle completo</a>
+            {% if pago and pago.state == 'processing' %}
+            <a href="{{ url_for('pos.completa_abono', codigo=abono.codigo) }}" class="btn btn-success btn-lg">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon me-1" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                <path d="M5 12l5 5l10 -10" />
+              </svg>
+              Aprobar Pago
+            </a>
+            {% elif pago and pago.state == 'succeeded' %}
+            <span class="text-success fw-bold">✔ Pago ya aprobado</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+{% endblock page_body %}
+
+{% block page_scripts %}
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+  var scanner = null;
+
+  document.getElementById("btn-scan").addEventListener("click", function () {
+    var readerEl = document.getElementById("qr-reader");
+    var statusEl = document.getElementById("qr-status");
+
+    if (scanner) {
+      scanner.clear().then(function () {
+        scanner = null;
+        readerEl.style.display = "none";
+        statusEl.textContent = "";
+        document.getElementById("btn-scan").textContent = "Escanear QR con Cámara";
+      });
+      return;
+    }
+
+    readerEl.style.display = "block";
+    document.getElementById("btn-scan").innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="icon me-1" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l5 5l10 -10" /></svg> Detener Cámara';
+    statusEl.textContent = "Apunta la cámara al código QR del apoderado...";
+
+    scanner = new Html5QrcodeScanner("qr-reader", { fps: 15, qrbox: 220, supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA] });
+    scanner.render(function (decodedText) {
+      document.getElementById("codigo-input").value = decodedText;
+      statusEl.textContent = "Código detectado: " + decodedText;
+      scanner.clear().then(function () {
+        scanner = null;
+        readerEl.style.display = "none";
+        document.getElementById("btn-scan").innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="icon me-1" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 4m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" /><path d="M7 17l0 .01" /><path d="M14 4m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" /><path d="M7 7l0 .01" /><path d="M4 14m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" /><path d="M17 7l0 .01" /><path d="M14 14l3 0" /><path d="M20 14l0 .01" /><path d="M14 14l0 3" /><path d="M14 20l3 0" /><path d="M17 17l3 0" /><path d="M20 17l0 3" /></svg> Escanear QR con Cámara';
+        document.getElementById("search-form").submit();
+      });
+    }, function (error) {
+      // scan error – keep scanning
+    });
+  });
+</script>
+{% endblock page_scripts %}
