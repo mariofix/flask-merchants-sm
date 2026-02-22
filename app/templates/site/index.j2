@@ -47,7 +47,9 @@
           {% for menu in menus %}
           <div class="swiper-slide">
             <div class="card shadow-sm position-relative {% if menu.fuera_stock %}is-out-of-stock{% endif %}">
+              {% if menu.foto_principal %}
               <img src="{{ url_for('static', filename='platos/' ~ menu.foto_principal[0], v=app_version) }}" class="menu-card-img" alt="Menú Clásico">
+              {% endif %}
               <div class="card-body">
                 <div class="mb-2 d-flex flex-wrap gap-1">
                   {% if menu.fuera_stock %}
@@ -63,7 +65,7 @@
                     Agotado
                   </span>
                   {% endif %}
-                  {% if "hipocalorico" in menu.extra_attrs %}
+                  {% if menu.extra_attrs and "hipocalorico" in menu.extra_attrs %}
                   <span class="badge bg-green-lt text-green">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-bowl-spoon">
                       <path stroke="none" d="M0 0h24v24H0z" fill="none" />
@@ -74,7 +76,7 @@
                     Hipocalorico
                   </span>
                   {% endif %}
-                  {% if "vegano" in menu.extra_attrs %}
+                  {% if menu.extra_attrs and "vegano" in menu.extra_attrs %}
                   <span class="badge bg-indigo-lt text-indigo">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-leaf">
                       <path stroke="none" d="M0 0h24v24H0z" fill="none" />
