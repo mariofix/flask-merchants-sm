@@ -16,7 +16,6 @@ from wtforms import SelectMultipleField
 from flask_admin.form import Select2Widget
 from wtforms import StringField
 from wtforms.validators import Optional
-from flask_merchants.contrib.sqla import PaymentModelView
 
 
 admin = Admin(

@@ -52,6 +52,14 @@ class Payment(db.Model, PaymentMixin):
 
     id: Mapped[int] = mapped_column(primary_key=True)
 
+    pedido: Mapped["Pedido | None"] = relationship(
+        "Pedido",
+        primaryjoin="Payment.session_id == foreign(Pedido.codigo_merchants)",
+        back_populates="payment",
+        uselist=False,
+        viewonly=True,
+    )
+
     def __str__(self):
         return f"{self.id}"
 
@@ -250,6 +258,14 @@ class Pedido(db.Model, Timestamp):
 
     # Metadata
     extra_attrs: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+
+    payment: Mapped["Payment | None"] = relationship(
+        "Payment",
+        primaryjoin="foreign(Pedido.codigo_merchants) == Payment.session_id",
+        back_populates="pedido",
+        uselist=False,
+        viewonly=True,
+    )
 
     def __str__(self):
         return f"{self.codigo} - {self.estado.value}"
