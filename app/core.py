@@ -1,6 +1,7 @@
 import os
 
 import merchants as _merchants
+import redis as _redis
 from dotenv import load_dotenv
 from flask import Flask, url_for
 from flask_admin import helpers as admin_helpers
@@ -13,7 +14,7 @@ from .celery import celery_init_app
 from .docs import docs_bp
 from .database import db, migrations
 from .extensions import babel, csrf, flask_merchants, mail, limiter
-from .extensions.admin import admin
+from .extensions.admin import admin, SecureRedisCli
 from .model import *  # noqa: F403
 from .pos.routes import pos_bp
 from .providers.cafeteria import CafeteriaProvider
@@ -46,6 +47,29 @@ def create_app():
     admin.init_app(app)
     csrf.init_app(app)
     limiter.init_app(app)
+
+    # Redis CLI consoles (one per database: broker queue and result backend)
+    celery_cfg = app.config.get("CELERY", {})
+    broker_url = celery_cfg.get("broker_url", "")
+    result_backend = celery_cfg.get("result_backend", "")
+    if broker_url and broker_url.startswith("redis"):
+        admin.add_view(
+            SecureRedisCli(
+                _redis.from_url(broker_url),
+                name="Redis Cola",
+                endpoint="redis_broker",
+                category="Herramientas",
+            )
+        )
+    if result_backend and result_backend.startswith("redis") and result_backend != broker_url:
+        admin.add_view(
+            SecureRedisCli(
+                _redis.from_url(result_backend),
+                name="Redis Resultados",
+                endpoint="redis_results",
+                category="Herramientas",
+            )
+        )
 
     # Setup Flask-Security
     user_datastore = SQLAlchemyUserDatastore(db, User, Role)
