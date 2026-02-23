@@ -64,6 +64,16 @@
         <div id="nfc-status" class="card-body py-2" style="display:none;">
           <div class="alert mb-0" id="nfc-alert" role="alert"></div>
         </div>
+
+        {# ── Manual tag input (shown when NFC/QR camera unavailable) ──────── #}
+        <div id="manual-tag-section" class="card-body py-2" style="display:none;">
+          <div class="mb-1 text-secondary small">Ingresa el código del brazalete o TAG manualmente:</div>
+          <div class="input-group">
+            <input type="text" id="manual-tag-field" class="form-control font-monospace"
+              placeholder="ej: d5bca774" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" />
+            <button type="button" id="btn-buscar-manual-tag" class="btn btn-primary">Buscar</button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -204,6 +214,10 @@
   const csrfToken = "{{ csrf_token() }}";
 
   // ── Helpers ────────────────────────────────────────────────────────────────
+  function normalizeTag(raw) {
+    return (raw || '').replace(/:/g, '').toLowerCase().trim();
+  }
+
   function showScanResult(data) {
     const alumno  = data.alumno;
     const orden   = data.orden;
@@ -304,7 +318,7 @@
     pendingEntregaUrl = url;
     document.getElementById('confirm-detail').innerHTML =
       `<strong>${nombre}</strong><br><span class="text-muted">${menu}</span>`;
-    new bootstrap.Modal(document.getElementById('confirmaAlmuerzoModal')).show();
+    new tabler.Modal(document.getElementById('confirmaAlmuerzoModal')).show();
   }
 
   // ── Confirm delivery ───────────────────────────────────────────────────────
@@ -318,7 +332,7 @@
         headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' },
       });
       const data = await resp.json();
-      bootstrap.Modal.getInstance(document.getElementById('confirmaAlmuerzoModal')).hide();
+      tabler.Modal.getInstance(document.getElementById('confirmaAlmuerzoModal')).hide();
       if (data.ok) {
         // Prepend to the recent deliveries table
         const tbody = document.getElementById('recientes-tbody');
@@ -345,7 +359,8 @@
   // ── NFC (Web NFC API – Android Chrome only) ────────────────────────────────
   document.getElementById('btn-nfc').addEventListener('click', async function () {
     if (!('NDEFReader' in window)) {
-      showNfcStatus('warning', 'NFC no disponible en este dispositivo/navegador. Use el lector QR.');
+      document.getElementById('manual-tag-section').style.display = '';
+      document.getElementById('manual-tag-field').focus();
       return;
     }
     showNfcStatus('info', 'Acerca el brazalete del alumno a la parte posterior del celular…');
@@ -353,7 +368,7 @@
       const ndef = new NDEFReader();
       await ndef.scan();
       ndef.onreading = (event) => {
-        const serial = (event.serialNumber || '').replace(/:/g, '').toLowerCase();
+        const serial = normalizeTag(event.serialNumber);
         showNfcStatus('success', `Brazalete detectado: <strong>${serial}</strong>`);
         scanTag(serial);
       };
@@ -365,19 +380,50 @@
 
   // ── QR scanner (html5-qrcode) ──────────────────────────────────────────────
   const qrModal = document.getElementById('qrModal');
-  qrModal.addEventListener('shown.bs.modal', function () {
+  qrModal.addEventListener('shown.bs.modal', async function () {
     if (qrScanner) return;
-    qrScanner = new Html5QrcodeScanner('qr-reader', { fps: 15, qrbox: 220 });
-    qrScanner.render(function (decoded) {
-      const serial = (decoded || '').replace(/:/g, '').toLowerCase();
-      document.getElementById('qr-modal-status').textContent = 'Código: ' + serial;
-      qrScanner.clear().then(() => { qrScanner = null; });
-      bootstrap.Modal.getInstance(qrModal).hide();
-      scanTag(serial);
-    });
+    // Non-secure contexts (non-HTTPS, non-localhost) have no camera API
+    if (!window.isSecureContext) {
+      tabler.Modal.getInstance(qrModal).hide();
+      document.getElementById('manual-tag-section').style.display = '';
+      document.getElementById('manual-tag-field').focus();
+      return;
+    }
+    const qr = new Html5Qrcode('qr-reader');
+    qrScanner = qr;
+    try {
+      await qr.start(
+        { facingMode: 'environment' },
+        { fps: 15, qrbox: 220 },
+        (decoded) => {
+          const serial = normalizeTag(decoded);
+          document.getElementById('qr-modal-status').textContent = 'Código: ' + serial;
+          qr.stop().then(() => { qrScanner = null; });
+          tabler.Modal.getInstance(qrModal).hide();
+          scanTag(serial);
+        }
+      );
+    } catch(err) {
+      console.warn('QR camera unavailable:', err);
+      qrScanner = null;
+      tabler.Modal.getInstance(qrModal).hide();
+      document.getElementById('manual-tag-section').style.display = '';
+      document.getElementById('manual-tag-field').focus();
+    }
   });
   qrModal.addEventListener('hidden.bs.modal', function () {
-    if (qrScanner) { qrScanner.clear().then(() => { qrScanner = null; }); }
+    if (qrScanner) { qrScanner.stop().catch(() => {}).finally(() => { qrScanner = null; }); }
+  });
+
+  // ── Manual tag input (fallback when NFC/QR camera unavailable) ─────────────
+  function buscarManualTag() {
+    const val = normalizeTag(document.getElementById('manual-tag-field').value);
+    if (!val) return;
+    scanTag(val);
+  }
+  document.getElementById('btn-buscar-manual-tag').addEventListener('click', buscarManualTag);
+  document.getElementById('manual-tag-field').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') buscarManualTag();
   });
 
   // ── Manual alumno entry ────────────────────────────────────────────────────
