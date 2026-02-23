@@ -728,6 +728,27 @@ def _hora_escolar_aleatoria(fecha, tipo: str = "general"):
     return datetime(fecha.year, fecha.month, fecha.day, hora, minuto, random.randint(0, 59))
 
 
+_RESTRICCIONES_CATALOGO = [
+    {"nombre": "Maní", "motivo": "Alergia"},
+    {"nombre": "Mariscos", "motivo": "Alergia"},
+    {"nombre": "Huevo", "motivo": "Alergia"},
+    {"nombre": "Soya", "motivo": "Alergia"},
+    {"nombre": "Palta", "motivo": "Intolerancia"},
+    {"nombre": "Lactosa", "motivo": "Intolerancia"},
+    {"nombre": "Gluten", "motivo": "Intolerancia"},
+    {"nombre": "Uva", "motivo": "Intolerancia"},
+    {"nombre": "Vegano", "motivo": "Preferencia"},
+    {"nombre": "Vegetariano", "motivo": "Preferencia"},
+]
+
+
+def _restricciones_aleatorias(rng) -> list:
+    """Return a random (possibly empty) list of restricciones dicts."""
+    if rng.random() > 0.30:
+        return []
+    return rng.sample(_RESTRICCIONES_CATALOGO, k=rng.randint(1, 2))
+
+
 class GenerarDatosView(BaseView):
     """Vista de administración para generar datos de prueba contextualizados."""
 
@@ -888,6 +909,7 @@ class GenerarDatosView(BaseView):
                 apoderado=random.choice(apoderados),
                 maximo_diario=random.choice([None, 1, 2, 3]),
                 maximo_semanal=random.choice([None, 5, 10]),
+                restricciones=_restricciones_aleatorias(random),
             )
             db.session.add(alumno)
             creados += 1
@@ -970,6 +992,7 @@ class GenerarDatosView(BaseView):
                     apoderado=apoderado,
                     maximo_diario=max_diario,
                     maximo_semanal=max_semanal,
+                    restricciones=_restricciones_aleatorias(random),
                 )
                 db.session.add(alumno)
 
