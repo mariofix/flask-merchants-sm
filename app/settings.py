@@ -103,34 +103,6 @@ MERCHANTS_PROVIDER_LABELS = {
 # STORE_BRAND_ICON = "bi bi-shop"
 # STORE_NAME = "Storefront"
 
-# ---------------------------------------------------------------------------
-# Domain-based blueprint routing
-# ---------------------------------------------------------------------------
-# Requests that arrive at a blueprint on the *wrong* host are redirected
-# (HTTP 301) to the canonical hostname configured here.
-# Leave both values empty (the default) to disable enforcement — useful in
-# development or single-domain deployments.
-#
-# Why not TRUSTED_HOSTS?
-#   TRUSTED_HOSTS is a *security* allowlist: Werkzeug's TrustedHostsMiddleware
-#   rejects requests whose Host header is not in that list (Host Header
-#   Injection protection).  It is a flat list and carries no information about
-#   which blueprint belongs to which domain — that is a routing concern,
-#   expressed here with two explicit, semantically-named keys.
-#
-# Why not Flask host_matching=True?
-#   Flask's native approach (Flask(host_matching=True) + registering each
-#   blueprint with host="…") is the right long-term solution, but it requires
-#   *every* blueprint — including Flask-Security and Flask-Admin — to declare a
-#   host.  Those extensions do not expose a host= parameter, so enabling
-#   host_matching today would need upstream patches.  The before_request guards
-#   below are a pragmatic equivalent that requires no changes to extensions.
-#
-#   sabormirandiano.cl  →  public website (core) + parent portal (apoderado)
-#   apps.156.cl         →  POS terminal (pos) + data manager (Flask-Admin)
-SABORMIRANDIANO_HOST = ""
-APPS_HOST = ""
-
 CELERY = {
     "broker_url": "redis://10.100.254.2/10",
     "result_backend": "redis://10.100.254.2/11",
