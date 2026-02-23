@@ -1,8 +1,22 @@
 from dotenv import load_dotenv
 
 from app import create_app
+import os
 
 load_dotenv()
+import sentry_sdk
 
+from sentry_sdk.integrations.flask import FlaskIntegration
+
+dsn = os.getenv("FLASK_SENTRY_DSN", None)
+if dsn:
+    sentry_sdk.init(
+        dsn=dsn,
+        integrations=[FlaskIntegration()],
+        # Set traces_sample_rate to 1.0 to capture 100%
+        # of transactions for Tracing.
+        # We recommend adjusting this value in production,
+        traces_sample_rate=1.0,
+    )
 app = create_app()
 celery_app = app.extensions["celery"]
