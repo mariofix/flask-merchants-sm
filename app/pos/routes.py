@@ -142,6 +142,23 @@ def venta_kiosko():
     }), 201
 
 
+@pos_bp.route("/entrega-almuerzo/<int:orden_id>", methods=["POST"])
+@roles_accepted("admin", "pos")
+@limiter.limit("60 per minute")
+def entrega_almuerzo(orden_id: int):
+    """Mark an OrdenCasino as delivered (ENTREGADO)."""
+    orden = ctrl.entregar_almuerzo(orden_id)
+    if orden is None:
+        return jsonify({"error": "Orden no encontrada o ya entregada"}), 404
+    return jsonify({
+        "ok": True,
+        "orden_id": orden.id,
+        "alumno_id": orden.alumno_id,
+        "menu_slug": orden.menu_slug,
+        "estado": orden.estado.value,
+    })
+
+
 @pos_bp.route("/completa-abono/<string:codigo>")
 @roles_accepted("admin", "pos")
 @limiter.limit("30 per minute")

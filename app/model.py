@@ -91,7 +91,7 @@ class Abono(db.Model, Timestamp):
 
 
 class Alumno(db.Model, Timestamp):
-    ___tablename__ = "casino_alumno"
+    __tablename__ = "alumno"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     slug: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
