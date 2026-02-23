@@ -508,7 +508,7 @@ def send_confirmacion_orden_pagado(self, pedido_info: dict):
         body += f"\nVer detalle: {pedido_url}\n\nSaludos,\nCafetería Sabor Mirandiano"
 
         html = render_template(
-            "core/emails/calendar-confirmacion-orden/compiled.html",
+            "core/emails/confirmacion_orden.html",
             nombre_apoderado=apoderado.nombre,
             pedido_codigo=pedido_codigo_short,
             items=items,
