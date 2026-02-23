@@ -201,7 +201,7 @@
     }))
   }
   document.getElementById('btn-pedido').addEventListener('click', () => {
-    submitCalendar('{{ url_for('pos.ordenweb') }}', '{{ csrf_token() }}')
+    submitCalendar('{{ url_for('apoderado_cliente.ordenweb') }}', '{{ csrf_token() }}')
   })
 
   function submitCalendar(url, csrfToken) {
