@@ -1,0 +1,98 @@
+{% extends 'admin/master.html' %}
+
+{% block body %}
+<div class="container-fluid py-4">
+  <h2 class="mb-1">🧪 Generador de Datos de Prueba</h2>
+  <p class="text-muted mb-4">Crea registros de prueba con datos ficticios contextualizados para Chile. Solo disponible en modo de desarrollo.</p>
+
+  <div class="row g-4">
+    <!-- Generate form -->
+    <div class="col-lg-6">
+      <div class="card">
+        <div class="card-header"><strong>Generar Registros</strong></div>
+        <div class="card-body">
+          <form method="post" action="{{ url_for('generar_datos.generar') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="mb-3">
+              <label for="modelo" class="form-label fw-semibold">Tipo de Registro</label>
+              <select name="modelo" id="modelo" class="form-select">
+                <option value="plato">Plato</option>
+                <option value="alumno">Alumno</option>
+                <option value="apoderado">Apoderado (requiere Usuarios disponibles)</option>
+                <option value="menu_diario">Menú Diario (requiere Platos disponibles)</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="cantidad" class="form-label fw-semibold">Cantidad de Registros</label>
+              <input type="number" name="cantidad" id="cantidad" class="form-control"
+                     value="10" min="1" max="100">
+              <div class="form-text">Máximo 100 por operación.</div>
+            </div>
+            <button type="submit" class="btn btn-primary">
+              ▶ Generar
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vaciar form -->
+    <div class="col-lg-6">
+      <div class="card border-danger">
+        <div class="card-header bg-danger text-white"><strong>⚠️ Vaciar Datos</strong></div>
+        <div class="card-body">
+          <p class="text-muted small">
+            Elimina <strong>todos</strong> los registros de las tablas operacionales. Los registros de
+            <strong>Usuarios</strong> y <strong>Roles</strong> no se eliminan.
+          </p>
+          <p class="text-muted small">Tablas afectadas: Platos, Alumnos, Apoderados, Abonos, Menús, Pedidos, Ordenes, Pagos, Configuración.</p>
+          <form method="post" action="{{ url_for('generar_datos.vaciar') }}"
+                onsubmit="return confirm('¿Estás seguro? Esta acción eliminará todos los datos operacionales (excepto Usuarios y Roles).');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-danger">
+              🗑️ Vaciar Base de Datos
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Flash messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="mt-4">
+        {% for category, message in messages %}
+          <div class="alert alert-{{ 'success' if category == 'success' else ('danger' if category == 'error' else 'info') }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <!-- Current counts -->
+  <div class="card mt-4">
+    <div class="card-header"><strong>Estado Actual de la Base de Datos</strong></div>
+    <div class="card-body p-0">
+      <table class="table table-sm table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Tabla</th>
+            <th class="text-end">Registros</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for nombre, count in conteos.items() %}
+          <tr>
+            <td>{{ nombre }}</td>
+            <td class="text-end"><span class="badge bg-secondary">{{ count }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

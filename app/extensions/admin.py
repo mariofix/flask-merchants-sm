@@ -18,6 +18,7 @@ from ..model import (
     Apoderado,
     MenuDiario,
     OpcionMenuDia,
+    Payment,
     Pedido,
     Plato,
     Role,
@@ -416,6 +417,376 @@ class ResumenDiaAdminView(BaseView):
         )
 
 
+
+
+# ---------------------------------------------------------------------------
+# Generador de Datos de Prueba
+# ---------------------------------------------------------------------------
+
+# Platos chilenos organizados por categoría con flags dietéticos consistentes
+# Formato: (nombre, es_vegano, es_vegetariano, es_hipocalorico, contiene_gluten, contiene_alergenos)
+_PLATOS_FONDOS_CARNE = [
+    ("Cazuela de Vacuno", False, False, False, False, False),
+    ("Cazuela de Pollo", False, False, False, False, False),
+    ("Pollo Asado con Papas", False, False, False, False, False),
+    ("Filete de Merluza al Vapor", False, False, True, False, True),
+    ("Bistec a lo Pobre", False, False, False, False, False),
+    ("Charquicán", False, False, False, False, False),
+    ("Pastel de Choclo", False, False, False, False, False),
+    ("Arrollado de Huaso", False, False, False, False, False),
+    ("Guiso de Lentejas con Costilla", False, False, False, False, False),
+    ("Carne Mechada con Arroz", False, False, False, False, False),
+    ("Pollo a la Plancha con Ensalada", False, False, True, False, False),
+    ("Reineta al Horno", False, False, True, False, True),
+    ("Salmón a la Plancha", False, False, True, False, True),
+    ("Ajiaco", False, False, False, False, False),
+    ("Guiso de Porotos con Longaniza", False, False, False, False, False),
+]
+
+_PLATOS_FONDOS_VEGANOS = [
+    ("Guiso de Lentejas Vegano", True, True, True, False, False),
+    ("Estofado de Garbanzos", True, True, True, False, False),
+    ("Arroz con Verduras Salteadas", True, True, True, False, False),
+    ("Pastel de Papas Vegano", True, True, False, False, False),
+    ("Puré de Zapallo con Quinoa", True, True, True, False, False),
+    ("Cazuela de Verduras", True, True, True, False, False),
+    ("Porotos con Rienda Vegano", True, True, False, False, False),
+    ("Tarta de Espinacas", True, True, False, True, False),
+]
+
+_PLATOS_FONDOS_VEGETARIANOS = [
+    ("Tortilla de Acelga", False, True, True, False, True),
+    ("Lasaña de Verduras", False, True, False, True, True),
+    ("Revuelto Gramajo", False, True, False, False, True),
+    ("Omelette con Queso y Tomate", False, True, True, False, True),
+    ("Quiche de Espinacas", False, True, False, True, True),
+    ("Fideos con Salsa de Tomate", False, True, False, True, False),
+    ("Arroz con Leche de Coco", False, True, True, False, False),
+]
+
+_PLATOS_ENTRADAS = [
+    ("Sopa de Cebolla", True, True, False, False, False),
+    ("Crema de Zapallo", True, True, True, False, False),
+    ("Consomé de Pollo", False, False, True, False, False),
+    ("Sopa Minestrone", True, True, False, False, False),
+    ("Ensalada Chilena", True, True, True, False, False),
+    ("Ensalada César", False, False, False, False, True),
+    ("Ensalada de Tomate y Cebolla", True, True, True, False, False),
+    ("Empanadas de Horno", False, False, False, True, False),
+    ("Humitas", True, True, False, False, False),
+    ("Pebre con Marraqueta", True, True, False, True, False),
+]
+
+_PLATOS_POSTRES = [
+    ("Arroz con Leche", False, True, False, False, True),
+    ("Leche Asada", False, True, False, False, True),
+    ("Kuchen de Frutas", False, True, False, True, True),
+    ("Mote con Huesillos", True, True, True, False, False),
+    ("Sopaipillas con Chancaca", True, True, False, True, False),
+    ("Gelatina de Frutas", True, True, True, False, False),
+    ("Flan de Vainilla", False, True, False, False, True),
+    ("Picarones", True, True, False, True, False),
+    ("Fruta de Temporada", True, True, True, False, False),
+    ("Torta de Milhojas", False, True, False, True, True),
+]
+
+_CURSOS_CHILENOS = [
+    "1° Básico A", "1° Básico B", "2° Básico A", "2° Básico B",
+    "3° Básico A", "3° Básico B", "4° Básico A", "4° Básico B",
+    "5° Básico A", "5° Básico B", "6° Básico A", "6° Básico B",
+    "7° Básico A", "7° Básico B", "8° Básico A", "8° Básico B",
+    "1° Medio A", "1° Medio B", "2° Medio A", "2° Medio B",
+    "3° Medio A", "3° Medio B", "4° Medio A", "4° Medio B",
+]
+
+
+class GenerarDatosView(BaseView):
+    """Vista de administración para generar datos de prueba contextualizados."""
+
+    def is_accessible(self):
+        return current_user.is_active and current_user.is_authenticated and current_user.has_role("admin")
+
+    def _handle_view(self, name, **kwargs):
+        if not self.is_accessible():
+            if current_user.is_authenticated:
+                abort(403)
+            else:
+                return redirect(url_for("security.login", next=request.url))
+
+    def _get_conteos(self) -> dict:
+        from ..model import Abono, Alumno, Apoderado, MenuDiario, OpcionMenuDia, OrdenCasino, Payment, Pedido, Plato, Settings, User, Role
+
+        return {
+            "Platos": db.session.execute(db.select(db.func.count(Plato.id))).scalar() or 0,
+            "Menús Diarios": db.session.execute(db.select(db.func.count(MenuDiario.id))).scalar() or 0,
+            "Apoderados": db.session.execute(db.select(db.func.count(Apoderado.id))).scalar() or 0,
+            "Alumnos": db.session.execute(db.select(db.func.count(Alumno.id))).scalar() or 0,
+            "Abonos": db.session.execute(db.select(db.func.count(Abono.id))).scalar() or 0,
+            "Pedidos": db.session.execute(db.select(db.func.count(Pedido.id))).scalar() or 0,
+            "Ordenes Casino": db.session.execute(db.select(db.func.count(OrdenCasino.id))).scalar() or 0,
+            "Pagos": db.session.execute(db.select(db.func.count(Payment.id))).scalar() or 0,
+            "Configuraciones": db.session.execute(db.select(db.func.count(Settings.id))).scalar() or 0,
+            "Usuarios": db.session.execute(db.select(db.func.count(User.id))).scalar() or 0,
+            "Roles": db.session.execute(db.select(db.func.count(Role.id))).scalar() or 0,
+        }
+
+    @expose("/")
+    def index(self):
+        return self.render("admin/generar_datos.html", conteos=self._get_conteos())
+
+    @expose("/generar", methods=["POST"])
+    def generar(self):
+        import random
+        from datetime import date, timedelta
+
+        from faker import Faker
+
+        fake = Faker("es_CL")
+
+        modelo = request.form.get("modelo", "plato")
+        try:
+            cantidad = min(int(request.form.get("cantidad", 10)), 100)
+        except (ValueError, TypeError):
+            cantidad = 10
+
+        creados = 0
+
+        if modelo == "plato":
+            creados = self._generar_platos(fake, cantidad)
+        elif modelo == "alumno":
+            creados = self._generar_alumnos(fake, cantidad)
+        elif modelo == "apoderado":
+            creados = self._generar_apoderados(fake, cantidad)
+        elif modelo == "menu_diario":
+            creados = self._generar_menus_diarios(fake, cantidad)
+        else:
+            flash(f"Modelo desconocido: {modelo}", "error")
+            return redirect(url_for("generar_datos.index"))
+
+        flash(f"✅ Se crearon {creados} registros de tipo «{modelo}» exitosamente.", "success")
+        return redirect(url_for("generar_datos.index"))
+
+    def _generar_platos(self, fake, cantidad: int) -> int:
+        import random
+
+        todos = _PLATOS_ENTRADAS + _PLATOS_FONDOS_CARNE + _PLATOS_FONDOS_VEGANOS + _PLATOS_FONDOS_VEGETARIANOS + _PLATOS_POSTRES
+        creados = 0
+        usados = set(
+            row[0]
+            for row in db.session.execute(db.select(Plato.nombre)).all()
+        )
+
+        candidatos = [p for p in todos if p[0] not in usados]
+        random.shuffle(candidatos)
+
+        for i in range(min(cantidad, len(candidatos))):
+            nombre, vegano, vegetariano, hipocalorico, gluten, alergenos = candidatos[i]
+            plato = Plato(
+                nombre=nombre,
+                activo=True,
+                es_vegano=vegano,
+                es_vegetariano=vegetariano,
+                es_hipocalorico=hipocalorico,
+                contiene_gluten=gluten,
+                contiene_alergenos=alergenos,
+            )
+            db.session.add(plato)
+            creados += 1
+
+        if creados < cantidad:
+            # If we've run out of predefined names, generate unique ones
+            for _ in range(cantidad - creados):
+                categoria = random.choice(["entrada", "fondo", "postre"])
+                if categoria == "fondo":
+                    base = random.choice(["Guiso", "Cazuela", "Estofado", "Asado", "Salteado"])
+                    ingrediente = fake.word().capitalize()
+                    nombre = f"{base} de {ingrediente}"
+                    vegano = random.random() < 0.3
+                    vegetariano = vegano or (random.random() < 0.2)
+                elif categoria == "entrada":
+                    base = random.choice(["Sopa", "Crema", "Ensalada", "Consomé"])
+                    ingrediente = fake.word().capitalize()
+                    nombre = f"{base} de {ingrediente}"
+                    vegano = random.random() < 0.5
+                    vegetariano = vegano or (random.random() < 0.3)
+                else:
+                    nombre = fake.word().capitalize() + " dulce"
+                    vegano = random.random() < 0.4
+                    vegetariano = vegano or (random.random() < 0.4)
+
+                plato = Plato(
+                    nombre=nombre,
+                    activo=True,
+                    es_vegano=vegano,
+                    es_vegetariano=vegetariano,
+                    es_hipocalorico=random.random() < 0.3,
+                    contiene_gluten=random.random() < 0.4,
+                    contiene_alergenos=random.random() < 0.2,
+                )
+                db.session.add(plato)
+                creados += 1
+
+        db.session.commit()
+        return creados
+
+    def _generar_alumnos(self, fake, cantidad: int) -> int:
+        import random
+
+        apoderados = db.session.execute(db.select(Apoderado)).scalars().all()
+        if not apoderados:
+            flash("No hay Apoderados disponibles. Crea Apoderados primero.", "error")
+            return 0
+
+        creados = 0
+        for _ in range(cantidad):
+            nombre = f"{fake.first_name()} {fake.last_name()}"
+            curso = random.choice(_CURSOS_CHILENOS)
+            slug_base = f"{nombre.lower().replace(' ', '-')}-{random.randint(1, 999)}"
+            from slugify import slugify as _slugify
+            slug = _slugify(slug_base)
+
+            alumno = Alumno(
+                slug=slug,
+                nombre=nombre,
+                curso=curso,
+                activo=True,
+                apoderado=random.choice(apoderados),
+                maximo_diario=random.choice([None, 1, 2, 3]),
+                maximo_semanal=random.choice([None, 5, 10]),
+            )
+            db.session.add(alumno)
+            creados += 1
+
+        db.session.commit()
+        return creados
+
+    def _generar_apoderados(self, fake, cantidad: int) -> int:
+        import random
+
+        # Find users that don't already have an apoderado
+        existing_apoderado_user_ids = {
+            row[0]
+            for row in db.session.execute(db.select(Apoderado.usuario_id)).all()
+        }
+        usuarios = [
+            u for u in db.session.execute(db.select(User)).scalars().all()
+            if u.id not in existing_apoderado_user_ids
+        ]
+        if not usuarios:
+            flash("No hay Usuarios disponibles sin Apoderado. Crea Usuarios primero.", "error")
+            return 0
+
+        creados = 0
+        for usuario in usuarios[:cantidad]:
+            apoderado = Apoderado(
+                nombre=f"{fake.first_name()} {fake.last_name()}",
+                alumnos_registro=random.randint(1, 3),
+                usuario=usuario,
+                saldo_cuenta=random.randint(0, 50000),
+                maximo_diario=random.choice([None, 2, 3]),
+                maximo_semanal=random.choice([None, 10, 15]),
+            )
+            db.session.add(apoderado)
+            creados += 1
+
+        db.session.commit()
+        return creados
+
+    def _generar_menus_diarios(self, fake, cantidad: int) -> int:
+        import random
+        from datetime import date, timedelta
+        from decimal import Decimal
+
+        from slugify import slugify as _slugify
+
+        platos = db.session.execute(db.select(Plato).where(Plato.activo.is_(True))).scalars().all()
+        if not platos:
+            flash("No hay Platos disponibles. Crea Platos primero.", "error")
+            return 0
+
+        entradas = [p for p in platos if any(p.nombre.lower().startswith(kw) for kw in ("sopa", "crema", "ensalada", "consomé", "empanada", "humita", "pebre"))]
+        fondos = [p for p in platos if p not in entradas and not any(p.nombre.lower().startswith(kw) for kw in ("arroz con leche", "leche asada", "kuchen", "mote", "sopaipilla", "gelatina", "flan", "picarones", "fruta", "torta"))]
+        postres = [p for p in platos if p not in entradas and p not in fondos]
+
+        if not entradas:
+            entradas = platos
+        if not fondos:
+            fondos = platos
+        if not postres:
+            postres = platos
+
+        existing_slugs = {
+            row[0]
+            for row in db.session.execute(db.select(MenuDiario.slug)).all()
+        }
+
+        creados = 0
+        start_date = date.today() + timedelta(days=1)
+
+        for i in range(cantidad):
+            dia = start_date + timedelta(days=i)
+            slug_candidate = _slugify(f"menu-{dia.isoformat()}")
+            if slug_candidate in existing_slugs:
+                continue
+
+            menu = MenuDiario(
+                dia=dia,
+                slug=slug_candidate,
+                precio=Decimal(random.choice([2500, 3000, 3500, 4000, 4500])),
+                activo=True,
+                stock=random.randint(20, 100),
+                es_permanente=False,
+            )
+            db.session.add(menu)
+            db.session.flush()  # get menu.id
+
+            # Add opciones: 1-2 entradas, 2-3 fondos, 1-2 postres
+            orden = 0
+            from ..model import TipoCurso
+            for plato in random.sample(entradas, min(random.randint(1, 2), len(entradas))):
+                db.session.add(OpcionMenuDia(menu=menu, plato=plato, tipo_curso=TipoCurso.ENTRADA, orden=orden))
+                orden += 1
+            for plato in random.sample(fondos, min(random.randint(2, 3), len(fondos))):
+                db.session.add(OpcionMenuDia(menu=menu, plato=plato, tipo_curso=TipoCurso.FONDO, orden=orden))
+                orden += 1
+            for plato in random.sample(postres, min(random.randint(1, 2), len(postres))):
+                db.session.add(OpcionMenuDia(menu=menu, plato=plato, tipo_curso=TipoCurso.POSTRE, orden=orden))
+                orden += 1
+
+            existing_slugs.add(slug_candidate)
+            creados += 1
+
+        db.session.commit()
+        return creados
+
+    @expose("/vaciar", methods=["POST"])
+    def vaciar(self):
+        """Delete all records except User and Role tables."""
+        from ..model import Abono, Alumno, Apoderado, MenuDiario, OpcionMenuDia, OrdenCasino, Payment, Pedido, Plato, Settings
+
+        # Order matters: delete dependents before parents
+        tablas_orden = [
+            OrdenCasino,
+            OpcionMenuDia,
+            MenuDiario,
+            Abono,
+            Alumno,
+            Apoderado,
+            Plato,
+            Pedido,
+            Payment,
+            Settings,
+        ]
+        total = 0
+        for modelo in tablas_orden:
+            result = db.session.execute(db.delete(modelo))
+            total += result.rowcount
+
+        db.session.commit()
+        flash(f"🗑️ Base de datos vaciada. Se eliminaron {total} registros (Usuarios y Roles conservados).", "success")
+        return redirect(url_for("generar_datos.index"))
+
+
 admin.add_view(PlatoAdminView(Plato, db.session, category="Casino"))
 admin.add_view(
     FileView(
@@ -442,6 +813,7 @@ admin.add_view(AlumnoAdminView(Alumno, db.session, category="Usuarios y Roles"))
 
 
 admin.add_view(SecureModelView(Settings, db.session, name="Configuracion"))
+admin.add_view(GenerarDatosView(name="Generar Datos", endpoint="generar_datos", category="Herramientas"))
 
 admin.add_link(MenuLink(name="Sitio Web", endpoint="core.index", icon_type="glyph", icon_value="glyphicon-home"))
 admin.add_link(MenuLink(name="POS", endpoint="pos.index", icon_type="glyph", icon_value="glyphicon-shopping-cart"))
