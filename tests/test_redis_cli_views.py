@@ -95,3 +95,18 @@ def test_redis_cli_views_single_when_same_url():
 
     assert len(added) == 1
     assert "broker" in added
+
+
+def test_execute_view_is_csrf_exempt():
+    """SecureRedisCli.execute_view must be marked as CSRF-exempt so the AJAX
+    POST to /run/ is not rejected with 400 by Flask-WTF global CSRF protection."""
+    from app.extensions.admin import SecureRedisCli
+    from app.extensions import csrf
+
+    # Flask-WTF stores exemptions as "{module}.{name}" (using __name__, not __qualname__).
+    fn = SecureRedisCli.execute_view
+    view_location = f"{fn.__module__}.{fn.__name__}"
+    assert view_location in csrf._exempt_views, (
+        f"execute_view ({view_location}) is not in csrf._exempt_views; "
+        "POST /run/ will be rejected with 400."
+    )

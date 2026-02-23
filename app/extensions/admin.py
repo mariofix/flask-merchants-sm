@@ -12,6 +12,7 @@ from flask_admin.menu import MenuDivider, MenuLink
 from flask_admin.theme import Bootstrap4Theme
 from slugify import slugify
 from flask_security import current_user  # type: ignore
+from . import csrf
 from .. import settings
 from ..database import db
 from ..model import (
@@ -160,6 +161,11 @@ class SecureRedisCli(RedisCli):
                 abort(403)
             else:
                 return redirect(url_for("security.login", next=request.url))
+
+    @expose("/run/", methods=("POST",))
+    @csrf.exempt
+    def execute_view(self):
+        return super().execute_view()
 
 
 class PlatoAdminView(SecureModelView):
