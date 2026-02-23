@@ -147,6 +147,13 @@ class PaymentView(BaseModelView):
         "currency": "Currency",
         "state": "State",
     }
+    column_descriptions = {
+        "session_id": "Unique identifier assigned by the payment provider.",
+        "provider": "The payment gateway that processed this transaction.",
+        "amount": "Payment amount in the smallest currency unit (e.g. cents).",
+        "currency": "ISO-4217 currency code (e.g. USD, EUR, CLP).",
+        "state": "Current processing state of the payment session.",
+    }
 
     column_formatters = {
         "state": lambda v, c, m, n: Markup(
@@ -199,7 +206,11 @@ class PaymentView(BaseModelView):
         choices = _STATE_CHOICES
 
         class StateForm(WTForm):
-            state = SelectField("State", choices=choices)
+            state = SelectField(
+                "State",
+                choices=choices,
+                description="The current processing state of this payment session.",
+            )
 
         return StateForm
 
@@ -353,6 +364,15 @@ class ProvidersView(BaseModelView):
         "auth_masked_value": "Auth Value",
         "transport": "Transport",
         "payment_count": "Payments",
+    }
+    column_descriptions = {
+        "key": "Unique identifier used to reference this provider in the application.",
+        "base_url": "Base API endpoint URL for this provider.",
+        "auth_type": "Authentication strategy used for API requests (e.g. ApiKeyAuth, TokenAuth).",
+        "auth_header": "HTTP header name used to send authentication credentials.",
+        "auth_masked_value": "Masked authentication token (first 5 and last 1 characters shown).",
+        "transport": "HTTP transport class used for provider API communication.",
+        "payment_count": "Number of payment sessions recorded for this provider.",
     }
 
     # Custom list template – extends admin/model/list.html for consistent UI.
