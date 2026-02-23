@@ -158,6 +158,17 @@ class ApoderadoController:
     # Write helpers
     # ------------------------------------------------------------------
 
+    def toggle_alumno_activo(self, alumno: Alumno, motivo: str = "Bloqueado por apoderado") -> Alumno:
+        """Toggle the ``activo`` flag on *alumno*.
+
+        When deactivating, ``motivo`` is stored on the record so the UI can
+        display a reason badge.  When reactivating, ``motivo`` is cleared.
+        """
+        alumno.activo = not alumno.activo
+        alumno.motivo = None if alumno.activo else motivo
+        db.session.commit()
+        return alumno
+
     def create_apoderado(self, nombre: str, alumnos_count: int, user) -> Apoderado:
         """Create and persist a new Apoderado record linked to *user*."""
         apoderado = Apoderado()

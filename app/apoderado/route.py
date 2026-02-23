@@ -250,6 +250,19 @@ def almuerzos():
     return render_template("apoderado/almuerzos.html", pedidos_info=pedidos_info, apoderado=apoderado)
 
 
+@apoderado_bp.route("/alumno/<int:id>/toggle-activo", methods=["POST"])
+@roles_accepted("apoderado", "admin")
+def toggle_alumno_activo(id):
+    from flask import abort
+    alumno = db.session.execute(
+        db.select(Alumno).filter_by(apoderado=current_user.apoderado, id=id)
+    ).scalar_one_or_none()
+    if not alumno:
+        abort(404)
+    ctrl.toggle_alumno_activo(alumno)
+    return redirect(url_for("apoderado_cliente.index"))
+
+
 # ---------------------------------------------------------------------------
 # Student profile
 # ---------------------------------------------------------------------------
