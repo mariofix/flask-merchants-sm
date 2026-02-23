@@ -186,7 +186,40 @@
             </div>
           </div>
         </div>
+        {% if alumno.tag %}
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Identificador TAG / QR</div>
+            </div>
+            <div class="card-body text-center">
+              <div class="mb-3">
+                <code class="fs-2 fw-bold text-primary px-2 py-1 bg-primary-lt rounded">{{ alumno.tag }}</code>
+              </div>
+              <div id="qr-tag" class="d-inline-block"></div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
       </div>
     </div>
   </div>
   {% endblock page_body %}
+
+{% block page_scripts %}
+{% if alumno.tag %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"
+    integrity="sha384-OLBgp1GsljhM2TJ+sbHjaiH9txEUvgdDTAzHv2P24donTt6/529l+9Ua0vFImLlb"
+    crossorigin="anonymous"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    new QRCode(document.getElementById('qr-tag'), {
+      text: {{ alumno.tag | tojson }},
+      width: 150,
+      height: 150,
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  });
+</script>
+{% endif %}
+{% endblock page_scripts %}
