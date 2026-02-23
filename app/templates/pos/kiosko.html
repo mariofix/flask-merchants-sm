@@ -44,10 +44,10 @@
                       </div>
                     </div>
                     {% if not menu.fuera_stock %}
-                    <div class="ms-auto">
+                    <div class="ms-auto text-success">
                       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                        stroke-linejoin="round" class="icon text-success">
+                        stroke-linejoin="round" class="icon">
                         <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                         <path d="M12 5l0 14" /><path d="M5 12l14 0" />
                       </svg>
@@ -74,20 +74,26 @@
         </div>
         <div class="card-body">
 
-          {# Alumno search #}
+          {# Alumno – pre-populated TomSelect (no name ever goes in the URL) #}
           <div class="mb-3">
             <label class="form-label">Alumno</label>
-            <input type="text" id="alumno-search" class="form-control"
-              placeholder="Escribir nombre o curso…" autocomplete="off" />
-            <div id="alumno-suggestions" class="list-group mt-1" style="display:none; max-height:200px; overflow-y:auto; position:absolute; z-index:1000; width:calc(100% - 2rem);"></div>
-            <input type="hidden" id="alumno-id" />
-            <div id="alumno-selected" class="mt-1 text-success small"></div>
+            <select id="alumno-select" class="form-select" placeholder="Escribir nombre o curso…">
+              <option value=""></option>
+              {% for curso, grupo in alumnos | groupby('curso') %}
+              <optgroup label="{{ curso }}">
+                {% for alumno in grupo | sort(attribute='nombre') %}
+                <option value="{{ alumno.id }}">{{ alumno.nombre }}</option>
+                {% endfor %}
+              </optgroup>
+              {% endfor %}
+            </select>
           </div>
 
           {# Selected menu #}
           <div class="mb-3">
             <label class="form-label">Menú seleccionado</label>
-            <input type="text" id="menu-selected-name" class="form-control" readonly placeholder="Clic en un menú →" />
+            <input type="text" id="menu-selected-name" class="form-control" readonly
+              placeholder="Selecciona un menú de la lista →" />
             <input type="hidden" id="menu-selected-slug" />
           </div>
 
@@ -118,78 +124,48 @@
 {% block page_scripts -%}
 <script>
   const csrfToken = "{{ csrf_token() }}";
-  const ventaUrl   = "{{ url_for('pos.venta_kiosko') }}";
-  const alumnosUrl = "{{ url_for('pos.api_alumnos') }}";
+  const ventaUrl  = "{{ url_for('pos.venta_kiosko') }}";
 
-  let selectedAlumnoId = null;
-  let selectedMenuSlug = null;
+  let selectedAlumnoId   = null;
+  let selectedMenuSlug   = null;
   let selectedMenuPrecio = 0;
+
+  // ── TomSelect alumno selector ──────────────────────────────────────────────
+  document.addEventListener("DOMContentLoaded", function () {
+    if (window.TomSelect) {
+      new TomSelect(document.getElementById('alumno-select'), {
+        maxItems: 1,
+        closeAfterSelect: true,
+        copyClassesToDropdown: false,
+        placeholder: 'Escribir nombre o curso…',
+        sortField: { field: 'text', direction: 'asc' },
+        onChange: function (value) {
+          selectedAlumnoId = value || null;
+          updateVenderBtn();
+        },
+      });
+    }
+  });
 
   // ── Menu item click ────────────────────────────────────────────────────────
   document.querySelectorAll('.menu-item:not(.opacity-50)').forEach(function (card) {
     card.addEventListener('click', function () {
       document.querySelectorAll('.menu-item').forEach(c => c.classList.remove('border-success'));
       card.classList.add('border-success');
-      selectedMenuSlug  = card.dataset.slug;
+      selectedMenuSlug   = card.dataset.slug;
       const parsed = parseInt(card.dataset.precio, 10);
       selectedMenuPrecio = Number.isNaN(parsed) ? 0 : parsed;
       document.getElementById('menu-selected-name').value = card.dataset.descripcion;
       document.getElementById('menu-selected-slug').value = selectedMenuSlug;
-      updateTotal();
+      document.getElementById('venta-total').value =
+        '$' + selectedMenuPrecio.toLocaleString('es-CL');
       updateVenderBtn();
     });
   });
 
-  function updateTotal() {
-    document.getElementById('venta-total').value =
-      selectedMenuSlug ? '$' + selectedMenuPrecio.toLocaleString('es-CL') : '—';
-  }
-
   function updateVenderBtn() {
     document.getElementById('btn-vender').disabled = !(selectedAlumnoId && selectedMenuSlug);
   }
-
-  // ── Alumno search ──────────────────────────────────────────────────────────
-  let searchTimeout = null;
-  document.getElementById('alumno-search').addEventListener('input', function () {
-    const q = this.value.trim();
-    clearTimeout(searchTimeout);
-    const suggestions = document.getElementById('alumno-suggestions');
-    if (q.length < 2) { suggestions.style.display = 'none'; return; }
-    searchTimeout = setTimeout(async function () {
-      try {
-        const resp = await fetch(alumnosUrl + '?q=' + encodeURIComponent(q));
-        const alumnos = await resp.json();
-        suggestions.innerHTML = '';
-        if (!alumnos.length) {
-          suggestions.innerHTML = '<div class="list-group-item text-muted">Sin resultados</div>';
-        } else {
-          alumnos.forEach(function (a) {
-            const item = document.createElement('button');
-            item.type = 'button';
-            item.className = 'list-group-item list-group-item-action';
-            item.textContent = a.nombre + ' (' + a.curso + ')';
-            item.addEventListener('click', function () {
-              selectedAlumnoId = a.id;
-              document.getElementById('alumno-id').value = a.id;
-              document.getElementById('alumno-search').value = a.nombre + ' (' + a.curso + ')';
-              document.getElementById('alumno-selected').textContent = '✔ ' + a.nombre;
-              suggestions.style.display = 'none';
-              updateVenderBtn();
-            });
-            suggestions.appendChild(item);
-          });
-        }
-        suggestions.style.display = '';
-      } catch(e) { /* ignore */ }
-    }, 250);
-  });
-
-  document.addEventListener('click', function (e) {
-    if (!e.target.closest('#alumno-search') && !e.target.closest('#alumno-suggestions')) {
-      document.getElementById('alumno-suggestions').style.display = 'none';
-    }
-  });
 
   // ── Confirm sale ───────────────────────────────────────────────────────────
   document.getElementById('btn-vender').addEventListener('click', async function () {
@@ -215,7 +191,7 @@
         msgEl.innerHTML = 'Error: ' + (data.error || 'No se pudo registrar la venta.');
         msgEl.style.display = '';
       }
-    } catch(e) {
+    } catch (e) {
       msgEl.className = 'alert alert-danger mt-2';
       msgEl.innerHTML = 'Error de comunicación con el servidor.';
       msgEl.style.display = '';
@@ -227,22 +203,22 @@
 
   // ── Clear ──────────────────────────────────────────────────────────────────
   function limpiarKiosko() {
-    selectedAlumnoId = null;
-    selectedMenuSlug = null;
+    selectedAlumnoId   = null;
+    selectedMenuSlug   = null;
     selectedMenuPrecio = 0;
-    document.getElementById('alumno-search').value = '';
-    document.getElementById('alumno-id').value = '';
-    document.getElementById('alumno-selected').textContent = '';
+    const ts = document.getElementById('alumno-select').tomselect;
+    if (ts) ts.clear();
     document.getElementById('menu-selected-name').value = '';
     document.getElementById('menu-selected-slug').value = '';
+    document.getElementById('venta-total').value = '—';
     document.querySelectorAll('.menu-item').forEach(c => c.classList.remove('border-success'));
-    updateTotal();
     updateVenderBtn();
   }
 
   document.getElementById('btn-limpiar-kiosko').addEventListener('click', function () {
     limpiarKiosko();
-    document.getElementById('venta-msg').style.display = 'none';
+    const msgEl = document.getElementById('venta-msg');
+    msgEl.style.display = 'none';
   });
 </script>
 {% endblock page_scripts -%}

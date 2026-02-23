@@ -49,7 +49,7 @@ class TestGetAlumnosSinTag:
 
     def test_excludes_alumno_with_tag(self, db_session, sample_apoderado):
         alumno = sample_apoderado.alumnos[0]
-        alumno.tag = "AABBCCDD"
+        alumno.tag = "aabbccdd"
         db_session.commit()
         alumnos = make_ctrl().get_alumnos_sin_tag()
         assert not any(a.id == alumno.id for a in alumnos)
@@ -83,7 +83,7 @@ class TestGetAlumnoByTag:
 
     def test_returns_alumno_for_known_tag(self, db_session, sample_apoderado):
         alumno = sample_apoderado.alumnos[0]
-        alumno.tag = "DEADBEEF"
+        alumno.tag = "deadbeef"
         db_session.commit()
         result = make_ctrl().get_alumno_by_tag("deadbeef")
         assert result is not None
@@ -91,7 +91,7 @@ class TestGetAlumnoByTag:
 
     def test_tag_lookup_is_case_insensitive(self, db_session, sample_apoderado):
         alumno = sample_apoderado.alumnos[0]
-        alumno.tag = "ABCD1234"
+        alumno.tag = "abcd1234"
         db_session.commit()
         assert make_ctrl().get_alumno_by_tag("abcd1234") is not None
         assert make_ctrl().get_alumno_by_tag("ABCD1234") is not None
@@ -111,7 +111,7 @@ class TestGetAlumnoConOrden:
     def test_returns_pending_orden(self, db_session, sample_apoderado):
         from app.model import EstadoAlmuerzo
         alumno = sample_apoderado.alumnos[0]
-        alumno.tag = "AA11BB22"
+        alumno.tag = "aa11bb22"
         db_session.commit()
         orden = _create_orden_casino(db_session, alumno, EstadoAlmuerzo.PENDIENTE)
         result = make_ctrl().get_alumno_con_orden("AA11BB22")
@@ -122,7 +122,7 @@ class TestGetAlumnoConOrden:
     def test_detects_ya_entregado(self, db_session, sample_apoderado):
         from app.model import EstadoAlmuerzo
         alumno = sample_apoderado.alumnos[0]
-        alumno.tag = "CC33DD44"
+        alumno.tag = "cc33dd44"
         db_session.commit()
         _create_orden_casino(db_session, alumno, EstadoAlmuerzo.ENTREGADO)
         result = make_ctrl().get_alumno_con_orden("CC33DD44")

@@ -117,8 +117,12 @@
             <label class="form-label">Buscar alumno</label>
             <select class="form-select" id="lista-alumnos" placeholder="Escribe el nombre...">
               <option value=""></option>
-              {% for alumno in alumnos %}
-              <option value="{{ alumno.id }}">{{ alumno.nombre }} ({{ alumno.curso }})</option>
+              {% for curso, grupo in alumnos | groupby('curso') %}
+              <optgroup label="{{ curso }}">
+                {% for alumno in grupo | sort(attribute='nombre') %}
+                <option value="{{ alumno.id }}">{{ alumno.nombre }}</option>
+                {% endfor %}
+              </optgroup>
               {% endfor %}
             </select>
           </div>
@@ -347,7 +351,7 @@
       const ndef = new NDEFReader();
       await ndef.scan();
       ndef.onreading = (event) => {
-        const serial = (event.serialNumber || '').replace(/:/g, '').toUpperCase();
+        const serial = (event.serialNumber || '').replace(/:/g, '').toLowerCase();
         showNfcStatus('success', `Brazalete detectado: <strong>${serial}</strong>`);
         scanTag(serial);
       };
@@ -363,7 +367,7 @@
     if (qrScanner) return;
     qrScanner = new Html5QrcodeScanner('qr-reader', { fps: 15, qrbox: 220 });
     qrScanner.render(function (decoded) {
-      const serial = (decoded || '').replace(/:/g, '').toUpperCase();
+      const serial = (decoded || '').replace(/:/g, '').toLowerCase();
       document.getElementById('qr-modal-status').textContent = 'Código: ' + serial;
       qrScanner.clear().then(() => { qrScanner = null; });
       bootstrap.Modal.getInstance(qrModal).hide();

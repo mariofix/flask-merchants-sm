@@ -92,104 +92,13 @@ def api_alumno(alumno_id: int):
     })
 
 
-@pos_bp.route("/api/alumnos", methods=["GET"])
-@roles_accepted("admin", "pos")
-def api_alumnos():
-    """JSON search endpoint for the kiosk alumno selector."""
-    query = request.args.get("q", "").strip()
-    if not query or len(query) < 2:
-        return jsonify([])
-    alumnos = ctrl.buscar_alumnos(query)
-    return jsonify([
-        {"id": a.id, "nombre": a.nombre, "curso": a.curso}
-        for a in alumnos
-    ])
-
-
-@pos_bp.route("/venta", methods=["POST"])
-@roles_accepted("admin", "pos")
-def venta():
-    return render_template("pos/venta.html")
-
-
-@pos_bp.route("/buscar-abono", methods=["GET", "POST"])
-@roles_accepted("admin", "pos")
-def buscar_abono():
-    abono = None
-    pago = None
-    display_code = ""
-    codigo_buscado = ""
-
-    if request.method == "POST":
-        codigo_buscado = request.form.get("codigo", "").strip()
-        if codigo_buscado:
-            abono, pago, display_code = ctrl.get_abono_by_codigo(codigo_buscado)
-
-    return render_template(
-        "pos/buscar-abono.html",
-        abono=abono,
-        pago=pago,
-        display_code=display_code,
-        codigo_buscado=codigo_buscado,
-    )
-
-
-@pos_bp.route("/api/abono/<string:codigo>", methods=["GET"])
-@roles_accepted("admin", "pos")
-def api_buscar_abono(codigo):
-    abono, pago, display_code = ctrl.get_abono_by_codigo(codigo)
-
-    if not abono:
-        return jsonify({"error": "Abono no encontrado", "codigo": codigo}), 404
-
-    return jsonify({
-        "found": True,
-        "abono": abono.to_dict(),
-        "pago_estado": pago.state if pago else None,
-        "display_code": display_code,
-        "detalle_url": url_for("apoderado_cliente.abono_detalle", codigo=abono.codigo),
-        "completa_url": url_for("pos.completa_abono", codigo=abono.codigo) if (pago and pago.state == "processing") else None,
-    })
-
-
-@pos_bp.route("/abono-web", methods=["GET", "POST"])
-@roles_accepted("admin", "pos")
-def abono_web():
-    return render_template("pos/abono.html")
-
-
-@pos_bp.route("/casino", methods=["GET"])
-@roles_accepted("admin", "pos")
-def casino():
-    """Canteen POS view: scan NFC/QR tag and deliver today's lunch."""
-    recientes = ctrl.get_ordenes_entregadas_hoy()
-    alumnos = ctrl.get_alumnos_activos()
-    return render_template("pos/casino.html", recientes=recientes, alumnos=alumnos)
-
-
-@pos_bp.route("/entrega-almuerzo/<int:orden_id>", methods=["POST"])
-@roles_accepted("admin", "pos")
-@limiter.limit("60 per minute")
-def entrega_almuerzo(orden_id: int):
-    """Mark an OrdenCasino as delivered. Returns JSON."""
-    orden = ctrl.entregar_almuerzo(orden_id)
-    if not orden:
-        return jsonify({"error": "Orden no encontrada o ya entregada", "orden_id": orden_id}), 404
-    return jsonify({
-        "ok": True,
-        "orden_id": orden.id,
-        "alumno_nombre": orden.alumno.nombre,
-        "alumno_curso": orden.alumno.curso,
-        "menu": orden.menu_descripcion,
-    })
-
-
 @pos_bp.route("/kiosko", methods=["GET"])
 @roles_accepted("admin", "pos")
 def kiosko():
     """Kiosk interface: sell a cash lunch to a student."""
     menus = ctrl.get_menus_hoy()
-    return render_template("pos/kiosko.html", menus=menus)
+    alumnos = ctrl.get_alumnos_activos()
+    return render_template("pos/kiosko.html", menus=menus, alumnos=alumnos)
 
 
 @pos_bp.route("/venta-kiosko", methods=["POST"])

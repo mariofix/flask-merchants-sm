@@ -343,6 +343,6 @@ admin.add_view(AlumnoAdminView(Alumno, db.session, category="Usuarios y Roles"))
 
 admin.add_view(SecureModelView(Settings, db.session, name="Configuracion"))
 
-admin.add_link(MenuLink(name="Sitio Web", url="/", icon_type="glyph", icon_value="glyphicon-home"))
-admin.add_link(MenuLink(name="POS", url="/pos", icon_type="glyph", icon_value="glyphicon-shopping-cart"))
-admin.add_link(MenuLink(name="Apoderado", url="/apoderado", icon_type="glyph", icon_value="glyphicon-user"))
+admin.add_link(MenuLink(name="Sitio Web", endpoint="core.index", icon_type="glyph", icon_value="glyphicon-home"))
+admin.add_link(MenuLink(name="POS", endpoint="pos.index", icon_type="glyph", icon_value="glyphicon-shopping-cart"))
+admin.add_link(MenuLink(name="Apoderado", endpoint="apoderado_cliente.index", icon_type="glyph", icon_value="glyphicon-user"))

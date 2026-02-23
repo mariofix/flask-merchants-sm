@@ -40,9 +40,9 @@ class PosController:
         )
 
     def get_alumno_by_tag(self, serial: str) -> Optional[Alumno]:
-        """Return the Alumno matching *serial* (case-insensitive), or ``None``."""
+        """Return the Alumno matching *serial* (stored lowercase), or ``None``."""
         return db.session.execute(
-            db.select(Alumno).filter_by(tag=serial.upper())
+            db.select(Alumno).filter_by(tag=serial.lower())
         ).scalar_one_or_none()
 
     def get_alumno_con_orden(self, serial: str, fecha: Optional[date] = None) -> dict:
@@ -232,11 +232,25 @@ class PosController:
         This is used when a child arrives at the kiosk without a pre-paid lunch.
         The staff selects the alumno and today's menu; the order is created and
         immediately marked as delivered so the child can join the queue.
+
+        A Pedido record is created first so that ``pedido_codigo`` always
+        references a real Pedido (required by the data model).
         """
         if fecha is None:
             fecha = date.today()
+
+        # Create the backing Pedido so pedido_codigo is a real order reference
+        pedido = Pedido()
+        pedido.extra_attrs = [{"slug": menu.slug, "date": fecha.isoformat(), "note": "kiosko", "alumnos": [{"id": alumno.id}]}]
+        pedido.precio_total = menu.precio or 0
+        pedido.pagado = True
+        pedido.estado = EstadoPedido.PAGADO
+        pedido.fecha_pago = datetime.now()
+        db.session.add(pedido)
+        db.session.flush()  # obtain pedido.codigo without committing yet
+
         orden = OrdenCasino()
-        orden.pedido_codigo = f"kiosko-{alumno.id}-{fecha.isoformat()}"
+        orden.pedido_codigo = pedido.codigo
         orden.alumno_id = alumno.id
         orden.menu_slug = menu.slug
         orden.menu_descripcion = menu.descripcion
