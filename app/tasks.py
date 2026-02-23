@@ -452,6 +452,88 @@ def send_notificacion_pedido_pendiente(self, pedido_info: dict):
 
 
 
+_MESES_ES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
+
+
+@shared_task(bind=True, ignore_result=False)
+def send_confirmacion_orden_pagado(self, pedido_info: dict):
+    """Notifica al apoderado la confirmación de sus almuerzos tras pagar el pedido.
+
+    Only sends when the Apoderado has notificacion_compra=True.  Does NOT
+    notify admins.
+    """
+    with current_app.app_context():
+        from datetime import date as _date
+
+        from .database import db
+        from .model import Apoderado
+
+        apoderado_id = pedido_info.get("apoderado_id")
+        if not apoderado_id:
+            return
+
+        apoderado = db.session.get(Apoderado, int(apoderado_id))
+        if not apoderado or not apoderado.notificacion_compra:
+            return
+
+        email = apoderado.usuario.email if apoderado.usuario else None
+        if not email:
+            return
+
+        pedido_codigo = pedido_info.get("pedido_codigo", "")
+        pedido_codigo_short = pedido_codigo[:8].upper() if pedido_codigo else ""
+        total = pedido_info.get("total", 0)
+        items = list(pedido_info.get("items", []))
+        pedido_url = url_for("apoderado_cliente.pago_orden", orden=pedido_codigo, _external=True)
+
+        # Enrich items with Spanish date components for the calendar template
+        for item in items:
+            try:
+                d = _date.fromisoformat(item.get("fecha", ""))
+                item["dia"] = f"{d.day:02d}"
+                item["mes_abr"] = _MESES_ES[d.month - 1]
+            except (ValueError, IndexError):
+                item["dia"] = ""
+                item["mes_abr"] = ""
+
+        subject = f"Confirmación de almuerzos #{pedido_codigo_short}"
+        body = (
+            f"Hola {apoderado.nombre},\n\n"
+            f"Tus almuerzos han sido confirmados.\n\n"
+            f"N° de pedido: {pedido_codigo_short}\n"
+            f"Total: ${int(total):,}\n\n"
+        )
+        for item in items:
+            body += f"- {item['fecha']}: {item['descripcion']} ({item['alumnos_str']})\n"
+        body += f"\nVer detalle: {pedido_url}\n\nSaludos,\nCafetería Sabor Mirandiano"
+
+        html = render_template(
+            "core/emails/calendar-confirmacion-orden/compiled.html",
+            nombre_apoderado=apoderado.nombre,
+            pedido_codigo=pedido_codigo_short,
+            items=items,
+            total=total,
+            pedido_url=pedido_url,
+        )
+        from_email = _get_from_email()
+        with mail.get_connection() as connection:
+            msg = EmailMultiAlternatives(
+                subject=subject,
+                body=body,
+                from_email=from_email,
+                to=[email],
+                connection=connection,
+            )
+            msg.attach_alternative(html, "text/html")
+            msg.send()
+            merchants_audit.info(
+                "email_sent: from=%r to=%r subject=%r",
+                from_email,
+                [email],
+                subject,
+            )
+
+
 @shared_task(bind=True, ignore_result=False)
 def send_notificacion_admin_nuevo_apoderado(self, apoderado_info: dict):
     """Notifica a los administradores sobre un nuevo apoderado registrado."""
