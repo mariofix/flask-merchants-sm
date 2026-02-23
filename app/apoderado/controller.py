@@ -229,6 +229,7 @@ class ApoderadoController:
             apoderado.comprobantes_transferencia = bool(data.get("comprobantes_transferencia"))
             apoderado.notificacion_compra = bool(data.get("notificacion_compra"))
             apoderado.informe_semanal = bool(data.get("informe_semanal"))
+            apoderado.tag_compartido = bool(data.get("tag_compartido"))
             apoderado.copia_notificaciones = data.get("copia_notificaciones", apoderado.copia_notificaciones)
             try:
                 if data.get("maximo_diario"):
@@ -240,9 +241,31 @@ class ApoderadoController:
                     apoderado.maximo_semanal = int(data["maximo_semanal"])
             except ValueError:
                 pass
+            try:
+                if data.get("limite_notificacion"):
+                    apoderado.limite_notificacion = int(data["limite_notificacion"])
+            except ValueError:
+                pass
         if data.get("phone"):
             user.username = data["phone"]
         db.session.commit()
+
+    def add_restriccion_alumnos(self, alumnos: list, nombre: str, motivo: str) -> None:
+        """Append a dietary restriction to each alumno in *alumnos*."""
+        nueva = {"nombre": nombre, "motivo": motivo}
+        for alumno in alumnos:
+            restricciones = list(alumno.restricciones or [])
+            restricciones.append(nueva)
+            alumno.restricciones = restricciones
+        db.session.commit()
+
+    def delete_restriccion_alumno(self, alumno: Alumno, index: int) -> None:
+        """Remove the restriction at *index* from *alumno*.restricciones."""
+        restricciones = list(alumno.restricciones or [])
+        if 0 <= index < len(restricciones):
+            restricciones.pop(index)
+            alumno.restricciones = restricciones
+            db.session.commit()
 
     # ------------------------------------------------------------------
     # Order / payment helpers
