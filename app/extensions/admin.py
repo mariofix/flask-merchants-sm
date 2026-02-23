@@ -3,7 +3,7 @@ import os.path as op
 
 from flask import flash, request, redirect, abort, url_for, current_app
 from pathlib import Path
-from flask_admin import Admin, AdminIndexView, expose
+from flask_admin import Admin, AdminIndexView, BaseView, expose
 from flask_admin.actions import action
 from flask_admin.contrib.fileadmin import FileAdmin
 from flask_admin.contrib.sqla import ModelView
@@ -317,6 +317,105 @@ class AbonoAdminView(SecureModelView):
         flash(f"Comprobante encolado para {count} abono(s).")
 
 
+class ResumenDiaAdminView(BaseView):
+    """Vista de resumen de almuerzos comprados por día."""
+
+    def is_accessible(self):
+        return current_user.is_active and current_user.is_authenticated and current_user.has_role("admin")
+
+    def _handle_view(self, name, **kwargs):
+        if not self.is_accessible():
+            if current_user.is_authenticated:
+                abort(403)
+            else:
+                return redirect(url_for("security.login", next=request.url))
+
+    @expose("/", methods=["GET"])
+    def index(self):
+        from datetime import date as _date
+
+        from ..model import Alumno, EstadoAlmuerzo, OrdenCasino
+
+        fecha_str = request.args.get("fecha", _date.today().isoformat())
+        try:
+            fecha = _date.fromisoformat(fecha_str)
+        except ValueError:
+            fecha = _date.today()
+            fecha_str = fecha.isoformat()
+
+        ordenes = (
+            db.session.execute(
+                db.select(OrdenCasino)
+                .where(OrdenCasino.fecha == fecha)
+                .order_by(OrdenCasino.menu_slug, OrdenCasino.alumno_id)
+            )
+            .scalars()
+            .all()
+        )
+
+        # Pre-load all alumnos in one query to avoid N+1
+        alumno_ids = list({o.alumno_id for o in ordenes if o.alumno_id})
+        alumnos_by_id: dict = {}
+        if alumno_ids:
+            alumnos_by_id = {
+                a.id: a
+                for a in db.session.execute(
+                    db.select(Alumno).where(Alumno.id.in_(alumno_ids))
+                )
+                .scalars()
+                .all()
+            }
+
+        def _iniciales(nombre: str | None) -> str:
+            if not nombre:
+                return "—"
+            return "".join(p[0].upper() + "." for p in nombre.strip().split() if p)
+
+        menus: dict = {}
+        total_monto = 0
+        for orden in ordenes:
+            slug = orden.menu_slug
+            desc = orden.menu_descripcion or slug
+            if slug not in menus:
+                menus[slug] = {
+                    "descripcion": desc, "total": 0, "monto": 0,
+                    "pendientes": 0, "entregados": 0, "cancelados": 0,
+                }
+            menus[slug]["total"] += 1
+            precio = int(orden.menu_precio) if orden.menu_precio else 0
+            menus[slug]["monto"] += precio
+            total_monto += precio
+            if orden.estado == EstadoAlmuerzo.PENDIENTE:
+                menus[slug]["pendientes"] += 1
+            elif orden.estado == EstadoAlmuerzo.ENTREGADO:
+                menus[slug]["entregados"] += 1
+            elif orden.estado == EstadoAlmuerzo.CANCELADO:
+                menus[slug]["cancelados"] += 1
+
+        detalles = []
+        for orden in ordenes:
+            alumno = alumnos_by_id.get(orden.alumno_id)
+            detalles.append({
+                "orden_id": orden.id,
+                "iniciales": _iniciales(alumno.nombre if alumno else None),
+                "curso": alumno.curso if alumno else "—",
+                "menu": orden.menu_descripcion or orden.menu_slug,
+                "precio": int(orden.menu_precio) if orden.menu_precio else 0,
+                "estado": orden.estado.value,
+                "nota": orden.nota or "",
+            })
+
+        return self.render(
+            "admin/resumen_dia.html",
+            fecha=fecha,
+            fecha_str=fecha_str,
+            ordenes_total=len(ordenes),
+            total_monto=total_monto,
+            menus=menus,
+            detalles=detalles,
+        )
+
+
 admin.add_view(PlatoAdminView(Plato, db.session, category="Casino"))
 admin.add_view(
     FileView(
@@ -332,6 +431,7 @@ admin.add_menu_item(MenuDivider(), target_category="Casino")
 admin.add_view(SecureModelView(Pedido, db.session, category="Casino", name="Pedidos"))
 admin.add_view(AbonoAdminView(Abono, db.session, category="Casino", name="Abonos"))
 admin.add_view(SecureModelView(OrdenCasino, db.session, category="Casino", name="Ordenes"))
+admin.add_view(ResumenDiaAdminView(name="Resumen del Día", endpoint="resumen_dia", category="Casino"))
 
 
 admin.add_view(UserView(User, db.session, category="Usuarios y Roles", name="Usuarios"))
@@ -346,3 +446,5 @@ admin.add_view(SecureModelView(Settings, db.session, name="Configuracion"))
 admin.add_link(MenuLink(name="Sitio Web", endpoint="core.index", icon_type="glyph", icon_value="glyphicon-home"))
 admin.add_link(MenuLink(name="POS", endpoint="pos.index", icon_type="glyph", icon_value="glyphicon-shopping-cart"))
 admin.add_link(MenuLink(name="Apoderado", endpoint="apoderado_cliente.index", icon_type="glyph", icon_value="glyphicon-user"))
+admin.add_link(MenuLink(name="Mi Cuenta", endpoint="security.change_password", icon_type="glyph", icon_value="glyphicon-cog"))
+admin.add_link(MenuLink(name="Cerrar Sesión", endpoint="security.logout", icon_type="glyph", icon_value="glyphicon-log-out"))

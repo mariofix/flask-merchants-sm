@@ -320,7 +320,8 @@ class ApoderadoController:
         """Create one OrdenCasino per item×alumno after a Pedido is paid.
 
         Idempotent: skips silently if OrdenCasino rows already exist for this
-        pedido.
+        pedido.  Dispatches send_confirmacion_orden_pagado after creating the
+        orders when the Pedido has an associated Apoderado.
         """
         from datetime import date as _date
         from ..routes import get_casino_timelimits
@@ -332,6 +333,7 @@ class ApoderadoController:
         if existing:
             return
 
+        email_items = []
         for item in items:
             fecha_str = item.get("date")
             slug = item.get("slug")
@@ -363,6 +365,7 @@ class ApoderadoController:
                         pedido.codigo, slug, fecha_str,
                     )
 
+            alumno_names = []
             for alumno_data in alumnos_list:
                 try:
                     alumno_id = int(alumno_data.get("id"))
@@ -380,5 +383,24 @@ class ApoderadoController:
                 orden.fecha = fecha
                 orden.nota = nota
                 db.session.add(orden)
+                alumno_names.append(alumno.nombre)
+
+            if alumno_names:
+                email_items.append({
+                    "fecha": fecha_str,
+                    "descripcion": menu.descripcion if menu else slug,
+                    "alumnos_str": ", ".join(alumno_names),
+                    "precio": int(menu.precio) * len(alumno_names) if menu and menu.precio else 0,
+                    "nota": nota or "",
+                })
 
         db.session.commit()
+
+        if pedido.apoderado_id and email_items:
+            from ..tasks import send_confirmacion_orden_pagado
+            send_confirmacion_orden_pagado.delay({
+                "apoderado_id": pedido.apoderado_id,
+                "pedido_codigo": pedido.codigo,
+                "total": int(pedido.precio_total),
+                "items": email_items,
+            })
