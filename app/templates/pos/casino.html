@@ -304,7 +304,7 @@
     pendingEntregaUrl = url;
     document.getElementById('confirm-detail').innerHTML =
       `<strong>${nombre}</strong><br><span class="text-muted">${menu}</span>`;
-    new bootstrap.Modal(document.getElementById('confirmaAlmuerzoModal')).show();
+    new tabler.Modal(document.getElementById('confirmaAlmuerzoModal')).show();
   }
 
   // ── Confirm delivery ───────────────────────────────────────────────────────
@@ -318,7 +318,7 @@
         headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' },
       });
       const data = await resp.json();
-      bootstrap.Modal.getInstance(document.getElementById('confirmaAlmuerzoModal')).hide();
+      tabler.Modal.getInstance(document.getElementById('confirmaAlmuerzoModal')).hide();
       if (data.ok) {
         // Prepend to the recent deliveries table
         const tbody = document.getElementById('recientes-tbody');
@@ -372,7 +372,7 @@
       const serial = (decoded || '').replace(/:/g, '').toLowerCase();
       document.getElementById('qr-modal-status').textContent = 'Código: ' + serial;
       qrScanner.clear().then(() => { qrScanner = null; });
-      bootstrap.Modal.getInstance(qrModal).hide();
+      tabler.Modal.getInstance(qrModal).hide();
       scanTag(serial);
     });
   });
