@@ -12,7 +12,7 @@ from .apoderado.route import apoderado_bp
 from .celery import celery_init_app
 from .docs import docs_bp
 from .database import db, migrations
-from .extensions import babel, csrf, flask_merchants, mail
+from .extensions import babel, csrf, flask_merchants, mail, limiter
 from .extensions.admin import admin
 from .model import *  # noqa: F403
 from .pos.routes import pos_bp
@@ -45,6 +45,7 @@ def create_app():
     migrations.init_app(app, db, directory="app/migrations")
     admin.init_app(app)
     csrf.init_app(app)
+    limiter.init_app(app)
 
     # Setup Flask-Security
     user_datastore = SQLAlchemyUserDatastore(db, User, Role)

@@ -1,8 +1,9 @@
+import os
 import os.path as op
 
 from flask import flash, request, redirect, abort, url_for, current_app
 from pathlib import Path
-from flask_admin import Admin
+from flask_admin import Admin, AdminIndexView, expose
 from flask_admin.actions import action
 from flask_admin.contrib.fileadmin import FileAdmin
 from flask_admin.contrib.sqla import ModelView
@@ -31,10 +32,74 @@ from wtforms import StringField
 from wtforms.validators import Optional
 
 
+def _read_recent_audit_entries(n: int = 20) -> list[str]:
+    """Return the last *n* lines from the merchants_audit log file.
+
+    The log path is read from ``current_app.config['AUDIT_LOG_PATH']`` when
+    available, falling back to ``logs/merchants_audit.log``.
+    """
+    from flask import current_app
+
+    log_path = current_app.config.get("AUDIT_LOG_PATH", os.path.join("logs", "merchants_audit.log"))
+    try:
+        with open(log_path, encoding="utf-8") as f:
+            lines = f.readlines()
+        return [line.rstrip() for line in lines[-n:] if line.strip()]
+    except OSError:
+        return []
+
+
+class SaborMirandianoIndexView(AdminIndexView):
+    """Custom admin home page with summary stats and recent audit log entries."""
+
+    @expose("/")
+    def index(self):
+        from ..model import Abono, Alumno, Pedido, Payment
+        from datetime import date, timedelta
+
+        if not (current_user.is_active and current_user.is_authenticated and current_user.has_role("admin")):
+            return redirect(url_for("security.login", next=request.url))
+
+        today = date.today()
+        tomorrow = today + timedelta(days=1)
+
+        pending_abonos = (
+            db.session.execute(
+                db.select(db.func.count(Abono.id))
+                .join(Payment, Payment.session_id == Abono.codigo)
+                .filter(Payment.state == "processing")
+            ).scalar()
+            or 0
+        )
+
+        active_alumnos = db.session.execute(db.select(db.func.count(Alumno.id))).scalar() or 0
+
+        today_pedidos = (
+            db.session.execute(
+                db.select(db.func.count(Pedido.id)).filter(
+                    Pedido.created >= today,
+                    Pedido.created < tomorrow,
+                )
+            ).scalar()
+            or 0
+        )
+
+        audit_entries = _read_recent_audit_entries()
+
+        return self.render(
+            "admin/index.html",
+            pending_abonos=pending_abonos,
+            active_alumnos=active_alumnos,
+            today_pedidos=today_pedidos,
+            audit_entries=audit_entries,
+        )
+
+
 admin = Admin(
     name="Sabor Mirandiano",
     url="/data-manager",
     theme=Bootstrap4Theme(fluid=True, swatch="united"),
+    index_view=SaborMirandianoIndexView(url="/data-manager"),
 )
 
 

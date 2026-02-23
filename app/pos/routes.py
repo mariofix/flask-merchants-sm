@@ -4,6 +4,7 @@ from flask import Blueprint, jsonify, render_template, request, url_for, redirec
 from flask_security import current_user, login_required, roles_accepted
 
 from ..database import db
+from ..extensions import limiter
 from ..model import EstadoPedido, Pedido, Abono, Payment, Alumno
 
 # from .reader import registra_lectura
@@ -127,6 +128,7 @@ def kiosko():
 
 @pos_bp.route("/completa-abono/<string:codigo>")
 @roles_accepted("admin", "pos")
+@limiter.limit("30 per minute")
 def completa_abono(codigo):
     from ..tasks import send_comprobante_abono, send_notificacion_admin_abono, send_copia_notificaciones_abono
 
@@ -173,6 +175,7 @@ def completa_abono(codigo):
 
 @pos_bp.route("/completa-pedido/<string:codigo>")
 @roles_accepted("admin", "pos")
+@limiter.limit("30 per minute")
 def completa_pedido(codigo):
     from ..apoderado.controller import ApoderadoController
     ctrl = ApoderadoController()
