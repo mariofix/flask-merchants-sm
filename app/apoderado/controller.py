@@ -275,6 +275,8 @@ class ApoderadoController:
             tiene_vegano = False
             tiene_vegetariano = False
             for r in restricciones:
+                if not isinstance(r, dict):
+                    continue
                 nombre = r.get("nombre", "")
                 if r.get("motivo") == "Alergia":
                     alergias.append(nombre)

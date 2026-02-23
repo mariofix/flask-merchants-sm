@@ -310,3 +310,16 @@ class TestComputeAdvertencias:
         menu = self._make_menu(alergenos=True)
         alumno = self._make_alumno("Marta", restricciones="not a list")
         assert self.ctrl.compute_advertencias(menu, [alumno]) == []
+
+    def test_string_items_in_restricciones_are_skipped(self):
+        menu = self._make_menu(alergenos=True)
+        alumno = self._make_alumno("Carlos", restricciones=["Alergia", "Vegano"])
+        assert self.ctrl.compute_advertencias(menu, [alumno]) == []
+
+    def test_mixed_restricciones_processes_valid_dicts(self):
+        menu = self._make_menu(alergenos=True)
+        alumno = self._make_alumno("Ines", restricciones=[{"nombre": "Gluten", "motivo": "Alergia"}, "invalid_string"])
+        result = self.ctrl.compute_advertencias(menu, [alumno])
+        assert len(result) == 1
+        assert result[0]["tipo"] == "warning"
+        assert "Gluten" in result[0]["mensaje"]
