@@ -6,6 +6,7 @@ from pathlib import Path
 from flask_admin import Admin, AdminIndexView, BaseView, expose
 from flask_admin.actions import action
 from flask_admin.contrib.fileadmin import FileAdmin
+from flask_admin.contrib.rediscli import RedisCli
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.menu import MenuDivider, MenuLink
 from flask_admin.theme import Bootstrap4Theme
@@ -145,6 +146,20 @@ class FileView(FileAdmin):
     can_delete_dirs = False
     allowed_extensions = ("jpg", "jpeg", "png", "webp")
     upload_modal = False
+
+
+class SecureRedisCli(RedisCli):
+    """Redis CLI console restricted to admin users."""
+
+    def is_accessible(self):
+        return current_user.is_active and current_user.is_authenticated and current_user.has_role("admin")
+
+    def _handle_view(self, name, **kwargs):
+        if not self.is_accessible():
+            if current_user.is_authenticated:
+                abort(403)
+            else:
+                return redirect(url_for("security.login", next=request.url))
 
 
 class PlatoAdminView(SecureModelView):
