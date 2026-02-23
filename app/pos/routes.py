@@ -168,6 +168,24 @@ def entrega_almuerzo(orden_id: int):
     })
 
 
+@pos_bp.route("/buscar-abono", methods=["GET", "POST"])
+@roles_accepted("admin", "pos")
+def buscar_abono():
+    abono = pago = display_code = None
+    codigo_buscado = ""
+    if request.method == "POST":
+        codigo_buscado = (request.form.get("codigo") or "").strip().upper()
+        if codigo_buscado:
+            abono, pago, display_code = ctrl.get_abono_by_codigo(codigo_buscado)
+    return render_template(
+        "pos/buscar-abono.html",
+        abono=abono,
+        pago=pago,
+        display_code=display_code,
+        codigo_buscado=codigo_buscado,
+    )
+
+
 @pos_bp.route("/completa-abono/<string:codigo>")
 @roles_accepted("admin", "pos")
 @limiter.limit("30 per minute")
