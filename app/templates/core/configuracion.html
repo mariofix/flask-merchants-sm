@@ -106,6 +106,14 @@
                     <input type="text" class="form-control" name="copia_notificaciones" value="{{ apoderado.copia_notificaciones if apoderado and apoderado.copia_notificaciones else '' }}" placeholder="correo1@ejemplo.com, correo2@ejemplo.com" />
                   </div>
                 </div>
+                <h3 class="card-title mt-4">TAG Compartido</h3>
+                <p class="card-subtitle">Permite que todos los alumnos compartan el mismo TAG de identificación.</p>
+                <div>
+                  <label class="form-check form-switch form-switch-lg">
+                    <input class="form-check-input" type="checkbox" name="tag_compartido" {% if apoderado and apoderado.tag_compartido %}checked{% endif %} />
+                    <span class="form-check-label">Usar TAG compartido para todos los alumnos</span>
+                  </label>
+                </div>
               </div>
               <div class="tab-pane" id="tab-limites">
                 <h2 class="mb-4">Limites</h2>
@@ -122,10 +130,70 @@
                     <input type="number" class="form-control" name="maximo_semanal" value="{{ apoderado.maximo_semanal if apoderado and apoderado.maximo_semanal else '' }}" placeholder="Sin límite" />
                   </div>
                 </div>
+                <h3 class="card-title mt-4">Límite para Notificaciones</h3>
+                <p class="card-subtitle">Monto a partir del cual se envían notificaciones de uso.</p>
+                <div class="row g-3">
+                  <div class="col-md">
+                    <input type="number" class="form-control" name="limite_notificacion" value="{{ apoderado.limite_notificacion if apoderado and apoderado.limite_notificacion else 1500 }}" placeholder="1500" />
+                  </div>
+                </div>
               </div>
               <div class="tab-pane" id="tab-restricciones">
                 <h2 class="mb-4">Restricciones</h2>
-                Restricciones de compra: Productos específicos, categorías, con ingredientes en particular.
+                <p>Agrega restricciones alimenticias (alergias, intolerancias, etc.) a uno o más alumnos.</p>
+                {% if apoderado and apoderado.alumnos %}
+                <form method="POST" action="{{ url_for('apoderado_cliente.ajustes_restricciones') }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                  <h3 class="card-title mt-4">Alumno(s)</h3>
+                  <p class="card-subtitle">Selecciona uno o más alumnos a quienes aplicar la restricción.</p>
+                  <div class="row g-2 mb-3">
+                    {% for alumno in apoderado.alumnos %}
+                    <div class="col-auto">
+                      <label class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" name="alumno_ids" value="{{ alumno.id }}" />
+                        <span class="form-check-label">{{ alumno.nombre }}</span>
+                      </label>
+                    </div>
+                    {% endfor %}
+                  </div>
+                  <h3 class="card-title mt-4">Restricción</h3>
+                  <div class="row g-3">
+                    <div class="col-md">
+                      <label class="form-label">Nombre</label>
+                      <input type="text" class="form-control" name="nombre" placeholder="Ej: Maní, Gluten, Lactosa" required />
+                    </div>
+                    <div class="col-md">
+                      <label class="form-label">Motivo</label>
+                      <select class="form-select" name="motivo">
+                        <option value="Alergia">Alergia</option>
+                        <option value="Intolerancia">Intolerancia</option>
+                        <option value="No le Gusta">No le Gusta</option>
+                        <option value="Restringida por apoderado">Restringida por apoderado</option>
+                        <option value="Otro">Otro</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="mt-3">
+                    <button type="submit" class="btn btn-primary">Agregar Restricción</button>
+                  </div>
+                </form>
+                <hr class="my-4" />
+                <h3 class="card-title">Restricciones actuales</h3>
+                {% for alumno in apoderado.alumnos %}
+                {% if alumno.restricciones %}
+                <div class="mb-3">
+                  <strong>{{ alumno.nombre }}</strong>
+                  <div class="badges-list mt-1">
+                    {% for item in alumno.restricciones %}
+                    <span class="badge bg-danger-lt me-1" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Motivo: {{ item.motivo }}">{{ item.nombre }}</span>
+                    {% endfor %}
+                  </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+                {% else %}
+                <p class="text-secondary">No tienes alumnos registrados.</p>
+                {% endif %}
               </div>
             </div>
             <div class="card-footer">

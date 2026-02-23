@@ -350,3 +350,72 @@ class TestComputeAdvertencias:
         assert len(result) == 1
         assert result[0]["tipo"] == "warning"
         assert "Gluten" in result[0]["mensaje"]
+
+
+# ---------------------------------------------------------------------------
+# add_restriccion_alumnos
+# ---------------------------------------------------------------------------
+
+class TestAddRestriccionAlumnos:
+    def test_adds_restriction_to_single_alumno(self, db_session, sample_apoderado):
+        alumno = sample_apoderado.alumnos[0]
+        alumno.restricciones = []
+        db_session.commit()
+        make_ctrl().add_restriccion_alumnos([alumno], "Maní", "Alergia")
+        db_session.refresh(alumno)
+        assert len(alumno.restricciones) == 1
+        assert alumno.restricciones[0] == {"nombre": "Maní", "motivo": "Alergia"}
+
+    def test_adds_restriction_to_multiple_alumnos(self, db_session, sample_apoderado):
+        for a in sample_apoderado.alumnos:
+            a.restricciones = []
+        db_session.commit()
+        make_ctrl().add_restriccion_alumnos(sample_apoderado.alumnos, "Lactosa", "Intolerancia")
+        for alumno in sample_apoderado.alumnos:
+            db_session.refresh(alumno)
+            assert any(r["nombre"] == "Lactosa" for r in alumno.restricciones)
+
+    def test_appends_to_existing_restrictions(self, db_session, sample_apoderado):
+        alumno = sample_apoderado.alumnos[0]
+        alumno.restricciones = [{"nombre": "Gluten", "motivo": "Alergia"}]
+        db_session.commit()
+        make_ctrl().add_restriccion_alumnos([alumno], "Maní", "Alergia")
+        db_session.refresh(alumno)
+        assert len(alumno.restricciones) == 2
+
+    def test_empty_list_does_nothing(self, db_session, sample_apoderado):
+        make_ctrl().add_restriccion_alumnos([], "Soya", "Alergia")
+
+
+# ---------------------------------------------------------------------------
+# delete_restriccion_alumno
+# ---------------------------------------------------------------------------
+
+class TestDeleteRestriccionAlumno:
+    def test_removes_restriction_at_index(self, db_session, sample_apoderado):
+        alumno = sample_apoderado.alumnos[0]
+        alumno.restricciones = [
+            {"nombre": "Maní", "motivo": "Alergia"},
+            {"nombre": "Gluten", "motivo": "Intolerancia"},
+        ]
+        db_session.commit()
+        make_ctrl().delete_restriccion_alumno(alumno, 0)
+        db_session.refresh(alumno)
+        assert len(alumno.restricciones) == 1
+        assert alumno.restricciones[0]["nombre"] == "Gluten"
+
+    def test_invalid_index_does_nothing(self, db_session, sample_apoderado):
+        alumno = sample_apoderado.alumnos[0]
+        alumno.restricciones = [{"nombre": "Maní", "motivo": "Alergia"}]
+        db_session.commit()
+        make_ctrl().delete_restriccion_alumno(alumno, 5)
+        db_session.refresh(alumno)
+        assert len(alumno.restricciones) == 1
+
+    def test_negative_index_does_nothing(self, db_session, sample_apoderado):
+        alumno = sample_apoderado.alumnos[0]
+        alumno.restricciones = [{"nombre": "Maní", "motivo": "Alergia"}]
+        db_session.commit()
+        make_ctrl().delete_restriccion_alumno(alumno, -1)
+        db_session.refresh(alumno)
+        assert len(alumno.restricciones) == 1

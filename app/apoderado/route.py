@@ -293,8 +293,48 @@ def ajustes():
     apoderado = ctrl.get_apoderado(current_user)
     if request.method == "POST":
         ctrl.update_ajustes(apoderado, current_user, request.form)
+        flash("Cambios guardados correctamente.", "success")
         return redirect(url_for("apoderado_cliente.ajustes"))
     return render_template("core/configuracion.html", apoderado=apoderado, current_user=current_user)
+
+
+@apoderado_bp.route("/ajustes/restricciones", methods=["POST"])
+@roles_accepted("apoderado", "admin")
+def ajustes_restricciones():
+    from flask import abort
+    apoderado = ctrl.get_apoderado(current_user)
+    if not apoderado:
+        abort(403)
+    nombre = request.form.get("nombre", "").strip()
+    motivo = request.form.get("motivo", "").strip()
+    alumno_ids = request.form.getlist("alumno_ids")
+    if not nombre or not alumno_ids:
+        flash("Debes ingresar un nombre y seleccionar al menos un alumno.", "danger")
+        return redirect(url_for("apoderado_cliente.ajustes") + "#tab-restricciones")
+    alumnos = [
+        a for a in apoderado.alumnos if str(a.id) in alumno_ids
+    ]
+    ctrl.add_restriccion_alumnos(alumnos, nombre, motivo or "Restringida por apoderado")
+    flash("Restricción agregada correctamente.", "success")
+    return redirect(url_for("apoderado_cliente.ajustes") + "#tab-restricciones")
+
+
+@apoderado_bp.route("/alumno/<int:id>/delete-restriccion", methods=["POST"])
+@roles_accepted("apoderado", "admin")
+def delete_restriccion(id):
+    from flask import abort
+    alumno = db.session.execute(
+        db.select(Alumno).filter_by(apoderado=current_user.apoderado, id=id)
+    ).scalar_one_or_none()
+    if not alumno:
+        abort(404)
+    try:
+        index = int(request.form.get("index", -1))
+    except (ValueError, TypeError):
+        index = -1
+    ctrl.delete_restriccion_alumno(alumno, index)
+    flash("Restricción eliminada.", "success")
+    return redirect(url_for("apoderado_cliente.ficha", id=id) + "#restricciones")
 
 
 # ---------------------------------------------------------------------------
