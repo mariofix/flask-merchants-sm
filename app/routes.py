@@ -1,4 +1,4 @@
-from flask import Blueprint, abort, render_template
+from flask import Blueprint, abort, redirect, render_template, url_for
 from .model import MenuDiario, Settings
 from .database import db
 from datetime import date, datetime, time
@@ -6,6 +6,7 @@ from collections import OrderedDict
 from zoneinfo import ZoneInfo
 from sqlalchemy import and_, or_, select
 from flask_login import login_required
+from flask_security import current_user
 from flask_security.decorators import roles_accepted, roles_required
 from types import SimpleNamespace
 import locale
@@ -63,6 +64,19 @@ def get_casino_timelimits():
     return hora_limite, hora_rezagados, menu_rezagados_cfg
 
 core_bp = Blueprint("core", __name__)
+
+
+@core_bp.route("/dispatcher", methods=["GET"])
+@login_required
+def dispatcher():
+    """Post-login dispatcher: redirect to the appropriate view based on user role."""
+    if current_user.has_role("admin"):
+        return redirect(url_for("admin.index"))
+    if current_user.has_role("pos"):
+        return redirect(url_for("pos.index"))
+    if current_user.has_role("apoderado"):
+        return redirect(url_for("apoderado_cliente.index"))
+    return redirect(url_for("core.index"))
 
 
 @core_bp.route("/", methods=["GET"])

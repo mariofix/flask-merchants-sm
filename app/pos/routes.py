@@ -6,26 +6,25 @@ from flask_security import current_user, login_required, roles_accepted
 from ..database import db
 from ..extensions import limiter
 from ..model import EstadoPedido, Pedido, Abono, Payment, Alumno
+from .crud import PosController
 
 # from .reader import registra_lectura
 
 pos_bp = Blueprint("pos", __name__)
-
+ctrl = PosController()
 
 
 @pos_bp.route("/", methods=["GET"])
 @roles_accepted("admin", "pos")
 def index():
-    alumnos_sin_tag = (
-        db.session.execute(db.select(Alumno).filter_by(tag=None).order_by(Alumno.curso, Alumno.slug)).scalars().all()
-    )
+    alumnos_sin_tag = ctrl.get_alumnos_sin_tag()
     return render_template("pos/dashboard.html", alumnos_sin_tag=alumnos_sin_tag)
 
 
 @pos_bp.route("/valida_tag/<string:serial>", methods=["GET"])
 @roles_accepted("admin", "pos")
 def valida_tag(serial: str):
-    alumno = db.session.execute(db.select(Alumno).filter_by(tag=serial.upper())).scalar_one_or_none()
+    alumno = ctrl.get_alumno_by_tag(serial)
 
     if not alumno:
         return jsonify({"error": "TAG no encontrado en el sistema", "serial": serial}), 404
@@ -53,22 +52,7 @@ def buscar_abono():
     if request.method == "POST":
         codigo_buscado = request.form.get("codigo", "").strip()
         if codigo_buscado:
-            abono = db.session.execute(db.select(Abono).filter_by(codigo=codigo_buscado)).scalar_one_or_none()
-            if not abono:
-                pagos = db.session.execute(db.select(Payment)).scalars().all()
-                for p in pagos:
-                    if (p.metadata_json or {}).get("display_code", "").upper() == codigo_buscado.upper():
-                        pago = p
-                        abono = db.session.execute(
-                            db.select(Abono).filter_by(codigo=p.session_id)
-                        ).scalar_one_or_none()
-                        break
-
-        if abono:
-            pago = pago or db.session.execute(
-                db.select(Payment).filter_by(session_id=abono.codigo)
-            ).scalar_one_or_none()
-            display_code = (pago.metadata_json or {}).get("display_code", "") if pago else ""
+            abono, pago, display_code = ctrl.get_abono_by_codigo(codigo_buscado)
 
     return render_template(
         "pos/buscar-abono.html",
@@ -82,21 +66,11 @@ def buscar_abono():
 @pos_bp.route("/api/abono/<string:codigo>", methods=["GET"])
 @roles_accepted("admin", "pos")
 def api_buscar_abono(codigo):
-    abono = db.session.execute(db.select(Abono).filter_by(codigo=codigo)).scalar_one_or_none()
-    if not abono:
-        pagos = db.session.execute(db.select(Payment)).scalars().all()
-        for p in pagos:
-            if (p.metadata_json or {}).get("display_code", "").upper() == codigo.upper():
-                abono = db.session.execute(
-                    db.select(Abono).filter_by(codigo=p.session_id)
-                ).scalar_one_or_none()
-                break
+    abono, pago, display_code = ctrl.get_abono_by_codigo(codigo)
 
     if not abono:
         return jsonify({"error": "Abono no encontrado", "codigo": codigo}), 404
 
-    pago = db.session.execute(db.select(Payment).filter_by(session_id=abono.codigo)).scalar_one_or_none()
-    display_code = (pago.metadata_json or {}).get("display_code", "") if pago else ""
     return jsonify({
         "found": True,
         "abono": abono.to_dict(),
@@ -132,43 +106,38 @@ def kiosko():
 def completa_abono(codigo):
     from ..tasks import send_comprobante_abono, send_notificacion_admin_abono, send_copia_notificaciones_abono
 
-    abono = db.session.execute(db.select(Abono).filter_by(codigo=codigo)).scalar_one_or_none()
-    pago = db.session.execute(db.select(Payment).filter_by(session_id=codigo)).scalar_one_or_none()
+    abono, pago, _ = ctrl.get_abono_by_codigo(codigo)
 
-    if abono and pago and pago.state == "processing":
-        pago.state = "succeeded"
-        saldo_actual = abono.apoderado.saldo_cuenta or 0
-        nuevo_saldo = saldo_actual + int(abono.monto)
-        abono.apoderado.saldo_cuenta = nuevo_saldo
-        db.session.commit()
+    if abono and pago:
+        approved = ctrl.approve_abono(abono, pago)
+        if approved:
+            from flask_merchants import merchants_audit
+            merchants_audit.info(
+                "abono_aprobado: codigo=%s apoderado_id=%s email=%r monto=%s nuevo_saldo=%s",
+                abono.codigo,
+                abono.apoderado.id,
+                abono.apoderado.usuario.email,
+                int(abono.monto),
+                abono.apoderado.saldo_cuenta,
+            )
 
-        from flask_merchants import merchants_audit
-        merchants_audit.info(
-            "abono_aprobado: codigo=%s apoderado_id=%s email=%r monto=%s nuevo_saldo=%s",
-            abono.codigo,
-            abono.apoderado.id,
-            abono.apoderado.usuario.email,
-            int(abono.monto),
-            nuevo_saldo,
-        )
-
-        abono_info = {
-            "id": abono.id,
-            "codigo": abono.codigo,
-            "monto": int(abono.monto),
-            "forma_pago": abono.forma_pago,
-            "descripcion": abono.descripcion,
-            "apoderado_nombre": abono.apoderado.nombre,
-            "apoderado_email": abono.apoderado.usuario.email,
-            "saldo_cuenta": nuevo_saldo,
-            "copia_notificaciones": abono.apoderado.copia_notificaciones,
-        }
-        if abono.forma_pago != "cafeteria":
-            send_notificacion_admin_abono.delay(abono_info=abono_info)
-        if abono.apoderado.comprobantes_transferencia:
-            send_comprobante_abono.delay(abono_info=abono_info)
-            if abono.apoderado.copia_notificaciones:
-                send_copia_notificaciones_abono.delay(abono_info=abono_info)
+            abono_info = {
+                "id": abono.id,
+                "codigo": abono.codigo,
+                "monto": int(abono.monto),
+                "forma_pago": abono.forma_pago,
+                "descripcion": abono.descripcion,
+                "apoderado_nombre": abono.apoderado.nombre,
+                "apoderado_email": abono.apoderado.usuario.email,
+                "saldo_cuenta": abono.apoderado.saldo_cuenta,
+                "copia_notificaciones": abono.apoderado.copia_notificaciones,
+            }
+            if abono.forma_pago != "cafeteria":
+                send_notificacion_admin_abono.delay(abono_info=abono_info)
+            if abono.apoderado.comprobantes_transferencia:
+                send_comprobante_abono.delay(abono_info=abono_info)
+                if abono.apoderado.copia_notificaciones:
+                    send_copia_notificaciones_abono.delay(abono_info=abono_info)
 
     return redirect(url_for("apoderado_cliente.abono_detalle", codigo=codigo))
 
@@ -178,25 +147,15 @@ def completa_abono(codigo):
 @limiter.limit("30 per minute")
 def completa_pedido(codigo):
     from ..apoderado.controller import ApoderadoController
-    ctrl = ApoderadoController()
+    apoderado_ctrl = ApoderadoController()
 
-    pedido = db.session.execute(db.select(Pedido).filter_by(codigo=codigo)).scalar_one_or_none()
-    pago = (
-        db.session.execute(db.select(Payment).filter_by(session_id=pedido.codigo_merchants)).scalar_one_or_none()
-        if pedido and pedido.codigo_merchants
-        else None
-    )
+    pedido, pago = ctrl.get_pedido_with_payment(codigo)
 
-    if pedido and pago and pago.state == "processing":
-        pago.state = "succeeded"
-        pedido.pagado = True
-        pedido.estado = EstadoPedido.PAGADO
-        pedido.fecha_pago = datetime.now()
-        db.session.commit()
-        ctrl.process_payment_completion(pedido)
+    if pedido and pago:
+        approved = ctrl.approve_pedido(pedido, pago)
+        if approved:
+            apoderado_ctrl.process_payment_completion(pedido)
 
-    # Redirect to the order summary page (parent-facing, on sabormirandiano.cl).
-    # Staff complete the payment here; the order details page serves both roles.
     return redirect(url_for("apoderado_cliente.pago_orden", orden=codigo))
 
 

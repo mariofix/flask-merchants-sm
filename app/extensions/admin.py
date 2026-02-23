@@ -7,7 +7,7 @@ from flask_admin import Admin, AdminIndexView, expose
 from flask_admin.actions import action
 from flask_admin.contrib.fileadmin import FileAdmin
 from flask_admin.contrib.sqla import ModelView
-from flask_admin.menu import MenuDivider
+from flask_admin.menu import MenuDivider, MenuLink
 from flask_admin.theme import Bootstrap4Theme
 from slugify import slugify
 from flask_security import current_user  # type: ignore
@@ -342,3 +342,7 @@ admin.add_view(AlumnoAdminView(Alumno, db.session, category="Usuarios y Roles"))
 
 
 admin.add_view(SecureModelView(Settings, db.session, name="Configuracion"))
+
+admin.add_link(MenuLink(name="Sitio Web", url="/", icon_type="glyph", icon_value="glyphicon-home"))
+admin.add_link(MenuLink(name="POS", url="/pos", icon_type="glyph", icon_value="glyphicon-shopping-cart"))
+admin.add_link(MenuLink(name="Apoderado", url="/apoderado", icon_type="glyph", icon_value="glyphicon-user"))
