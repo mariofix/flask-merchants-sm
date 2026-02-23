@@ -92,6 +92,15 @@ def api_alumno(alumno_id: int):
     })
 
 
+@pos_bp.route("/casino", methods=["GET"])
+@roles_accepted("admin", "pos")
+def casino():
+    """POS Casino: NFC/QR tag scanner for lunch delivery."""
+    recientes = ctrl.get_ordenes_entregadas_hoy()
+    alumnos = ctrl.get_alumnos_activos()
+    return render_template("pos/casino.html", recientes=recientes, alumnos=alumnos)
+
+
 @pos_bp.route("/kiosko", methods=["GET"])
 @roles_accepted("admin", "pos")
 def kiosko():
