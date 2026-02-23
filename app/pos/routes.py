@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from flask import Blueprint, current_app, jsonify, render_template, request, url_for, redirect
+from flask import Blueprint, jsonify, render_template, request, url_for, redirect
 from flask_security import current_user, login_required, roles_accepted
 
 from ..database import db
@@ -10,13 +10,6 @@ from ..model import EstadoPedido, Pedido, Abono, Payment, Alumno
 
 pos_bp = Blueprint("pos", __name__)
 
-
-@pos_bp.before_request
-def enforce_pos_domain():
-    """Redirect to the POS/admin domain when APPS_HOST is configured."""
-    host = current_app.config.get("APPS_HOST", "")
-    if host and request.host.split(":")[0] != host:
-        return redirect(f"https://{host}{request.full_path}", 301)
 
 
 @pos_bp.route("/", methods=["GET"])
@@ -181,7 +174,8 @@ def completa_abono(codigo):
 @pos_bp.route("/completa-pedido/<string:codigo>")
 @roles_accepted("admin", "pos")
 def completa_pedido(codigo):
-    from ..apoderado.route import _process_payment_completion
+    from ..apoderado.controller import ApoderadoController
+    ctrl = ApoderadoController()
 
     pedido = db.session.execute(db.select(Pedido).filter_by(codigo=codigo)).scalar_one_or_none()
     pago = (
@@ -196,8 +190,10 @@ def completa_pedido(codigo):
         pedido.estado = EstadoPedido.PAGADO
         pedido.fecha_pago = datetime.now()
         db.session.commit()
-        _process_payment_completion(pedido)
+        ctrl.process_payment_completion(pedido)
 
+    # Redirect to the order summary page (parent-facing, on sabormirandiano.cl).
+    # Staff complete the payment here; the order details page serves both roles.
     return redirect(url_for("apoderado_cliente.pago_orden", orden=codigo))
 
 

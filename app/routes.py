@@ -1,4 +1,4 @@
-from flask import Blueprint, abort, current_app, redirect, render_template, request
+from flask import Blueprint, abort, render_template
 from .model import MenuDiario, Settings
 from .database import db
 from datetime import date, datetime, time
@@ -63,15 +63,6 @@ def get_casino_timelimits():
     return hora_limite, hora_rezagados, menu_rezagados_cfg
 
 core_bp = Blueprint("core", __name__)
-
-
-@core_bp.before_request
-def enforce_website_domain():
-    # Redirect to the canonical public-website hostname when configured.
-    # See SABORMIRANDIANO_HOST in settings for the rationale.
-    host = current_app.config.get("SABORMIRANDIANO_HOST", "")
-    if host and request.host.split(":")[0] != host:
-        return redirect(f"https://{host}{request.full_path}", 301)
 
 
 @core_bp.route("/", methods=["GET"])

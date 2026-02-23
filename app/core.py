@@ -2,7 +2,7 @@ import os
 
 import merchants as _merchants
 from dotenv import load_dotenv
-from flask import Flask, url_for
+from flask import Flask, current_app, redirect, request, url_for
 from flask_admin import helpers as admin_helpers
 from flask_security.core import Security
 from flask_security.datastore import SQLAlchemyUserDatastore
@@ -23,6 +23,24 @@ from .version import __version__
 
 
 load_dotenv()
+
+
+def _bind_host(bp, config_key: str) -> None:
+    """Attach a domain-enforcement guard to *bp*.
+
+    When ``app.config[config_key]`` is set, any request that arrives on a
+    different hostname is redirected (HTTP 301) to the canonical one.
+    When the config key is absent or empty the guard is a no-op, so
+    single-domain and development setups work with no configuration changes.
+
+    All domain→blueprint mappings are declared in ``create_app`` so the
+    blueprint files themselves stay free of domain concerns.
+    """
+    @bp.before_request
+    def _enforce_host():
+        host = current_app.config.get(config_key, "")
+        if host and request.host.split(":")[0] != host:
+            return redirect(f"https://{host}{request.full_path}", 301)
 
 
 def create_app():
@@ -92,6 +110,14 @@ def create_app():
             "app_version": __version__,
             "payment_providers": _providers_ctx,
         }
+
+    # Domain bindings — all host→blueprint mappings in one place.
+    # Hostnames come from config (SABORMIRANDIANO_HOST / APPS_HOST).
+    # Empty config key = no restriction (development / single-domain).
+    _bind_host(core_bp, "SABORMIRANDIANO_HOST")
+    _bind_host(apoderado_bp, "SABORMIRANDIANO_HOST")
+    _bind_host(docs_bp, "SABORMIRANDIANO_HOST")
+    _bind_host(pos_bp, "APPS_HOST")
 
     app.register_blueprint(core_bp)
     app.register_blueprint(apoderado_bp, url_prefix="/apoderado")
