@@ -262,6 +262,51 @@ class PosController:
         db.session.commit()
         return orden
 
+    def get_dashboard_stats(self) -> dict:
+        """Return today's summary statistics for the POS dashboard.
+
+        Returns a dict with keys:
+        - ``ordenes_pendientes_hoy``: OrdenCasino count with PENDIENTE estado for today
+        - ``ordenes_entregadas_hoy``: OrdenCasino count with ENTREGADO estado for today
+        - ``total_alumnos``: total active Alumno count
+        - ``alumnos_con_tag``: active Alumno count that have a tag assigned
+        """
+        from sqlalchemy import func
+
+        today = date.today()
+        ordenes_pendientes = db.session.execute(
+            db.select(func.count()).select_from(OrdenCasino).where(
+                OrdenCasino.fecha == today,
+                OrdenCasino.estado == EstadoAlmuerzo.PENDIENTE,
+            )
+        ).scalar() or 0
+
+        ordenes_entregadas = db.session.execute(
+            db.select(func.count()).select_from(OrdenCasino).where(
+                OrdenCasino.fecha == today,
+                OrdenCasino.estado == EstadoAlmuerzo.ENTREGADO,
+            )
+        ).scalar() or 0
+
+        total_alumnos = db.session.execute(
+            db.select(func.count()).select_from(Alumno).where(Alumno.activo == True)  # noqa: E712
+        ).scalar() or 0
+
+        alumnos_con_tag = db.session.execute(
+            db.select(func.count()).select_from(Alumno).where(
+                Alumno.activo == True,  # noqa: E712
+                Alumno.tag.isnot(None),
+            )
+        ).scalar() or 0
+
+        return {
+            "ordenes_pendientes_hoy": ordenes_pendientes,
+            "ordenes_entregadas_hoy": ordenes_entregadas,
+            "total_alumnos": total_alumnos,
+            "alumnos_con_tag": alumnos_con_tag,
+            "porcentaje_cobertura_nfc": int(alumnos_con_tag / total_alumnos * 100) if total_alumnos else 0,
+        }
+
     def approve_abono(self, abono: Abono, pago: Payment) -> bool:
         """Mark *pago* as succeeded and credit *abono* amount to the apoderado.
 

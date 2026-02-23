@@ -268,9 +268,49 @@ class TestCrearOrdenKiosko:
         assert orden.menu_slug == menu.slug
 
 
+
 # ---------------------------------------------------------------------------
-# approve_abono
+# get_dashboard_stats
 # ---------------------------------------------------------------------------
+
+class TestGetDashboardStats:
+    def test_returns_zero_counts_when_no_data(self, db_session, app):
+        stats = make_ctrl().get_dashboard_stats()
+        assert stats["ordenes_pendientes_hoy"] == 0
+        assert stats["ordenes_entregadas_hoy"] == 0
+        assert stats["total_alumnos"] == 0
+        assert stats["alumnos_con_tag"] == 0
+        assert stats["porcentaje_cobertura_nfc"] == 0
+
+    def test_counts_pending_and_delivered_orders(self, db_session, sample_apoderado):
+        from app.model import EstadoAlmuerzo
+        alumno = sample_apoderado.alumnos[0]
+        _create_orden_casino(db_session, alumno, EstadoAlmuerzo.PENDIENTE)
+        _create_orden_casino(db_session, alumno, EstadoAlmuerzo.ENTREGADO)
+        stats = make_ctrl().get_dashboard_stats()
+        assert stats["ordenes_pendientes_hoy"] == 1
+        assert stats["ordenes_entregadas_hoy"] == 1
+
+    def test_counts_alumnos_and_tag_coverage(self, db_session, sample_apoderado):
+        alumno = sample_apoderado.alumnos[0]
+        # Alumno starts without a tag
+        stats_before = make_ctrl().get_dashboard_stats()
+        assert stats_before["total_alumnos"] >= 1
+        assert stats_before["alumnos_con_tag"] == 0
+        assert stats_before["porcentaje_cobertura_nfc"] == 0
+
+        alumno.tag = "aabbccdd"
+        db_session.commit()
+        stats_after = make_ctrl().get_dashboard_stats()
+        assert stats_after["alumnos_con_tag"] == 1
+        assert stats_after["porcentaje_cobertura_nfc"] == 100
+
+    def test_excludes_inactive_alumnos(self, db_session, sample_apoderado):
+        alumno = sample_apoderado.alumnos[0]
+        alumno.activo = False
+        db_session.commit()
+        stats = make_ctrl().get_dashboard_stats()
+        assert stats["total_alumnos"] == 0
 
 class TestApproveAbono:
     def _create_abono_with_payment(self, db_session, apoderado, state="processing"):
