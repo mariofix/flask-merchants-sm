@@ -268,6 +268,12 @@ def ficha(id):
 # Settings
 # ---------------------------------------------------------------------------
 
+@apoderado_bp.route("/kiosko", methods=["GET"])
+@roles_accepted("apoderado", "admin")
+def kiosko():
+    return render_template("apoderado/kiosko.html")
+
+
 @apoderado_bp.route("/ajustes", methods=["GET", "POST"])
 @roles_accepted("apoderado", "admin")
 def ajustes():

@@ -143,7 +143,7 @@
         <!-- BEGIN USER MENU -->
         <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
           <a href="{{ url_for('core.index') }}" class="dropdown-item">Cambiar App</a>
-          <a href="{{ url_for('apoderado.abonos')}}" class="dropdown-item">Abonos</a>
+          <a href="{{ url_for('apoderado_cliente.abonos')}}" class="dropdown-item">Abonos</a>
           <div class="dropdown-divider"></div>
           <a href="{{ url_for('apoderado_cliente.ajustes') }}" class="dropdown-item">Ajustes</a>
           <a href="{{ url_for('security.logout') }}" class="dropdown-item">Cerrar Sesión</a>
@@ -157,7 +157,7 @@
         <!-- BEGIN NAVBAR MENU -->
         <ul class="navbar-nav">
           <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('apoderado.index') }}">
+            <a class="nav-link" href="{{ url_for('apoderado_cliente.index') }}">
               <span class="nav-link-icon d-md-none d-lg-inline-block">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" class="icon icon-1">
                   <path d="M5 12l-2 0l9 -9l9 9l-2 0" />
@@ -175,7 +175,7 @@
             <div class="dropdown-menu">
               <div class="dropdown-menu-columns">
                 <div class="dropdown-menu-column">
-                  <a class="dropdown-item" href="{{ url_for('apoderado.abonar') }}">
+                  <a class="dropdown-item" href="{{ url_for('apoderado_cliente.abono_form') }}">
                     <span class="nav-link-icon d-md-none d-lg-inline-block">
                       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-credit-card-pay">
                         <path stroke="none" d="M0 0h24v24H0z" fill="none" />
@@ -189,8 +189,8 @@
                     Abonar
                     <span class="badge badge-sm bg-green-lt text-uppercase ms-auto">Nuevo</span>
                   </a>
-                  <a class="dropdown-item" href="{{ url_for('apoderado.menu_casino') }}"> Menu Casino </a>
-                  <a class="dropdown-item" href="{{ url_for('apoderado.kiosko') }}"> Colaciones </a>
+                  <a class="dropdown-item" href="{{ url_for('apoderado_cliente.menu_casino') }}"> Menu Casino </a>
+                  <a class="dropdown-item" href="{{ url_for('apoderado_cliente.kiosko') }}"> Colaciones </a>
                 </div>
               </div>
             </div>
