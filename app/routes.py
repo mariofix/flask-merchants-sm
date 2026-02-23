@@ -6,7 +6,7 @@ from collections import OrderedDict
 from zoneinfo import ZoneInfo
 from sqlalchemy import and_, or_, select
 from flask_login import login_required
-from flask_security.decorators import roles_required
+from flask_security.decorators import roles_accepted, roles_required
 from types import SimpleNamespace
 import locale
 
@@ -112,7 +112,7 @@ def obtiene_menues(dia):
 
 
 @core_bp.route("/consulta/<dia>")
-@login_required
+@roles_accepted("apoderado", "admin")
 def consulta(dia):
     try:
         fecha = datetime.strptime(dia, "%Y-%m-%d").date()

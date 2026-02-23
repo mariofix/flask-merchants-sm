@@ -13,6 +13,7 @@ from flask import Blueprint, current_app, flash, jsonify, redirect, render_templ
 from flask_security import current_user, login_required, roles_accepted  # type: ignore
 
 from ..database import db
+from ..extensions import limiter
 from ..model import Apoderado, MenuDiario, Payment, Pedido, Settings, EstadoPedido, Alumno
 from .controller import ApoderadoController
 
@@ -131,6 +132,7 @@ def abono_form():
 
 @apoderado_bp.route("/abono", methods=["POST"])
 @roles_accepted("apoderado", "admin")
+@limiter.limit("5 per minute;30 per hour")
 def abono():
     monto_raw = request.form.get("monto", "").strip()
     forma_pago = request.form.get("forma-de-pago", "")
@@ -188,7 +190,7 @@ def abono():
 
 
 @apoderado_bp.route("/abono-detalle/<string:codigo>", methods=["GET"])
-@login_required
+@roles_accepted("apoderado", "admin")
 def abono_detalle(codigo):
     abono, pago, display_code = ctrl.get_abono(codigo)
     return render_template("apoderado/detalle-abono.html", abono=abono, pago=pago, display_code=display_code)
@@ -209,7 +211,7 @@ def abonos():
 # ---------------------------------------------------------------------------
 
 @apoderado_bp.route("/menu-casino", methods=["GET"])
-@login_required
+@roles_accepted("apoderado", "admin")
 def menu_casino():
     from sqlalchemy.orm import selectinload
     from ..routes import get_casino_timelimits, TIMEZONE_SANTIAGO
@@ -267,7 +269,7 @@ def ficha(id):
 # ---------------------------------------------------------------------------
 
 @apoderado_bp.route("/ajustes", methods=["GET", "POST"])
-@login_required
+@roles_accepted("apoderado", "admin")
 def ajustes():
     apoderado = ctrl.get_apoderado(current_user)
     if request.method == "POST":
@@ -281,7 +283,8 @@ def ajustes():
 # ---------------------------------------------------------------------------
 
 @apoderado_bp.route("/orden-web", methods=["POST"])
-@login_required
+@roles_accepted("apoderado", "admin")
+@limiter.limit("10 per minute;60 per hour")
 def ordenweb():
     payload = request.get_json(force=True)
     apoderado = ctrl.get_apoderado(current_user)
@@ -293,7 +296,7 @@ def ordenweb():
 
 
 @apoderado_bp.route("/pago-orden/<orden>", methods=["GET", "POST"])
-@login_required
+@roles_accepted("apoderado", "admin")
 def pago_orden(orden):
     from types import SimpleNamespace
     from ..extensions import flask_merchants
