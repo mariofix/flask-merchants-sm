@@ -117,7 +117,7 @@
                     await ndef.scan();
 
                     ndef.onreading = ({ serialNumber }) => {
-                        input.value = serialNumber;
+                        input.value = (serialNumber || '').replace(/:/g, '').toLowerCase();
                         input.readOnly = false;
                         setSuccess();
                         btnText.textContent = '✓ Leído';

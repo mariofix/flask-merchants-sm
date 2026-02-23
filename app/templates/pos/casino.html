@@ -5,7 +5,6 @@
   <div class="container-xl">
     <div class="row g-2 align-items-center">
       <div class="col">
-        <!-- Page pre-title -->
         <h1 class="page-title">Punto de Venta Casino</h1>
       </div>
     </div>
@@ -16,24 +15,29 @@
 {% block page_body %}
 <div class="container-xl">
   <div class="row row-deck row-cards">
+
+    {# ── Scanner card ─────────────────────────────────────────────────────── #}
     <div class="col-sm-12 col-lg-12">
       <div class="card">
         <div class="card-header">
           <h3 class="card-title">Lector POS Casino</h3>
           <div class="card-actions">
-            <button type="button" class="btn btn-2" data-bs-toggle="modal" data-bs-target="#nfcModal">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-alarm-smoke">
+            <button type="button" id="btn-nfc" class="btn btn-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icon-tabler-wifi">
                 <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                <path d="M18 8l-.8 3a1.25 1.25 0 0 1 -1.2 1h-8a1.25 1.25 0 0 1 -1.2 -1l-.8 -3" />
-                <path d="M3 4m0 1a1 1 0 0 1 1 -1h16a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1z" />
-                <path d="M12 16c.643 .288 1.017 .756 1 1.25c.017 .494 -.357 .962 -1 1.25s-1.017 .756 -1 1.25c-.017 .494 .357 .962 1 1.25" />
-                <path d="M7 16c.643 .288 1.017 .756 1 1.25c.017 .494 -.357 .962 -1 1.25s-1.017 .756 -1 1.25c-.017 .494 .357 .962 1 1.25" />
-                <path d="M17 16c.643 .288 1.017 .756 1 1.25c.017 .494 -.357 .962 -1 1.25s-1.017 .756 -1 1.25c-.017 .494 .357 .962 1 1.25" />
+                <path d="M12 18l.01 0" />
+                <path d="M9.172 15.172a4 4 0 0 1 5.656 0" />
+                <path d="M6.343 12.343a8 8 0 0 1 11.314 0" />
+                <path d="M3.515 9.515c4.686 -4.687 12.284 -4.687 17 0" />
               </svg>
-              Leer Brazalete
+              Leer Brazalete NFC
             </button>
             <button type="button" class="btn btn-2" data-bs-toggle="modal" data-bs-target="#qrModal">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-qrcode">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icon-tabler-qrcode">
                 <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                 <path d="M4 4m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
                 <path d="M7 17l0 .01" />
@@ -41,103 +45,33 @@
                 <path d="M7 7l0 .01" />
                 <path d="M4 14m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
                 <path d="M17 7l0 .01" />
-                <path d="M14 14l3 0" />
-                <path d="M20 14l0 .01" />
-                <path d="M14 14l0 3" />
-                <path d="M14 20l3 0" />
-                <path d="M17 17l3 0" />
-                <path d="M20 17l0 3" />
+                <path d="M14 14l3 0" /><path d="M20 14l0 .01" /><path d="M14 14l0 3" />
+                <path d="M14 20l3 0" /><path d="M17 17l3 0" /><path d="M20 17l0 3" />
               </svg>
               Leer QR
             </button>
           </div>
         </div>
-        <div class="collapse" id="collapseExample">
-          <div class="card-body">
-            <div class="col-12">
-              <div class="row row-cards">
-                <div class="col-sm-6 col-lg-3">
-                  <div class="card card-sm">
-                    <div class="card-body">
-                      <div class="row align-items-center">
-                        <div class="col-auto">
-                          <span class="bg-primary text-white avatar"><!-- Download SVG icon from http://tabler.io/icons/icon/currency-dollar -->
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" class="icon icon-1">
-                              <path d="M16.7 8a3 3 0 0 0 -2.7 -2h-4a3 3 0 0 0 0 6h4a3 3 0 0 1 0 6h-4a3 3 0 0 1 -2.7 -2" />
-                              <path d="M12 3v3m0 12v3" />
-                            </svg></span>
-                        </div>
-                        <div class="col">
-                          <div class="font-weight-medium">Juan Carlos Bodoque</div>
-                          <div class="text-secondary">6-A</div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div class="col-sm-6 col-lg-3">
-                  <div class="card card-sm">
-                    <div class="card-body">
-                      <div class="row align-items-center">
-                        <div class="col-auto">
-                          <span class="bg-green text-white avatar"><!-- Download SVG icon from http://tabler.io/icons/icon/shopping-cart -->
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" class="icon icon-1">
-                              <path d="M6 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
-                              <path d="M17 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
-                              <path d="M17 17h-11v-14h-2" />
-                              <path d="M6 5l14 1l-1 7h-13" />
-                            </svg></span>
-                        </div>
-                        <div class="col">
-                          <div class="font-weight-medium">9 almuerzos disponibles.</div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div class="col-sm-6 col-lg-3">
-                  <div class="card card-sm">
-                    <div class="card-body">
-                      <div class="row align-items-center">
-                        <div class="col-auto">
-                          <span class="bg-success text-white avatar"><!-- Download SVG icon from http://tabler.io/icons/icon/brand-x -->
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
-                              <path d="M5 12l5 5l10 -10" />
-                            </svg></span>
-                        </div>
-                        <div class="col">
-                          <div class="font-weight-medium">Habilitado</div>
-                          <div class="text-secondary">No ha canjeado hoy</div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div class="col-sm-6 col-lg-3">
-                  <div class="card card-sm">
-                    <div class="card-body">
-                      <div class="row align-items-center">
-                        <div class="col-auto">
-                          <a href="" data-bs-toggle="modal" data-bs-target="#confirmaAlmuerzoModal" role="button" class="btn btn-success btn-lg w-100">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
-                              <path d="M5 12l5 5l10 -10" />
-                            </svg>Canjear Almuerzo</a>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+
+        {# ── Scan result panel (hidden until a tag is read) ───────────────── #}
+        <div id="scan-result" style="display:none;">
+          <div class="card-body" id="scan-result-body">
+            <div class="row row-cards" id="scan-cards"></div>
           </div>
+        </div>
+
+        {# ── NFC status ───────────────────────────────────────────────────── #}
+        <div id="nfc-status" class="card-body py-2" style="display:none;">
+          <div class="alert mb-0" id="nfc-alert" role="alert"></div>
         </div>
       </div>
     </div>
 
+    {# ── Recent deliveries ────────────────────────────────────────────────── #}
     <div class="col-md-12 col-lg-8">
       <div class="card">
         <div class="card-header">
-          <h3 class="card-title">Ultimas Compras</h3>
+          <h3 class="card-title">Últimas Entregas de Hoy</h3>
         </div>
         <div class="card-table table-responsive">
           <table class="table table-vcenter">
@@ -146,122 +80,72 @@
                 <th>Nombre</th>
                 <th>Curso</th>
                 <th>Hora</th>
-                <th>Via</th>
-                <th>Acciones</th>
+                <th>Menú</th>
               </tr>
             </thead>
-            <tr>
-              <td>Juanin Juan Harry</td>
-              <td class="text-secondary">7B</td>
-              <td class="text-secondary">13:01</td>
-              <td class="text-secondary">Tag</td>
-              <td class="text-end">
-                <a href="{{ url_for('apoderado.ficha', id=67)}}" class="btn btn-info btn-sm">Detalles</a>
-
-              </td>
-            </tr>
-            <tr>
-              <td>Mario Hugo</td>
-              <td class="text-secondary">6A</td>
-              <td class="text-secondary">13:00</td>
-              <td class="text-secondary">Tag</td>
-              <td class="text-end">
-                <a href="{{ url_for('apoderado.ficha', id=67)}}" class="btn btn-info btn-sm">Detalles</a>
-
-              </td>
-            </tr>
-            <tr>
-              <td>Mico el Micofono</td>
-              <td class="text-secondary">6B</td>
-              <td class="text-secondary">13:00</td>
-              <td class="text-secondary">Manual</td>
-              <td class="text-end">
-                <a href="{{ url_for('apoderado.ficha', id=67)}}" class="btn btn-info btn-sm">Detalles</a>
-
-              </td>
-            </tr>
-            <tr>
-              <td>Freddy Turbina</td>
-              <td class="text-secondary">7A</td>
-              <td class="text-secondary">13:00</td>
-              <td class="text-secondary">Tag</td>
-              <td class="text-end">
-                <a href="{{ url_for('apoderado.ficha', id=67)}}" class="btn btn-info btn-sm">Detalles</a>
-
-              </td>
-            </tr>
+            <tbody id="recientes-tbody">
+              {% for orden in recientes %}
+              <tr>
+                <td>{{ orden.alumno.nombre }}</td>
+                <td class="text-secondary">{{ orden.alumno.curso }}</td>
+                <td class="text-secondary">
+                  {{ orden.fecha_entrega.strftime('%H:%M') if orden.fecha_entrega else '—' }}
+                </td>
+                <td class="text-secondary text-truncate" style="max-width:180px;">
+                  {{ orden.menu_descripcion or orden.menu_slug }}
+                </td>
+              </tr>
+              {% else %}
+              <tr id="no-recientes-row">
+                <td colspan="4" class="text-center text-muted">Sin entregas hoy</td>
+              </tr>
+              {% endfor %}
+            </tbody>
           </table>
         </div>
       </div>
     </div>
+
+    {# ── Manual entry ─────────────────────────────────────────────────────── #}
     <div class="col-md-6 col-lg-4">
       <div class="card">
         <div class="card-header">
           <h3 class="card-title">Ingreso Manual</h3>
         </div>
         <div class="card-body">
-          <div class="row mb-2">
-            <div class="col-12">
-              <select class="form-select" id="lista-alumnos" placeholder="Buscar alumno...">
-                <option></option>
-                <option value="1" class="text-pink">Juanin Juan Harry</option>
-                <option value="2">Mario Hugo</option>
-                <option value="3">Mico el Micofono</option>
-                <option value="4">Freddy Turbina</option>
-                <option value="5">Balon Von Bola</option>
-                <option value="6">Calcetin con Rombos Man</option>
-                <option value="7">Titere 1</option>
-                <option value="8">Titere 2</option>
-                <option value="9">Juan Carlos Bodoque</option>
-
-              </select>
-            </div>
+          <div class="mb-2">
+            <label class="form-label">Buscar alumno</label>
+            <select class="form-select" id="lista-alumnos" placeholder="Escribe el nombre...">
+              <option value=""></option>
+              {% for curso, grupo in alumnos | groupby('curso') %}
+              <optgroup label="{{ curso }}">
+                {% for alumno in grupo | sort(attribute='nombre') %}
+                <option value="{{ alumno.id }}">{{ alumno.nombre }}</option>
+                {% endfor %}
+              </optgroup>
+              {% endfor %}
+            </select>
           </div>
+          <div id="manual-result" style="display:none;" class="mt-2"></div>
         </div>
         <div class="card-footer">
           <div class="d-flex">
-            <a href="#" class="btn btn-link">Limpiar</a>
-            <a href="#" class="btn btn-success ms-auto">Canjear Almuerzo</a>
+            <button type="button" id="btn-limpiar-manual" class="btn btn-link">Limpiar</button>
+            <button type="button" id="btn-canjear-manual" class="btn btn-success ms-auto" disabled>
+              Canjear Almuerzo
+            </button>
           </div>
         </div>
       </div>
     </div>
+
   </div>
 </div>
 {% endblock page_body -%}
 
 
 {% block page_scripts -%}
-<div class="modal" id="nfcModal" tabindex="-1">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Lector NFC</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        Este Lector solo está disponible en android, si tiene iPhone porfavor use el lector QR.<br>
-        Acá podria is solo un check (así como aparece en el formulario fonotarot cuando falla la compra) o bien podria mostrar la informacion del brazatele.<br>
-        Al presionar confirmar lectura, se tomará el dato leido y actualizará la pagina con la informacion encontrada.
-        <div class="alert alert-lime" role="alert">
-          <div class="font-weight-medium">Acerca el brazalete del alumno a la parte posterior de su celular.</div>
-        </div>
-
-        <div class="alert alert-primary" role="alert">
-          <div class="font-weight-medium">Brazalete encontrado: <strong>00:45:df:23:a2</strong></div>
-        </div>
-
-        <div class="alert alert-danger" role="alert">
-          <div class="font-weight-medium">No se encontró un brazalete.</div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-primary" onclick="dismissAndCollapse()" data-bs-dismiss="modal">Confirmar Lectura</button>
-      </div>
-    </div>
-  </div>
-</div>
-
+{# ── QR scanner modal ─────────────────────────────────────────────────────── #}
 <div class="modal" id="qrModal" tabindex="-1">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
@@ -270,52 +154,40 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        Este lector QR está disponible para los dispositivos con camara que no tienen NFC.<br>
-        Al presionar confirmar lectura, se tomará el dato leido y actualizará la pagina con la informacion encontrada.
-        <div class="alert alert-lime" role="alert">
-          <div class="font-weight-medium">Acerca el brazalete a la camara del celular, la imagen debe ser nítida.</div>
-        </div>
-
-        <div class="alert alert-primary" role="alert">
-          <div class="font-weight-medium">Brazalete encontrado: <strong>00:45:df:23:a2</strong></div>
-        </div>
-
-        <div class="alert alert-danger" role="alert">
-          <div class="font-weight-medium">No se encontró un brazalete.</div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-primary" onclick="dismissAndCollapse()" data-bs-dismiss="modal">Confirmar Lectura</button>
+        <div id="qr-reader" style="width:100%;"></div>
+        <div id="qr-modal-status" class="text-muted small mt-1"></div>
       </div>
     </div>
   </div>
 </div>
 
+{# ── Confirmation modal ───────────────────────────────────────────────────── #}
 <div class="modal" id="confirmaAlmuerzoModal" tabindex="-1">
   <div class="modal-dialog modal-sm" role="document">
     <div class="modal-content">
       <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       <div class="modal-status bg-success"></div>
       <div class="modal-body text-center py-4">
-        <svg xmlns="http://www.w3.org/2000/svg" class="icon mb-2 text-green icon-lg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon mb-2 text-green icon-lg" width="24" height="24"
+          viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round"
+          stroke-linejoin="round">
           <path stroke="none" d="M0 0h24v24H0z" fill="none" />
           <circle cx="12" cy="12" r="9" />
           <path d="M9 12l2 2l4 -4" />
         </svg>
         <h3>¿Canjear Almuerzo?</h3>
-        <div class="text-secondary">
-          <strong>Saldo Actual:</strong> 9 almuerzos.<br>
-          <strong>Saldo después del canje:</strong> 8 almuerzos.
-        </div>
+        <div class="text-secondary" id="confirm-detail"></div>
       </div>
       <div class="modal-footer">
         <div class="w-100">
           <div class="row">
             <div class="col">
-              <a href="#" class="btn w-100" data-bs-dismiss="modal"> Cancelar </a>
+              <button type="button" class="btn w-100" data-bs-dismiss="modal">Cancelar</button>
             </div>
             <div class="col">
-              <a href="{{ url_for('pos.casino') }}" class="btn btn-success w-100"> Canjear Almuerzo </a>
+              <button type="button" id="btn-confirm-entrega" class="btn btn-success w-100">
+                Confirmar
+              </button>
             </div>
           </div>
         </div>
@@ -324,47 +196,233 @@
   </div>
 </div>
 
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>
-  function dismissAndCollapse() {
-    // Animated collapse show
-    setTimeout(() => {
-      const collapseEl = document.getElementById('collapseExample');
+  // ── State ──────────────────────────────────────────────────────────────────
+  let pendingEntregaUrl = null;   // URL for the current /entrega-almuerzo POST
+  let qrScanner = null;
+  const csrfToken = "{{ csrf_token() }}";
 
-      // Start collapsed
-      collapseEl.classList.remove('collapse');
-      collapseEl.classList.add('collapsing');
-      collapseEl.style.height = '0px';
+  // ── Helpers ────────────────────────────────────────────────────────────────
+  function showScanResult(data) {
+    const alumno  = data.alumno;
+    const orden   = data.orden;
+    const yaEntregado = data.ya_entregado;
+    pendingEntregaUrl = null;
 
-      // Trigger reflow
-      collapseEl.offsetHeight;
+    let estadoBadge, canjearBtn;
+    if (yaEntregado) {
+      estadoBadge = '<span class="badge bg-warning text-dark">Ya entregado hoy</span>';
+      canjearBtn  = '';
+    } else if (orden) {
+      estadoBadge = '<span class="badge bg-success">Almuerzo disponible</span>';
+      canjearBtn  = `<button class="btn btn-success btn-lg w-100" onclick="abrirConfirmar('${orden.entrega_url}','${alumno.nombre}','${orden.menu_descripcion || orden.menu_slug}')">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l5 5l10 -10"/></svg>
+        Canjear Almuerzo</button>`;
+      pendingEntregaUrl = orden.entrega_url;
+    } else {
+      estadoBadge = '<span class="badge bg-danger">Sin almuerzo hoy</span>';
+      canjearBtn  = `<a href="{{ url_for('pos.kiosko') }}" class="btn btn-warning btn-lg w-100">Ir al Kiosko</a>`;
+    }
 
-      // Expand to full height
-      collapseEl.style.height = collapseEl.scrollHeight + 'px';
+    const restricciones = (alumno.restricciones || [])
+      .map(r => `<span class="badge bg-orange text-white me-1">${r.nombre || r}</span>`)
+      .join('');
 
-      // Clean up after transition
-      collapseEl.addEventListener('transitionend', function handler() {
-        collapseEl.classList.remove('collapsing');
-        collapseEl.classList.add('collapse', 'show');
-        collapseEl.style.height = '';
-        collapseEl.removeEventListener('transitionend', handler);
-      }, { once: true });
-    }, 300);
+    document.getElementById('scan-cards').innerHTML = `
+      <div class="col-sm-6 col-lg-3">
+        <div class="card card-sm">
+          <div class="card-body">
+            <div class="row align-items-center">
+              <div class="col-auto">
+                <span class="bg-primary text-white avatar">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1"><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"/><path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"/></svg>
+                </span>
+              </div>
+              <div class="col">
+                <div class="font-weight-medium">${alumno.nombre}</div>
+                <div class="text-secondary">${alumno.curso}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-sm-6 col-lg-3">
+        <div class="card card-sm">
+          <div class="card-body">
+            <div class="row align-items-center">
+              <div class="col">
+                <div class="font-weight-medium">Estado</div>
+                <div class="mt-1">${estadoBadge}</div>
+                ${restricciones ? `<div class="mt-1 small">${restricciones}</div>` : ''}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-sm-6 col-lg-6">
+        <div class="card card-sm">
+          <div class="card-body">
+            ${orden ? `<div class="text-muted small mb-2">${orden.menu_descripcion || orden.menu_slug}</div>` : ''}
+            ${canjearBtn}
+          </div>
+        </div>
+      </div>
+    `;
+    document.getElementById('scan-result').style.display = '';
   }
-</script>
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-    var el;
-    window.TomSelect &&
-      new TomSelect((el = document.getElementById("lista-alumnos")), {
-        maxItems: 1,
-        closeAfterSelect: true,
-        copyClassesToDropdown: true,
 
-        sortField: {
-          field: "text",
-          direction: "asc",
-        },
+  async function scanTag(serial) {
+    try {
+      const resp = await fetch(`{{ url_for('pos.api_alumno_tag', serial='__SERIAL__') }}`.replace('__SERIAL__', encodeURIComponent(serial)));
+      const data = await resp.json();
+      if (!data.encontrado) {
+        showNfcStatus('danger', `TAG <strong>${serial}</strong> no registrado en el sistema.`);
+        document.getElementById('scan-result').style.display = 'none';
+      } else {
+        showNfcStatus('', '');
+        document.getElementById('nfc-status').style.display = 'none';
+        showScanResult(data);
+      }
+    } catch(e) {
+      showNfcStatus('danger', 'Error de comunicación con el servidor.');
+    }
+  }
+
+  function showNfcStatus(type, msg) {
+    const el = document.getElementById('nfc-status');
+    const al = document.getElementById('nfc-alert');
+    if (!msg) { el.style.display = 'none'; return; }
+    al.className = `alert mb-0 alert-${type}`;
+    al.innerHTML = msg;
+    el.style.display = '';
+  }
+
+  function abrirConfirmar(url, nombre, menu) {
+    pendingEntregaUrl = url;
+    document.getElementById('confirm-detail').innerHTML =
+      `<strong>${nombre}</strong><br><span class="text-muted">${menu}</span>`;
+    new bootstrap.Modal(document.getElementById('confirmaAlmuerzoModal')).show();
+  }
+
+  // ── Confirm delivery ───────────────────────────────────────────────────────
+  document.getElementById('btn-confirm-entrega').addEventListener('click', async function () {
+    if (!pendingEntregaUrl) return;
+    this.disabled = true;
+    this.textContent = 'Procesando…';
+    try {
+      const resp = await fetch(pendingEntregaUrl, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' },
       });
+      const data = await resp.json();
+      bootstrap.Modal.getInstance(document.getElementById('confirmaAlmuerzoModal')).hide();
+      if (data.ok) {
+        // Prepend to the recent deliveries table
+        const tbody = document.getElementById('recientes-tbody');
+        const noRow = document.getElementById('no-recientes-row');
+        if (noRow) noRow.remove();
+        const now = new Date();
+        const hhmm = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${data.alumno_nombre}</td><td class="text-secondary">${data.alumno_curso}</td><td class="text-secondary">${hhmm}</td><td class="text-secondary text-truncate" style="max-width:180px;">${data.menu || '—'}</td>`;
+        tbody.insertBefore(tr, tbody.firstChild);
+        document.getElementById('scan-result').style.display = 'none';
+        pendingEntregaUrl = null;
+      } else {
+        alert('Error: ' + (data.error || 'No se pudo entregar el almuerzo.'));
+      }
+    } catch(e) {
+      alert('Error de comunicación.');
+    } finally {
+      this.disabled = false;
+      this.textContent = 'Confirmar';
+    }
+  });
+
+  // ── NFC (Web NFC API – Android Chrome only) ────────────────────────────────
+  document.getElementById('btn-nfc').addEventListener('click', async function () {
+    if (!('NDEFReader' in window)) {
+      showNfcStatus('warning', 'NFC no disponible en este dispositivo/navegador. Use el lector QR.');
+      return;
+    }
+    showNfcStatus('info', 'Acerca el brazalete del alumno a la parte posterior del celular…');
+    try {
+      const ndef = new NDEFReader();
+      await ndef.scan();
+      ndef.onreading = (event) => {
+        const serial = (event.serialNumber || '').replace(/:/g, '').toLowerCase();
+        showNfcStatus('success', `Brazalete detectado: <strong>${serial}</strong>`);
+        scanTag(serial);
+      };
+      ndef.onerror = () => showNfcStatus('danger', 'Error al leer el brazalete NFC.');
+    } catch(err) {
+      showNfcStatus('danger', 'No se pudo iniciar el lector NFC: ' + err.message);
+    }
+  });
+
+  // ── QR scanner (html5-qrcode) ──────────────────────────────────────────────
+  const qrModal = document.getElementById('qrModal');
+  qrModal.addEventListener('shown.bs.modal', function () {
+    if (qrScanner) return;
+    qrScanner = new Html5QrcodeScanner('qr-reader', { fps: 15, qrbox: 220 });
+    qrScanner.render(function (decoded) {
+      const serial = (decoded || '').replace(/:/g, '').toLowerCase();
+      document.getElementById('qr-modal-status').textContent = 'Código: ' + serial;
+      qrScanner.clear().then(() => { qrScanner = null; });
+      bootstrap.Modal.getInstance(qrModal).hide();
+      scanTag(serial);
+    });
+  });
+  qrModal.addEventListener('hidden.bs.modal', function () {
+    if (qrScanner) { qrScanner.clear().then(() => { qrScanner = null; }); }
+  });
+
+  // ── Manual alumno entry ────────────────────────────────────────────────────
+  let manualOrdenUrl = null;
+  document.addEventListener("DOMContentLoaded", function () {
+    window.TomSelect && new TomSelect(document.getElementById('lista-alumnos'), {
+      maxItems: 1,
+      closeAfterSelect: true,
+      sortField: { field: 'text', direction: 'asc' },
+      onChange: async function (alumnoId) {
+        const resultEl = document.getElementById('manual-result');
+        const canjearBtn = document.getElementById('btn-canjear-manual');
+        manualOrdenUrl = null;
+        canjearBtn.disabled = true;
+        resultEl.style.display = 'none';
+        if (!alumnoId) return;
+        try {
+          const resp = await fetch(`{{ url_for('pos.api_alumno', alumno_id=0) }}`.replace('/0', '/' + alumnoId));
+          const data = await resp.json();
+          if (!data.encontrado) { resultEl.innerHTML = '<div class="alert alert-danger">Alumno no encontrado.</div>'; resultEl.style.display = ''; return; }
+          const alumno = data.alumno;
+          const orden  = data.orden;
+          const ya     = data.ya_entregado;
+          let badge;
+          if (ya) { badge = '<span class="badge bg-warning text-dark">Ya entregado hoy</span>'; }
+          else if (orden) { badge = '<span class="badge bg-success">Almuerzo disponible</span>'; manualOrdenUrl = orden.entrega_url; canjearBtn.disabled = false; }
+          else { badge = '<span class="badge bg-danger">Sin almuerzo hoy</span>'; }
+          resultEl.innerHTML = `<div class="d-flex align-items-center gap-2">${badge}<span class="text-muted small">${orden ? (orden.menu_descripcion || orden.menu_slug) : 'Sin pedido'}</span></div>`;
+          resultEl.style.display = '';
+        } catch(e) { resultEl.innerHTML = '<div class="alert alert-danger">Error de comunicación.</div>'; resultEl.style.display = ''; }
+      }
+    });
+  });
+
+  document.getElementById('btn-limpiar-manual').addEventListener('click', function () {
+    const ts = document.getElementById('lista-alumnos').tomselect;
+    if (ts) ts.clear();
+    document.getElementById('manual-result').style.display = 'none';
+    document.getElementById('btn-canjear-manual').disabled = true;
+    manualOrdenUrl = null;
+  });
+
+  document.getElementById('btn-canjear-manual').addEventListener('click', function () {
+    if (!manualOrdenUrl) return;
+    const sel = document.getElementById('lista-alumnos');
+    const opt = sel.options[sel.selectedIndex];
+    abrirConfirmar(manualOrdenUrl, opt ? opt.text : 'Alumno', '');
   });
 </script>
 {% endblock page_scripts -%}
