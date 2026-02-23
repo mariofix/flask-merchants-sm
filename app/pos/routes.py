@@ -5,7 +5,7 @@ from flask_security import current_user, login_required, roles_accepted
 
 from ..database import db
 from ..extensions import limiter
-from ..model import EstadoPedido, Pedido, Abono, Payment, Alumno
+from ..model import EstadoPedido, Pedido, Abono, Payment, Alumno, MenuDiario
 from .crud import PosController
 
 # from .reader import registra_lectura
@@ -47,6 +47,25 @@ def api_alumno_tag(serial: str):
         return jsonify({"encontrado": False, "serial": serial}), 404
 
     orden = result["orden"]
+    orden_data = None
+    if orden:
+        menu_diario = db.session.execute(
+            db.select(MenuDiario).filter_by(slug=orden.menu_slug)
+        ).scalar_one_or_none()
+        courses = {}
+        if menu_diario:
+            courses = {
+                "entradas": [p.nombre for p in menu_diario.entradas],
+                "fondos": [p.nombre for p in menu_diario.fondos],
+                "postres": [p.nombre for p in menu_diario.postres],
+            }
+        orden_data = {
+            "id": orden.id,
+            "menu_descripcion": orden.menu_descripcion,
+            "menu_slug": orden.menu_slug,
+            "entrega_url": url_for("pos.entrega_almuerzo", orden_id=orden.id),
+            "courses": courses,
+        }
     return jsonify({
         "encontrado": True,
         "serial": serial,
@@ -57,12 +76,7 @@ def api_alumno_tag(serial: str):
             "restricciones": alumno.restricciones or [],
         },
         "saldo_apoderado": alumno.apoderado.saldo_cuenta or 0,
-        "orden": {
-            "id": orden.id,
-            "menu_descripcion": orden.menu_descripcion,
-            "menu_slug": orden.menu_slug,
-            "entrega_url": url_for("pos.entrega_almuerzo", orden_id=orden.id),
-        } if orden else None,
+        "orden": orden_data,
         "ya_entregado": result["ya_entregado"],
     })
 
@@ -105,6 +119,13 @@ def casino():
     return render_template("pos/casino.html", recientes=recientes, alumnos=alumnos)
 
 
+@pos_bp.route("/lector", methods=["GET"])
+@roles_accepted("admin", "pos")
+def lector():
+    """Standalone kiosk NFC reader: full-screen canteen tag scanner for the mounted phone."""
+    return render_template("pos/lector.html")
+
+
 @pos_bp.route("/kiosko", methods=["GET"])
 @roles_accepted("admin", "pos")
 def kiosko():
@@ -123,7 +144,6 @@ def venta_kiosko():
     Body: ``{"alumno_id": <int>, "menu_slug": <str>}``
     Returns JSON with the new OrdenCasino id.
     """
-    from ..model import MenuDiario as MD
     payload = request.get_json(force=True) or {}
     alumno_id = payload.get("alumno_id")
     menu_slug = payload.get("menu_slug")
@@ -140,7 +160,7 @@ def venta_kiosko():
     if not alumno:
         return jsonify({"error": "Alumno no encontrado"}), 404
 
-    menu = db.session.execute(db.select(MD).filter_by(slug=menu_slug)).scalar_one_or_none()
+    menu = db.session.execute(db.select(MenuDiario).filter_by(slug=menu_slug)).scalar_one_or_none()
     if not menu:
         return jsonify({"error": "Menú no encontrado"}), 404
 
