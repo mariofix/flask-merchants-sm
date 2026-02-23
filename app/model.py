@@ -109,7 +109,7 @@ class Alumno(db.Model, Timestamp):
     tag: Mapped[str | None] = mapped_column(String(255), nullable=True)
     tag_compartido: Mapped[bool] = mapped_column(default=False)
 
-    restricciones: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+    restricciones: Mapped[list[dict[str, Any]] | None] = mapped_column(JSON, nullable=True)
 
     def __str__(self):
         return f"{self.slug}"
