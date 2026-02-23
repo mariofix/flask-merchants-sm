@@ -6,7 +6,6 @@ import os
 
 load_dotenv()
 import sentry_sdk
-from flask import Flask
 from sentry_sdk.integrations.flask import FlaskIntegration
 
 dsn = os.getenv("FLASK_SENTRY_DSN", None)
@@ -20,6 +19,5 @@ if dsn:
         traces_sample_rate=1.0,
     )
 
-app = Flask(__name__)
 app = create_app()
 celery_app = app.extensions["celery"]
