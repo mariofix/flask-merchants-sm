@@ -48,7 +48,8 @@
           </td>
           <td>
             {% if orden.estado.value in ['pendiente', 'confirmada'] %}
-            <form method="POST" action="{{ url_for('misordenes.cancelar', orden_id=orden.id) }}" style="display:inline;">
+            <form method="POST" action="#" style="display:inline;">
+              <!-- cancel endpoint not yet implemented -->
               <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Cancelar pedido?')">
                 Cancelar
               </button>

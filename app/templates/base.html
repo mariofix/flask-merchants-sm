@@ -191,9 +191,9 @@
             </div>
             <div class="nav-item dropdown">
               <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown" aria-label="Open user menu">
-                <span class="avatar avatar-sm avatar-1 bg-lime text-white"> {{ current_user.email[0] }} </span>
+                <span class="avatar avatar-sm avatar-1 bg-lime text-white"> {{ current_user.email[0] if current_user.is_authenticated else '?' }} </span>
                 <div class="d-none d-xl-block ps-2">
-                  <div>{{ current_user.email }}</div>
+                  <div>{{ current_user.email if current_user.is_authenticated else '' }}</div>
                   <div class="mt-1 small text-secondary">
                     {% if current_user.has_role("apoderado") %}
                     Apoderado

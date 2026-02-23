@@ -247,8 +247,35 @@ class TestCreaOrden:
 
 
 # ---------------------------------------------------------------------------
-# compute_advertencias  (pure — no DB needed)
+# toggle_alumno_activo
 # ---------------------------------------------------------------------------
+
+class TestToggleAlumnoActivo:
+    def test_deactivates_active_alumno(self, db_session, sample_apoderado):
+        alumno = sample_apoderado.alumnos[0]
+        assert alumno.activo is True
+        make_ctrl().toggle_alumno_activo(alumno)
+        db_session.refresh(alumno)
+        assert alumno.activo is False
+        assert alumno.motivo == "Bloqueado por apoderado"
+
+    def test_reactivates_inactive_alumno(self, db_session, sample_apoderado):
+        alumno = sample_apoderado.alumnos[0]
+        alumno.activo = False
+        alumno.motivo = "Bloqueado"
+        db_session.commit()
+        make_ctrl().toggle_alumno_activo(alumno)
+        db_session.refresh(alumno)
+        assert alumno.activo is True
+        assert alumno.motivo is None
+
+    def test_custom_motivo_on_deactivate(self, db_session, sample_apoderado):
+        alumno = sample_apoderado.alumnos[0]
+        make_ctrl().toggle_alumno_activo(alumno, motivo="Suspendido temporalmente")
+        db_session.refresh(alumno)
+        assert alumno.activo is False
+        assert alumno.motivo == "Suspendido temporalmente"
+
 
 class TestComputeAdvertencias:
     def setup_method(self):

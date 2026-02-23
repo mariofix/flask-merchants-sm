@@ -193,7 +193,7 @@
   function read(id) {
     let xhr = new XMLHttpRequest();
     let number = Math.random() * 10000
-    let url = '{{ url_for('pos.nueva_lectura') }}/' + id + "?q=" + number;
+    let url = '{{ url_for('pos.api_alumno_tag', serial='__SERIAL__') }}'.replace('__SERIAL__', id) + "?q=" + number;
     xhr.open("GET", url, true);
 
     xhr.onreadystatechange = function () {
