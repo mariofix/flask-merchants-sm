@@ -503,6 +503,38 @@ _PLATOS_FONDOS_CARNE = [
     ("Salmón a la Plancha", False, False, True, False, True),
     ("Ajiaco", False, False, False, False, False),
     ("Guiso de Porotos con Longaniza", False, False, False, False, False),
+    # --- tramo 2 ---
+    ("Pollo al Horno con Arroz", False, False, False, False, False),
+    ("Trutro de Pollo Asado", False, False, False, False, False),
+    ("Milanesa de Pollo con Puré", False, False, False, True, False),
+    ("Milanesa de Vacuno", False, False, False, True, False),
+    ("Pollo Arvejado", False, False, False, False, False),
+    ("Tallarines con Carne Molida", False, False, False, True, False),
+    ("Churrasco con Palta", False, False, False, False, False),
+    ("Costillas de Cerdo al Horno", False, False, False, False, False),
+    ("Lomo Saltado", False, False, False, False, False),
+    ("Pollo con Champiñones", False, False, False, False, False),
+    ("Albóndigas al Jugo con Arroz", False, False, False, False, False),
+    ("Pollo Relleno al Horno", False, False, False, False, False),
+    ("Pechuga de Pollo a la Plancha", False, False, True, False, False),
+    ("Filete de Cerdo con Papas Doradas", False, False, False, False, False),
+    ("Atún al Horno con Verduras", False, False, True, False, True),
+    # --- tramo 3 ---
+    ("Salmón en Salsa de Limón", False, False, True, False, True),
+    ("Ropa Vieja", False, False, False, False, False),
+    ("Carbonada", False, False, False, False, False),
+    ("Pollo Saltado con Verduras", False, False, True, False, False),
+    ("Asado de Tira con Ensalada", False, False, False, False, False),
+    ("Caldillo de Congrio", False, False, False, False, True),
+    ("Pollo Escabechado", False, False, False, False, False),
+    ("Vacuno Estofado con Papas", False, False, False, False, False),
+    ("Carne al Jugo con Puré", False, False, False, False, False),
+    ("Pollo con Salsa de Tomate", False, False, False, False, False),
+    ("Guiso de Vacuno con Papas", False, False, False, False, False),
+    ("Pescado Frito con Ensalada", False, False, False, True, True),
+    ("Carne con Arroz y Ensalada", False, False, False, False, False),
+    ("Guiso de Mariscos", False, False, False, False, True),
+    ("Pollo a la Cerveza", False, False, False, False, False),
 ]
 
 _PLATOS_FONDOS_VEGANOS = [
@@ -514,6 +546,24 @@ _PLATOS_FONDOS_VEGANOS = [
     ("Cazuela de Verduras", True, True, True, False, False),
     ("Porotos con Rienda Vegano", True, True, False, False, False),
     ("Tarta de Espinacas", True, True, False, True, False),
+    # --- tramo 2 ---
+    ("Burger de Lentejas", True, True, False, True, False),
+    ("Curry de Garbanzos con Arroz", True, True, True, False, False),
+    ("Estofado de Zapallo y Papas", True, True, True, False, False),
+    ("Lasaña Vegana de Espinacas", True, True, False, True, False),
+    ("Sopa de Quinoa con Verduras", True, True, True, False, False),
+    ("Burger de Porotos Negros", True, True, False, True, False),
+    ("Risotto de Champiñones Vegano", True, True, False, False, False),
+    ("Cazuela de Porotos Negros", True, True, True, False, False),
+    # --- tramo 3 ---
+    ("Guiso de Lentejas con Espinaca", True, True, True, False, False),
+    ("Sopa de Tomate y Albahaca", True, True, True, False, False),
+    ("Guiso de Quinoa con Tomate", True, True, True, False, False),
+    ("Arroz Salteado con Brócoli Vegano", True, True, True, False, False),
+    ("Wrap de Verduras Asadas", True, True, True, True, False),
+    ("Stir-Fry de Verduras con Fideos", True, True, False, True, False),
+    ("Tacos de Champiñones Vegano", True, True, False, True, False),
+    ("Crema de Lentejas Rojas", True, True, True, False, False),
 ]
 
 _PLATOS_FONDOS_VEGETARIANOS = [
@@ -524,6 +574,22 @@ _PLATOS_FONDOS_VEGETARIANOS = [
     ("Quiche de Espinacas", False, True, False, True, True),
     ("Fideos con Salsa de Tomate", False, True, False, True, False),
     ("Arroz con Leche de Coco", False, True, True, False, False),
+    # --- tramo 2 ---
+    ("Pasta con Salsa de Champiñones", False, True, False, True, False),
+    ("Frittata de Verduras", False, True, True, False, True),
+    ("Soufflé de Queso", False, True, False, False, True),
+    ("Risotto de Parmesano", False, True, False, False, True),
+    ("Crepes Vegetarianos Rellenos", False, True, False, True, True),
+    ("Tarta de Tomate y Queso", False, True, False, True, True),
+    ("Gnocchi de Espinaca con Mantequilla", False, True, False, True, True),
+    # --- tramo 3 ---
+    ("Revuelto de Verduras con Queso", False, True, True, False, True),
+    ("Pasta Primavera", False, True, False, True, False),
+    ("Quesadillas de Espinaca", False, True, True, True, True),
+    ("Budín de Zapallo", False, True, True, False, True),
+    ("Pizza de Verduras", False, True, False, True, True),
+    ("Strúdel de Queso y Espinaca", False, True, False, True, True),
+    ("Tortilla Española de Papas", False, True, False, False, True),
 ]
 
 _PLATOS_ENTRADAS = [
@@ -537,6 +603,28 @@ _PLATOS_ENTRADAS = [
     ("Empanadas de Horno", False, False, False, True, False),
     ("Humitas", True, True, False, False, False),
     ("Pebre con Marraqueta", True, True, False, True, False),
+    # --- tramo 2 ---
+    ("Sopa de Zapallo Camote", True, True, True, False, False),
+    ("Crema de Zanahoria", True, True, True, False, False),
+    ("Sopa de Tomate Casera", True, True, True, False, False),
+    ("Ensalada de Remolacha", True, True, True, False, False),
+    ("Ensalada de Repollo y Zanahoria", True, True, True, False, False),
+    ("Sopa de Verduras del Día", True, True, True, False, False),
+    ("Tomaticán", True, True, True, False, False),
+    ("Porotos Granados", True, True, False, False, False),
+    ("Sopa de Choclo", True, True, False, False, False),
+    ("Sopa de Papas con Cilantro", True, True, True, False, False),
+    # --- tramo 3 ---
+    ("Pan Amasado con Pebre", True, True, False, True, False),
+    ("Tostadas con Tomate y Ajo", True, True, False, True, False),
+    ("Crema de Brócoli", False, True, True, False, True),
+    ("Ensalada de Pollo y Lechuga", False, False, True, False, False),
+    ("Ceviche de Mariscos", False, False, True, False, True),
+    ("Guacamole con Tostadas", True, True, True, True, False),
+    ("Sopa de Cebolla Gratinada", False, True, False, True, True),
+    ("Crema de Espárragos", False, True, True, False, True),
+    ("Ensalada Griega", False, True, True, False, True),
+    ("Ensalada de Pepino con Yogurt", False, True, True, False, True),
 ]
 
 _PLATOS_POSTRES = [
@@ -550,9 +638,31 @@ _PLATOS_POSTRES = [
     ("Picarones", True, True, False, True, False),
     ("Fruta de Temporada", True, True, True, False, False),
     ("Torta de Milhojas", False, True, False, True, True),
+    # --- tramo 2 ---
+    ("Mousse de Maracuyá", False, True, True, False, True),
+    ("Alfajores", False, True, False, True, True),
+    ("Queque de Naranja", False, True, False, True, True),
+    ("Budín de Pan", False, True, False, True, True),
+    ("Merengue con Crema", False, True, False, False, True),
+    ("Copa de Helado de Frutilla", False, True, False, False, True),
+    ("Ensalada de Frutas Frescas", True, True, True, False, False),
+    ("Panqueques con Manjar", False, True, False, True, True),
+    ("Queque de Chocolate", False, True, False, True, True),
+    ("Mazamorra de Maíz", True, True, True, False, False),
+    # --- tramo 3 ---
+    ("Manzana al Horno", True, True, True, False, False),
+    ("Plátano con Miel", True, True, True, False, False),
+    ("Gelatina de Frambuesa", True, True, True, False, False),
+    ("Suspiro Limeño", False, True, False, False, True),
+    ("Chilenitos", False, True, False, True, True),
+    ("Copa de Frutas Naturales", True, True, True, False, False),
+    ("Turrón de Merengue", False, True, False, False, True),
+    ("Kuchen de Manzana", False, True, False, True, True),
+    ("Yogurt con Granola y Frutas", False, True, True, True, True),
+    ("Manjar Casero con Galleta", False, True, False, True, True),
 ]
 
-_CURSOS_CHILENOS = [
+_CURSOS_FALLBACK = [
     "1° Básico A", "1° Básico B", "2° Básico A", "2° Básico B",
     "3° Básico A", "3° Básico B", "4° Básico A", "4° Básico B",
     "5° Básico A", "5° Básico B", "6° Básico A", "6° Básico B",
@@ -560,6 +670,22 @@ _CURSOS_CHILENOS = [
     "1° Medio A", "1° Medio B", "2° Medio A", "2° Medio B",
     "3° Medio A", "3° Medio B", "4° Medio A", "4° Medio B",
 ]
+
+
+def _get_cursos() -> list[str]:
+    """Return the list of school courses from Settings(slug='cursos').
+
+    ``Settings.value`` is a SQLAlchemy JSON column, so it is already
+    deserialized to a Python object when read.  The expected shape is a list
+    of strings, e.g. ``["1-A", "1-B", "2-A", ...]``.  Falls back to
+    ``_CURSOS_FALLBACK`` when the setting is absent, inactive, or empty.
+    """
+    setting = db.session.execute(
+        db.select(Settings).filter_by(slug="cursos", active=True)
+    ).scalar_one_or_none()
+    if setting and isinstance(setting.value, list) and setting.value:
+        return [str(c) for c in setting.value]
+    return _CURSOS_FALLBACK
 
 
 def _hora_escolar_aleatoria(fecha, tipo: str = "general"):
@@ -746,9 +872,10 @@ class GenerarDatosView(BaseView):
             return 0
 
         creados = 0
+        cursos = _get_cursos()
         for _ in range(cantidad):
             nombre = f"{fake.first_name()} {fake.last_name()}"
-            curso = random.choice(_CURSOS_CHILENOS)
+            curso = random.choice(cursos)
             slug_base = f"{nombre.lower().replace(' ', '-')}-{random.randint(1, 999)}"
             from slugify import slugify as _slugify
             slug = _slugify(slug_base)
@@ -786,6 +913,7 @@ class GenerarDatosView(BaseView):
 
         hoy = date.today()
         creados = 0
+        cursos = _get_cursos()  # fetch once per generation call, not per apoderado
 
         for _ in range(cantidad):
             primer_nombre = fake.first_name()
@@ -837,7 +965,7 @@ class GenerarDatosView(BaseView):
                 alumno = Alumno(
                     slug=a_slug,
                     nombre=a_nombre,
-                    curso=random.choice(_CURSOS_CHILENOS),
+                    curso=random.choice(cursos),
                     activo=True,
                     apoderado=apoderado,
                     maximo_diario=max_diario,
