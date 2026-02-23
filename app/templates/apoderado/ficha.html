@@ -178,7 +178,7 @@
             </div>
             <div class="card-body">
               <div class="badges-list">
-                {% for item in alumno.restricciones %}
+                {% for item in (alumno.restricciones or []) %}
                 <span class="badge bg-danger-lt" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Motivo: {{item.motivo}}">{{item.nombre}}</span>
                 {% endfor %}
               </div>
