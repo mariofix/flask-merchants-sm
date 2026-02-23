@@ -208,6 +208,7 @@
     const alumno  = data.alumno;
     const orden   = data.orden;
     const yaEntregado = data.ya_entregado;
+    const saldo   = data.saldo_apoderado !== undefined ? data.saldo_apoderado : null;
     pendingEntregaUrl = null;
 
     let estadoBadge, canjearBtn;
@@ -255,6 +256,7 @@
                 <div class="font-weight-medium">Estado</div>
                 <div class="mt-1">${estadoBadge}</div>
                 ${restricciones ? `<div class="mt-1 small">${restricciones}</div>` : ''}
+                ${saldo !== null ? `<div class="mt-2 small text-secondary">Saldo apoderado: <strong>$${saldo.toLocaleString('es-CL')}</strong></div>` : ''}
               </div>
             </div>
           </div>

@@ -18,7 +18,9 @@ ctrl = PosController()
 @roles_accepted("admin", "pos")
 def index():
     alumnos_sin_tag = ctrl.get_alumnos_sin_tag()
-    return render_template("pos/dashboard.html", alumnos_sin_tag=alumnos_sin_tag)
+    stats = ctrl.get_dashboard_stats()
+    recientes = ctrl.get_ordenes_entregadas_hoy()
+    return render_template("pos/dashboard.html", alumnos_sin_tag=alumnos_sin_tag, stats=stats, recientes=recientes)
 
 
 @pos_bp.route("/valida_tag/<string:serial>", methods=["GET"])
@@ -54,6 +56,7 @@ def api_alumno_tag(serial: str):
             "curso": alumno.curso,
             "restricciones": alumno.restricciones or [],
         },
+        "saldo_apoderado": alumno.apoderado.saldo_cuenta or 0,
         "orden": {
             "id": orden.id,
             "menu_descripcion": orden.menu_descripcion,
@@ -82,6 +85,7 @@ def api_alumno(alumno_id: int):
             "curso": alumno.curso,
             "restricciones": alumno.restricciones or [],
         },
+        "saldo_apoderado": alumno.apoderado.saldo_cuenta or 0,
         "orden": {
             "id": orden.id,
             "menu_descripcion": orden.menu_descripcion,
