@@ -158,6 +158,21 @@ class PlatoAdminView(SecureModelView):
         "contiene_alergenos",
     ]
 
+    @action(
+        "vaciar_tabla",
+        "Vaciar Tabla",
+        "⚠️ Esto eliminará TODOS los platos y sus asignaciones en menús. ¿Continuar?",
+    )
+    def action_vaciar_tabla(self, ids):
+        try:
+            db.session.execute(db.delete(OpcionMenuDia))
+            count = db.session.execute(db.delete(Plato)).rowcount
+            db.session.commit()
+            flash(f"Se eliminaron {count} plato(s) y todas las asignaciones de menú asociadas.")
+        except Exception as exc:
+            db.session.rollback()
+            flash(f"Error al vaciar tabla: {exc}", "error")
+
 
 class MenuDiarioAdminView(SecureModelView):
     form_extra_fields = {
@@ -187,6 +202,20 @@ class MenuDiarioAdminView(SecureModelView):
         form.foto_principal.choices = [(f, f) for f in self._obtiene_fotos()]  # type: ignore
         return form
 
+    @action(
+        "vaciar_tabla",
+        "Vaciar Tabla",
+        "⚠️ Esto eliminará TODOS los menús diarios y sus opciones. ¿Continuar?",
+    )
+    def action_vaciar_tabla(self, ids):
+        try:
+            count = db.session.execute(db.delete(MenuDiario)).rowcount
+            db.session.commit()
+            flash(f"Se eliminaron {count} menú(s) diario(s) y todas sus opciones.")
+        except Exception as exc:
+            db.session.rollback()
+            flash(f"Error al vaciar tabla: {exc}", "error")
+
 
 class ApoderadoAdminView(SecureModelView):
 
@@ -199,6 +228,24 @@ class ApoderadoAdminView(SecureModelView):
         "saldo_cuenta",
         "created",
     ]
+
+    @action(
+        "vaciar_tabla",
+        "Vaciar Tabla",
+        "⚠️ Esto eliminará TODOS los apoderados, sus alumnos y abonos. ¿Continuar?",
+    )
+    def action_vaciar_tabla(self, ids):
+        try:
+            db.session.execute(db.delete(OrdenCasino))
+            db.session.execute(db.delete(Alumno))
+            db.session.execute(db.delete(Payment))
+            db.session.execute(db.delete(Abono))
+            count = db.session.execute(db.delete(Apoderado)).rowcount
+            db.session.commit()
+            flash(f"Se eliminaron {count} apoderado(s) y todos sus alumnos, abonos y pagos.")
+        except Exception as exc:
+            db.session.rollback()
+            flash(f"Error al vaciar tabla: {exc}", "error")
 
 
 class AlumnoAdminView(SecureModelView):
@@ -227,6 +274,21 @@ class AlumnoAdminView(SecureModelView):
     }
 
     edit_template = "admin/alumno_edit.html"
+
+    @action(
+        "vaciar_tabla",
+        "Vaciar Tabla",
+        "⚠️ Esto eliminará TODOS los alumnos y sus órdenes de casino. ¿Continuar?",
+    )
+    def action_vaciar_tabla(self, ids):
+        try:
+            db.session.execute(db.delete(OrdenCasino))
+            count = db.session.execute(db.delete(Alumno)).rowcount
+            db.session.commit()
+            flash(f"Se eliminaron {count} alumno(s) y todas sus órdenes de casino.")
+        except Exception as exc:
+            db.session.rollback()
+            flash(f"Error al vaciar tabla: {exc}", "error")
 
 
 class AbonoAdminView(SecureModelView):
@@ -500,6 +562,46 @@ _CURSOS_CHILENOS = [
 ]
 
 
+def _hora_escolar_aleatoria(fecha, tipo: str = "general"):
+    """Return a datetime for *fecha* at a context-appropriate time.
+
+    tipos:
+    - ``"pedido"``     – parents place orders before the kitchen cutoff (07:30-11:30)
+    - ``"abono"``      – a parent initiates a payment; this can happen at any hour,
+                         including late at night via Khipu (00:00-23:59)
+    - ``"validacion"`` – an admin validates/approves a payment; only during office
+                         hours on weekdays (08:00-18:00, Mon-Fri)
+    - ``"entrega"``    – lunch is served during the lunch break (12:00-13:30)
+    - ``"general"``    – generic school-hours activity (08:00-17:00)
+    """
+    import random
+    from datetime import datetime, timedelta
+
+    if tipo == "pedido":
+        hora = random.randint(7, 11)
+        minuto = random.randint(30 if hora == 7 else 0, 59 if hora < 11 else 30)
+    elif tipo == "abono":
+        # Parents can pay at 2 AM via Khipu — no time restriction
+        hora = random.randint(0, 23)
+        minuto = random.randint(0, 59)
+    elif tipo == "validacion":
+        # Admins only work Mon-Fri 08:00-18:00; advance to Monday if on a weekend
+        fecha_val = fecha
+        while fecha_val.weekday() >= 5:
+            fecha_val += timedelta(days=1)
+        hora = random.randint(8, 17)
+        minuto = random.randint(0, 59)
+        return datetime(fecha_val.year, fecha_val.month, fecha_val.day, hora, minuto, random.randint(0, 59))
+    elif tipo == "entrega":
+        hora = random.choices([12, 13], weights=[7, 3])[0]
+        minuto = random.randint(0, 59 if hora == 12 else 30)
+    else:
+        hora = random.randint(8, 17)
+        minuto = random.randint(0, 59)
+
+    return datetime(fecha.year, fecha.month, fecha.day, hora, minuto, random.randint(0, 59))
+
+
 class GenerarDatosView(BaseView):
     """Vista de administración para generar datos de prueba contextualizados."""
 
@@ -563,7 +665,13 @@ class GenerarDatosView(BaseView):
             flash(f"Modelo desconocido: {modelo}", "error")
             return redirect(url_for("generar_datos.index"))
 
-        flash(f"✅ Se crearon {creados} registros de tipo «{modelo}» exitosamente.", "success")
+        nombres = {
+            "plato": "Plato(s)",
+            "alumno": "Alumno(s)",
+            "apoderado": "Apoderado(s) completo(s) (Usuario + Alumnos + Abonos)",
+            "menu_diario": "Menú(s) Diario(s)",
+        }
+        flash(f"✅ Se crearon {creados} {nombres.get(modelo, modelo)} exitosamente.", "success")
         return redirect(url_for("generar_datos.index"))
 
     def _generar_platos(self, fake, cantidad: int) -> int:
@@ -662,31 +770,134 @@ class GenerarDatosView(BaseView):
 
     def _generar_apoderados(self, fake, cantidad: int) -> int:
         import random
+        import uuid
+        from datetime import date, timedelta
+        from decimal import Decimal
 
-        # Find users that don't already have an apoderado
-        existing_apoderado_user_ids = {
-            row[0]
-            for row in db.session.execute(db.select(Apoderado.usuario_id)).all()
-        }
-        usuarios = [
-            u for u in db.session.execute(db.select(User)).scalars().all()
-            if u.id not in existing_apoderado_user_ids
-        ]
-        if not usuarios:
-            flash("No hay Usuarios disponibles sin Apoderado. Crea Usuarios primero.", "error")
-            return 0
+        from flask_security.utils import hash_password
+        from slugify import slugify as _slugify
 
+        # Get or create a plain "apoderado" role – never admin, never pos
+        rol = db.session.execute(db.select(Role).filter_by(name="apoderado")).scalar_one_or_none()
+        if not rol:
+            rol = Role(name="apoderado", description="Apoderado del Casino")
+            db.session.add(rol)
+            db.session.flush()
+
+        hoy = date.today()
         creados = 0
-        for usuario in usuarios[:cantidad]:
+
+        for _ in range(cantidad):
+            primer_nombre = fake.first_name()
+            apellido = fake.last_name()
+            nombre_completo = f"{primer_nombre} {apellido}"
+
+            # Chilean phone number format (9XXXXXXXX) as username
+            username = f"9{fake.numerify('########')}"
+            dominio = random.choice(["gmail.com", "yahoo.com", "hotmail.com", "outlook.com"])
+            email = f"{primer_nombre.lower()}.{apellido.lower()}{random.randint(1, 9999)}@{dominio}"
+
+            if db.session.execute(db.select(User).filter_by(email=email)).scalar_one_or_none():
+                continue  # skip on unlikely collision
+
+            # 1. User (confirmed, active, role=apoderado only)
+            user = User()
+            user.email = email
+            user.username = username
+            user.password = hash_password("TestPass2024!")
+            user.active = True
+            user.confirmed_at = _hora_escolar_aleatoria(
+                hoy - timedelta(days=random.randint(30, 365)), "general"
+            )
+            user.fs_uniquifier = str(uuid.uuid4())
+            user.roles = [rol]
+            db.session.add(user)
+            db.session.flush()
+
+            # 2. Apoderado
+            n_alumnos = random.randint(1, 3)  # realistic: no family has 34 kids
+            max_diario = random.choice([None, 2000, 3000, 5000])
+            max_semanal = random.choice([None, 10000, 15000])
             apoderado = Apoderado(
-                nombre=f"{fake.first_name()} {fake.last_name()}",
-                alumnos_registro=random.randint(1, 3),
-                usuario=usuario,
-                saldo_cuenta=random.randint(0, 50000),
-                maximo_diario=random.choice([None, 2, 3]),
-                maximo_semanal=random.choice([None, 10, 15]),
+                nombre=nombre_completo,
+                alumnos_registro=n_alumnos,
+                usuario=user,
+                saldo_cuenta=0,
+                maximo_diario=max_diario,
+                maximo_semanal=max_semanal,
+                notificacion_compra=True,
             )
             db.session.add(apoderado)
+            db.session.flush()
+
+            # 3. Alumnos — same apellido, different first names, real Chilean courses
+            for _ in range(n_alumnos):
+                a_nombre = f"{fake.first_name()} {apellido}"
+                a_slug = _slugify(f"{a_nombre}-{random.randint(1000, 9999)}")
+                alumno = Alumno(
+                    slug=a_slug,
+                    nombre=a_nombre,
+                    curso=random.choice(_CURSOS_CHILENOS),
+                    activo=True,
+                    apoderado=apoderado,
+                    maximo_diario=max_diario,
+                    maximo_semanal=max_semanal,
+                )
+                db.session.add(alumno)
+
+            # 4. Abonos spread over the last 90 school days — some fail, most succeed
+            saldo = 0
+            for _ in range(random.randint(1, 4)):
+                dias_atras = random.randint(1, 90)
+                fecha_abono = hoy - timedelta(days=dias_atras)
+                # Weekends are fine — a parent paying via Khipu at 2 AM on Saturday is normal
+                dt_abono = _hora_escolar_aleatoria(fecha_abono, "abono")
+                codigo_abono = str(uuid.uuid4())
+                monto = random.choice([5000, 10000, 15000, 20000, 25000, 30000])
+                forma_pago = random.choice(["transferencia", "khipu", "efectivo"])
+
+                abono = Abono(
+                    codigo=codigo_abono,
+                    monto=Decimal(monto),
+                    apoderado=apoderado,
+                    descripcion="Abono de Prueba",
+                    forma_pago=forma_pago,
+                )
+                abono.created = dt_abono
+                db.session.add(abono)
+
+                # Payment created at the same moment the parent initiated it (any hour)
+                # but if it was validated ("succeeded") that only happens during office hours
+                estado_pago = random.choices(
+                    ["succeeded", "processing", "failed", "cancelled"],
+                    weights=[60, 25, 10, 5],
+                )[0]
+                if estado_pago == "succeeded":
+                    # Admin validated the payment the next weekday during office hours
+                    dt_validacion = _hora_escolar_aleatoria(
+                        fecha_abono + timedelta(days=1), "validacion"
+                    )
+                else:
+                    dt_validacion = dt_abono
+                payment = Payment(
+                    session_id=codigo_abono,
+                    redirect_url="https://example.cl/pago",
+                    provider="cafeteria" if forma_pago == "efectivo" else forma_pago,
+                    amount=Decimal(monto),
+                    currency="CLP",
+                    state=estado_pago,
+                    metadata_json={"apoderado_id": apoderado.id, "monto": monto},
+                    request_payload={"amount": str(monto), "currency": "CLP"},
+                    response_payload={},
+                )
+                payment.created_at = dt_abono
+                payment.updated_at = dt_validacion
+                db.session.add(payment)
+
+                if estado_pago == "succeeded":
+                    saldo += monto
+
+            apoderado.saldo_cuenta = saldo
             creados += 1
 
         db.session.commit()
@@ -761,29 +972,73 @@ class GenerarDatosView(BaseView):
 
     @expose("/vaciar", methods=["POST"])
     def vaciar(self):
-        """Delete all records except User and Role tables."""
-        from ..model import Abono, Alumno, Apoderado, MenuDiario, OpcionMenuDia, OrdenCasino, Payment, Pedido, Plato, Settings
+        """Delete all records of a single model, respecting FK order."""
+        modelo = request.form.get("modelo", "")
 
-        # Order matters: delete dependents before parents
-        tablas_orden = [
-            OrdenCasino,
-            OpcionMenuDia,
-            MenuDiario,
-            Abono,
-            Alumno,
-            Apoderado,
-            Plato,
-            Pedido,
-            Payment,
-            Settings,
-        ]
-        total = 0
-        for modelo in tablas_orden:
-            result = db.session.execute(db.delete(modelo))
-            total += result.rowcount
+        _VACIAR = {
+            "plato": {
+                "label": "Plato(s)",
+                "pasos": [
+                    (OpcionMenuDia, "asignación(es) de menú"),
+                    (Plato, "plato(s)"),
+                ],
+            },
+            "menu_diario": {
+                "label": "Menú(s) Diario(s)",
+                # cascade="all, delete-orphan" on MenuDiario.opciones handles OpcionMenuDia
+                "pasos": [(MenuDiario, "menú(s) diario(s)")],
+            },
+            "apoderado": {
+                "label": "Apoderado(s) + Alumnos + Abonos + Pagos",
+                "pasos": [
+                    (OrdenCasino, "orden(es) de casino"),
+                    (Alumno, "alumno(s)"),
+                    (Payment, "pago(s)"),
+                    (Abono, "abono(s)"),
+                    (Apoderado, "apoderado(s)"),
+                ],
+            },
+            "alumno": {
+                "label": "Alumno(s)",
+                "pasos": [
+                    (OrdenCasino, "orden(es) de casino"),
+                    (Alumno, "alumno(s)"),
+                ],
+            },
+            "abono": {
+                "label": "Abono(s) + Pagos asociados",
+                "pasos": [
+                    (Payment, "pago(s)"),
+                    (Abono, "abono(s)"),
+                ],
+            },
+            "pedido": {
+                "label": "Pedido(s)",
+                "pasos": [
+                    (OrdenCasino, "orden(es) de casino"),
+                    (Pedido, "pedido(s)"),
+                ],
+            },
+        }
 
-        db.session.commit()
-        flash(f"🗑️ Base de datos vaciada. Se eliminaron {total} registros (Usuarios y Roles conservados).", "success")
+        cfg = _VACIAR.get(modelo)
+        if not cfg:
+            flash(f"Modelo desconocido: {modelo!r}", "error")
+            return redirect(url_for("generar_datos.index"))
+
+        try:
+            partes = []
+            for modelo_cls, etiqueta in cfg["pasos"]:
+                count = db.session.execute(db.delete(modelo_cls)).rowcount
+                if count:
+                    partes.append(f"{count} {etiqueta}")
+            db.session.commit()
+            resumen = ", ".join(partes) if partes else "0 registros"
+            flash(f"🗑️ {cfg['label']} vaciado(s): {resumen} eliminado(s).", "success")
+        except Exception as exc:
+            db.session.rollback()
+            flash(f"Error al vaciar {cfg['label']}: {exc}", "error")
+
         return redirect(url_for("generar_datos.index"))
 
 
