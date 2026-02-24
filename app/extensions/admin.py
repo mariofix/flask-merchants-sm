@@ -207,6 +207,15 @@ class MenuDiarioAdminView(SecureModelView):
         "foto_principal",
     ]
 
+    form_widget_args = {
+        "slug": {
+            "readonly": True,
+        }
+    }
+
+    create_template = "admin/menudiario_form.html"
+    edit_template = "admin/menudiario_edit.html"
+
     def _obtiene_fotos(self):
         base = Path(settings.DIRECTORIO_FOTOS_PLATO)
         return sorted(
