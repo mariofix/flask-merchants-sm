@@ -92,3 +92,12 @@
   </div>
 </form>
 {% endblock page_body %}
+
+{% block page_scripts %}
+<script>
+  // Umami — Wizard funnel step 3: alumnos saved, now setting preferences
+  document.addEventListener("DOMContentLoaded", function () {
+    if (typeof umami !== "undefined") { umami.track("usuario_wizard_paso3"); }
+  });
+</script>
+{% endblock page_scripts %}

@@ -458,124 +458,18 @@
 
 
 {% block page_scripts -%}
-{# <script>
+<script>
+  // Umami — session anchor; fires on every dashboard visit so Journeys and Retention
+  // can link login → abono → pedido flows that happen in the same browser session
   document.addEventListener("DOMContentLoaded", function () {
-    window.ApexCharts &&
-      new ApexCharts(document.getElementById("sparkline-activity"), {
-        chart: {
-          type: "radialBar",
-          fontFamily: "inherit",
-          height: 40,
-          width: 40,
-          animations: {
-            enabled: false,
-          },
-          sparkline: {
-            enabled: true,
-          },
-        },
-        tooltip: {
-          enabled: false,
-        },
-        plotOptions: {
-          radialBar: {
-            hollow: {
-              margin: 0,
-              size: "69%",
-            },
-            track: {
-              margin: 0,
-            },
-            dataLabels: {
-              show: false,
-            },
-          },
-        },
-        colors: ["var(--tblr-primary)"],
-        series: [35],
-      }).render();
+    if (typeof umami !== "undefined") {
+      umami.track("apoderado_sesion_inicio");
+      {% if apoderado.saldo_cuenta is not none and apoderado.saldo_cuenta < apoderado.limite_notificacion %}
+      // Goal: "Saldo Bajo" — tracks apoderados at risk of not being able to pay for lunches
+      // Historical problem: apoderados who didn't pay; high frequency here = collection issue
+      umami.track("apoderado_saldo_bajo");
+      {% endif %}
+    }
   });
 </script>
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-    window.ApexCharts &&
-      new ApexCharts(document.getElementById("chart-development-activity"), {
-        chart: {
-          type: "area",
-          fontFamily: "inherit",
-          height: 192,
-          sparkline: {
-            enabled: false,
-          },
-          animations: {
-            enabled: false,
-          },
-        },
-        dataLabels: {
-          enabled: true,
-        },
-        fill: {
-          colors: ["color-mix(in srgb, transparent, var(--tblr-primary) 16%)", "color-mix(in srgb, transparent, var(--tblr-primary) 16%)"],
-          type: "solid",
-        },
-        stroke: {
-          width: 2,
-          lineCap: "round",
-          curve: "smooth",
-        },
-        series: [
-          {
-            name: "Compras",
-            data: [1300, 1100, 1300, 1250, 900, 1050, 1530, 760, 1300, 1250, 1190, 1100, 950, 1200],
-          },
-        ],
-        tooltip: {
-          theme: "dark",
-        },
-        grid: {
-          strokeDashArray: 4,
-        },
-        xaxis: {
-          labels: {
-            padding: 0,
-          },
-          tooltip: {
-            enabled: false,
-          },
-          axisBorder: {
-            show: false,
-          },
-          type: "datetime",
-        },
-        yaxis: {
-          labels: {
-            padding: 4,
-          },
-        },
-        labels: [
-          "2020-06-20",
-          "2020-06-21",
-          "2020-06-22",
-          "2020-06-23",
-          "2020-06-24",
-          "2020-06-25",
-          "2020-06-26",
-          "2020-06-27",
-          "2020-06-28",
-          "2020-06-29",
-          "2020-06-30",
-          "2020-07-01",
-          "2020-07-02",
-          "2020-07-03",
-        ],
-        colors: ["color-mix(in srgb, transparent, var(--tblr-primary) 100%)"],
-        legend: {
-          show: true,
-        },
-        point: {
-          show: true,
-        },
-      }).render();
-  });
-</script> #}
 {% endblock page_scripts -%}

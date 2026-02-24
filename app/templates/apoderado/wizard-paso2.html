@@ -79,6 +79,11 @@
 
 {% block page_scripts %}
 <script>
+  // Umami — Wizard funnel step 2: apoderado data saved, now entering alumnos
+  document.addEventListener("DOMContentLoaded", function () {
+    if (typeof umami !== "undefined") { umami.track("usuario_wizard_paso2"); }
+  });
+
   function agregarRestriccion(num) {
     const lista = document.getElementById('restricciones_lista_' + num);
     const row = document.createElement('div');

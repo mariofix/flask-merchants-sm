@@ -166,6 +166,11 @@
 
 {% block page_scripts %}
 <script>
+  // Umami — Wizard funnel step 1: user arrived at registration
+  document.addEventListener("DOMContentLoaded", function () {
+    if (typeof umami !== "undefined") { umami.track("usuario_wizard_paso1"); }
+  });
+
   const form_p1 = document.querySelector('.needs-validation');
 
   form_p1.addEventListener('submit', (e) => {

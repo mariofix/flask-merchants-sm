@@ -159,4 +159,17 @@
   });
 </script>
 {% endif %}
+<script>
+  // Umami — Abono funnel steps 2 & 3
+  // abono_funnel_detalle_revision: form was submitted and apoderado is reviewing the pending payment
+  // abono_funnel_completado: payment confirmed — Goal "Abono Completado"; gap vs inicio reveals non-payers
+  document.addEventListener("DOMContentLoaded", function () {
+    if (typeof umami === "undefined") { return; }
+    {% if pago and pago.state == 'succeeded' %}
+    umami.track("abono_funnel_completado");
+    {% elif abono %}
+    umami.track("abono_funnel_detalle_revision");
+    {% endif %}
+  });
+</script>
 {% endblock %}
