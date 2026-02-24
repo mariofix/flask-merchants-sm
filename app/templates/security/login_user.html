@@ -54,6 +54,8 @@
     }
 
     form.classList.add('was-validated');
+    // Umami — fire login intent; enables Retention analysis (same visitor returning across sessions)
+    if (typeof umami !== 'undefined') { umami.track('usuario_login'); }
   }, false);
 </script>
 
