@@ -118,7 +118,7 @@
 
     {# ── Manual entry ─────────────────────────────────────────────────────── #}
     <div class="col-md-6 col-lg-4">
-      <div class="card">
+      <div class="card" data-bs-theme="light">
         <div class="card-header">
           <h3 class="card-title">Ingreso Manual</h3>
         </div>
@@ -237,7 +237,7 @@
       pendingEntregaUrl = orden.entrega_url;
     } else {
       estadoBadge = '<span class="badge bg-danger">Sin almuerzo hoy</span>';
-      canjearBtn  = `<a href="{{ url_for('pos.kiosko') }}" class="btn btn-warning btn-lg w-100">Ir al Kiosko</a>`;
+      canjearBtn  = `<div class="alert alert-warning mb-0">Sin almuerzo reservado. El alumno debe acercarse a la cafetería del colegio.</div>`;
     }
 
     const restricciones = (alumno.restricciones || [])
@@ -451,7 +451,9 @@
           if (ya) { badge = '<span class="badge bg-warning text-dark">Ya entregado hoy</span>'; }
           else if (orden) { badge = '<span class="badge bg-success">Almuerzo disponible</span>'; manualOrdenUrl = orden.entrega_url; canjearBtn.disabled = false; }
           else { badge = '<span class="badge bg-danger">Sin almuerzo hoy</span>'; }
-          resultEl.innerHTML = `<div class="d-flex align-items-center gap-2">${badge}<span class="text-muted small">${orden ? (orden.menu_descripcion || orden.menu_slug) : 'Sin pedido'}</span></div>`;
+          const menuInfo = orden ? (orden.menu_descripcion || orden.menu_slug) : '';
+          const cafeteriaMsg = (!orden && !ya) ? '<div class="w-100 mt-1 small text-warning">Sin almuerzo reservado. El alumno debe acercarse a la cafetería del colegio.</div>' : '';
+          resultEl.innerHTML = `<div class="d-flex align-items-center gap-2 flex-wrap">${badge}<span class="text-muted small">${menuInfo}</span>${cafeteriaMsg}</div>`;
           resultEl.style.display = '';
         } catch(e) { resultEl.innerHTML = '<div class="alert alert-danger">Error de comunicación.</div>'; resultEl.style.display = ''; }
       }

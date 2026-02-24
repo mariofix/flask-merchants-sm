@@ -56,6 +56,40 @@ class TestGetAlumnosSinTag:
 
 
 # ---------------------------------------------------------------------------
+# get_alumnos_con_almuerzo_pendiente
+# ---------------------------------------------------------------------------
+
+class TestGetAlumnosConAlmuerzoPendiente:
+    def test_returns_alumno_with_pending_order(self, db_session, sample_apoderado):
+        from app.model import EstadoAlmuerzo
+        alumno = sample_apoderado.alumnos[0]
+        _create_orden_casino(db_session, alumno, EstadoAlmuerzo.PENDIENTE)
+        alumnos = make_ctrl().get_alumnos_con_almuerzo_pendiente()
+        assert any(a.id == alumno.id for a in alumnos)
+
+    def test_excludes_alumno_with_entregado_order(self, db_session, sample_apoderado):
+        from app.model import EstadoAlmuerzo
+        alumno = sample_apoderado.alumnos[0]
+        _create_orden_casino(db_session, alumno, EstadoAlmuerzo.ENTREGADO)
+        alumnos = make_ctrl().get_alumnos_con_almuerzo_pendiente()
+        assert not any(a.id == alumno.id for a in alumnos)
+
+    def test_excludes_alumno_without_order(self, db_session, sample_apoderado):
+        alumno = sample_apoderado.alumnos[0]
+        alumnos = make_ctrl().get_alumnos_con_almuerzo_pendiente()
+        assert not any(a.id == alumno.id for a in alumnos)
+
+    def test_excludes_inactive_alumno(self, db_session, sample_apoderado):
+        from app.model import EstadoAlmuerzo
+        alumno = sample_apoderado.alumnos[0]
+        alumno.activo = False
+        db_session.commit()
+        _create_orden_casino(db_session, alumno, EstadoAlmuerzo.PENDIENTE)
+        alumnos = make_ctrl().get_alumnos_con_almuerzo_pendiente()
+        assert not any(a.id == alumno.id for a in alumnos)
+
+
+# ---------------------------------------------------------------------------
 # get_alumnos_activos
 # ---------------------------------------------------------------------------
 
