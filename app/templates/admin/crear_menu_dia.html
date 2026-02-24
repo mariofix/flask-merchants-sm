@@ -1,0 +1,313 @@
+{% extends 'admin/master.html' %}
+
+{% block head_tail %}
+{{ super() }}
+<style>
+  /* ── Course column scrollable list ──────────────────────────── */
+  .plato-list {
+    max-height: 360px;
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+    border-radius: .375rem;
+    padding: .5rem .75rem;
+    background: #fff;
+  }
+  .plato-list .form-check { padding: .25rem 0 .25rem 1.5rem; border-bottom: 1px solid #f0f0f0; }
+  .plato-list .form-check:last-child { border-bottom: none; }
+  .plato-list .form-check-label { cursor: pointer; user-select: none; width: 100%; }
+  .plato-list .form-check-input:checked + label { font-weight: 600; }
+
+  /* ── Live preview pane ───────────────────────────────────────── */
+  #preview-pane { position: sticky; top: 1rem; }
+  #preview-pane .preview-course { margin-bottom: .75rem; }
+  #preview-pane .preview-course h6 { font-size: .78rem; text-transform: uppercase;
+      letter-spacing: .05em; color: #6c757d; margin-bottom: .25rem; }
+  #preview-pane .preview-item { font-size: .85rem; padding: .1rem 0; color: #212529; }
+  #preview-pane .preview-empty { font-size: .8rem; color: #adb5bd; font-style: italic; }
+
+  /* ── Dietary badges ─────────────────────────────────────────── */
+  .badge-diet { font-size: .65rem; padding: .2em .45em; margin-left: .2rem; vertical-align: middle; }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid py-4">
+
+  <!-- Breadcrumb / back link -->
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item">
+        <a href="{{ url_for('gestor_menu.index') }}">🍽️ Gestor de Menús</a>
+      </li>
+      <li class="breadcrumb-item active" aria-current="page">② Crear Menú del Día</li>
+    </ol>
+  </nav>
+
+  <h3 class="mb-1">📅 Crear Menú del Día</h3>
+  <p class="text-muted mb-4">
+    Asigna platos a cada curso para el menú de un día específico. Los campos marcados con
+    <span class="text-danger">*</span> son obligatorios.
+  </p>
+
+  <!-- Flash messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="mb-4">
+        {% for category, message in messages %}
+          <div class="alert alert-{{ 'success' if category == 'success' else ('danger' if category == 'error' else ('warning' if category == 'warning' else 'info')) }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <form method="post" action="{{ url_for('gestor_menu.crear_menu') }}" id="crear-menu-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div class="row g-4">
+
+      <!-- ── LEFT: meta fields + submit ────────────────────────────── -->
+      <div class="col-xl-3 col-lg-4">
+
+        <div class="card shadow-sm">
+          <div class="card-header bg-success text-white">
+            <strong>Datos del Menú</strong>
+          </div>
+          <div class="card-body">
+
+            <div class="mb-3">
+              <label for="dia" class="form-label fw-semibold">
+                Fecha <span class="text-danger">*</span>
+              </label>
+              <input type="date" id="dia" name="dia" class="form-control"
+                     value="{{ default_dia }}" required>
+              <div class="form-text" id="dia-preview"><!-- filled by JS --></div>
+            </div>
+
+            <div class="mb-3">
+              <label for="descripcion" class="form-label fw-semibold">Descripción</label>
+              <input type="text" id="descripcion" name="descripcion" class="form-control"
+                     placeholder="Ej: Menú especial del lunes" maxlength="255">
+              <div class="form-text">Visible en la web de pedidos.</div>
+            </div>
+
+            <div class="mb-3">
+              <label for="precio" class="form-label fw-semibold">Precio (CLP)</label>
+              <div class="input-group">
+                <span class="input-group-text">$</span>
+                <input type="number" id="precio" name="precio" class="form-control"
+                       placeholder="Ej: 3000" min="0" step="1">
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <label for="stock" class="form-label fw-semibold">Stock (raciones)</label>
+              <input type="number" id="stock" name="stock" class="form-control"
+                     value="50" min="1" step="1">
+              <div class="form-text">Número máximo de almuerzos a vender.</div>
+            </div>
+
+            <div class="d-grid gap-2">
+              <button type="submit" class="btn btn-success" id="submit-btn"
+                      {% if not platos %}disabled title="No hay platos activos"{% endif %}>
+                ✅ Crear Menú del Día
+              </button>
+              <a href="{{ url_for('gestor_menu.index') }}" class="btn btn-outline-secondary">
+                ✖ Cancelar
+              </a>
+            </div>
+
+            {% if not platos %}
+            <div class="alert alert-warning mt-3 py-2 small">
+              No hay platos activos registrados. Crea platos primero en el
+              <a href="{{ url_for('gestor_menu.index') }}">Gestor de Menús</a>.
+            </div>
+            {% endif %}
+
+          </div><!-- /card-body -->
+        </div><!-- /card -->
+
+        <!-- ── Live preview pane ─────────────────────────────── -->
+        <div class="card shadow-sm mt-3" id="preview-pane">
+          <div class="card-header">
+            <strong>📋 Resumen de selección</strong>
+          </div>
+          <div class="card-body py-2">
+            <div class="preview-course" id="prev-entradas">
+              <h6>Entradas</h6>
+              <div class="preview-items" id="prev-entradas-items">
+                <span class="preview-empty">— ninguna —</span>
+              </div>
+            </div>
+            <div class="preview-course" id="prev-fondos">
+              <h6>Fondos</h6>
+              <div class="preview-items" id="prev-fondos-items">
+                <span class="preview-empty">— ninguno —</span>
+              </div>
+            </div>
+            <div class="preview-course" id="prev-postres">
+              <h6>Postres</h6>
+              <div class="preview-items" id="prev-postres-items">
+                <span class="preview-empty">— ninguno —</span>
+              </div>
+            </div>
+            <p class="text-muted small mb-0 mt-2" id="prev-total">0 platos seleccionados</p>
+          </div>
+        </div>
+
+      </div><!-- /col left -->
+
+      <!-- ── RIGHT: course pickers ─────────────────────────────────── -->
+      <div class="col-xl-9 col-lg-8">
+        <div class="row g-3">
+
+          {% for curso_key, curso_label, curso_color, curso_icon in [
+              ('entradas', 'Entradas',  'primary', '🥗'),
+              ('fondos',   'Fondos',    'success', '🍲'),
+              ('postres',  'Postres',   'warning', '🍮'),
+          ] %}
+          <div class="col-md-4">
+            <div class="card h-100 border-{{ curso_color }}">
+              <div class="card-header bg-{{ curso_color }} {% if curso_key == 'postres' %}text-dark{% else %}text-white{% endif %}">
+                <strong>{{ curso_icon }} {{ curso_label }}</strong>
+              </div>
+              <div class="card-body p-2">
+
+                {% if platos %}
+                <!-- Search filter -->
+                <input type="text"
+                       class="form-control form-control-sm mb-2 plato-search"
+                       data-target="{{ curso_key }}-list"
+                       placeholder="Buscar plato…"
+                       aria-label="Buscar {{ curso_label }}">
+
+                <!-- Count badge -->
+                <p class="small text-muted mb-1">
+                  <span id="{{ curso_key }}-count" class="fw-semibold text-{{ curso_color }}">0</span>
+                  seleccionado(s) de {{ platos|length }}
+                </p>
+
+                <!-- Plato list -->
+                <div class="plato-list" id="{{ curso_key }}-list">
+                  {% for p in platos %}
+                  <div class="form-check plato-item" data-nombre="{{ p.nombre | lower }}">
+                    <input class="form-check-input plato-checkbox"
+                           type="checkbox"
+                           name="{{ curso_key }}"
+                           value="{{ p.id }}"
+                           id="{{ curso_key }}-plato-{{ p.id }}"
+                           data-curso="{{ curso_key }}"
+                           data-nombre="{{ p.nombre }}">
+                    <label class="form-check-label" for="{{ curso_key }}-plato-{{ p.id }}">
+                      {{ p.nombre }}
+                      {% if p.es_vegano %}
+                        <span class="badge bg-success badge-diet" title="Vegano">V</span>
+                      {% elif p.es_vegetariano %}
+                        <span class="badge bg-secondary badge-diet" title="Vegetariano">Veg</span>
+                      {% endif %}
+                      {% if p.es_hipocalorico %}
+                        <span class="badge bg-info text-dark badge-diet" title="Hipocalórico">Hip</span>
+                      {% endif %}
+                      {% if p.contiene_alergenos %}
+                        <span class="badge bg-warning text-dark badge-diet" title="Contiene alérgenos">⚠</span>
+                      {% endif %}
+                    </label>
+                  </div>
+                  {% endfor %}
+                </div><!-- /plato-list -->
+                {% else %}
+                <p class="text-muted small text-center py-3">Sin platos activos.</p>
+                {% endif %}
+
+              </div><!-- /card-body -->
+            </div><!-- /card -->
+          </div><!-- /col -->
+          {% endfor %}
+
+        </div><!-- /row -->
+      </div><!-- /col right -->
+
+    </div><!-- /row main -->
+  </form>
+
+</div><!-- /container -->
+
+<script>
+(function () {
+  "use strict";
+
+  /* ── Date preview ──────────────────────────────────────────── */
+  const daysES = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
+  const monthsES = ["enero","febrero","marzo","abril","mayo","junio",
+                    "julio","agosto","septiembre","octubre","noviembre","diciembre"];
+
+  function updateDatePreview() {
+    const val = document.getElementById("dia").value;
+    const el  = document.getElementById("dia-preview");
+    if (!val) { el.textContent = ""; return; }
+    const [y, m, d] = val.split("-").map(Number);
+    const date = new Date(y, m - 1, d);
+    el.textContent = daysES[date.getDay()] + " " + d + " de " + monthsES[m - 1] + " de " + y;
+  }
+  document.getElementById("dia").addEventListener("change", updateDatePreview);
+  updateDatePreview();
+
+  /* ── Live preview pane ─────────────────────────────────────── */
+  const COURSES = [
+    { key: "entradas", emptyMsg: "— ninguna —" },
+    { key: "fondos",   emptyMsg: "— ninguno —" },
+    { key: "postres",  emptyMsg: "— ninguno —" },
+  ];
+
+  function updatePreview() {
+    let total = 0;
+    COURSES.forEach(function (c) {
+      const checked = document.querySelectorAll(
+        'input[name="' + c.key + '"]:checked'
+      );
+      const container = document.getElementById("prev-" + c.key + "-items");
+      container.innerHTML = "";
+      if (checked.length === 0) {
+        container.innerHTML = '<span class="preview-empty">' + c.emptyMsg + "</span>";
+      } else {
+        checked.forEach(function (cb) {
+          const div = document.createElement("div");
+          div.className = "preview-item";
+          div.textContent = "• " + cb.dataset.nombre;
+          container.appendChild(div);
+        });
+      }
+      total += checked.length;
+    });
+    document.getElementById("prev-total").textContent =
+      total + (total === 1 ? " plato seleccionado" : " platos seleccionados");
+  }
+
+  function updateCount(curso) {
+    const checked = document.querySelectorAll('input[name="' + curso + '"]:checked');
+    document.getElementById(curso + "-count").textContent = checked.length;
+  }
+
+  /* bind checkboxes */
+  document.querySelectorAll(".plato-checkbox").forEach(function (cb) {
+    cb.addEventListener("change", function () {
+      updatePreview();
+      updateCount(this.dataset.curso);
+    });
+  });
+
+  /* ── Live search / filter ──────────────────────────────────── */
+  document.querySelectorAll(".plato-search").forEach(function (input) {
+    const listId = input.dataset.target;
+    input.addEventListener("input", function () {
+      const term = this.value.toLowerCase();
+      document.querySelectorAll("#" + listId + " .plato-item").forEach(function (item) {
+        item.style.display = item.dataset.nombre.includes(term) ? "" : "none";
+      });
+    });
+  });
+})();
+</script>
+{% endblock %}

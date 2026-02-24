@@ -1246,20 +1246,42 @@ class GestorMenuView(BaseView):
             else:
                 return redirect(url_for("security.login", next=request.url))
 
-    @expose("/", methods=["GET"])
-    def index(self):
-        """Landing page – shows the 3 workflow cards."""
-        platos = (
+    def _get_platos_activos(self):
+        return (
             db.session.execute(db.select(Plato).where(Plato.activo.is_(True)).order_by(Plato.nombre))
             .scalars()
             .all()
         )
-        menus = (
-            db.session.execute(db.select(MenuDiario).order_by(MenuDiario.dia.desc()).limit(30))
+
+    def _get_menus_recientes(self, limit: int = 30):
+        return (
+            db.session.execute(db.select(MenuDiario).order_by(MenuDiario.dia.desc()).limit(limit))
             .scalars()
             .all()
         )
-        return self.render("admin/gestor_menu.html", platos=platos, menus=menus)
+
+    @expose("/", methods=["GET"])
+    def index(self):
+        """Landing page – shows the 3 workflow cards."""
+        return self.render(
+            "admin/gestor_menu.html",
+            platos=self._get_platos_activos(),
+            menus=self._get_menus_recientes(),
+        )
+
+    @expose("/crear-menu-dia", methods=["GET"])
+    def crear_menu_dia_form(self):
+        """Dedicated full-page form for creating a new MenuDiario (Option 2)."""
+        from datetime import date as _date, timedelta
+
+        platos = self._get_platos_activos()
+        # Suggest tomorrow as the default date
+        default_dia = (_date.today() + timedelta(days=1)).isoformat()
+        return self.render(
+            "admin/crear_menu_dia.html",
+            platos=platos,
+            default_dia=default_dia,
+        )
 
     @expose("/crear-plato", methods=["POST"])
     def crear_plato(self):
@@ -1294,28 +1316,30 @@ class GestorMenuView(BaseView):
         from datetime import date as _date
         from decimal import Decimal, InvalidOperation
 
+        _form_redirect = url_for("gestor_menu.crear_menu_dia_form")
+
         dia_str = (request.form.get("dia") or "").strip()
         if not dia_str:
             flash("Debes seleccionar una fecha para el menú.", "error")
-            return redirect(url_for("gestor_menu.index"))
+            return redirect(_form_redirect)
         try:
             dia = _date.fromisoformat(dia_str)
         except ValueError:
             flash("Fecha inválida.", "error")
-            return redirect(url_for("gestor_menu.index"))
+            return redirect(_form_redirect)
 
         precio_str = (request.form.get("precio") or "").strip()
         try:
             precio = Decimal(precio_str) if precio_str else None
         except InvalidOperation:
             flash("Precio inválido.", "error")
-            return redirect(url_for("gestor_menu.index"))
+            return redirect(_form_redirect)
 
         slug_candidate = slugify(f"menu-{dia.isoformat()}")
         existing_menu = db.session.execute(db.select(MenuDiario).filter_by(slug=slug_candidate)).scalar_one_or_none()
         if existing_menu:
             flash(f"Ya existe un menú para la fecha {dia.isoformat()} (slug: {slug_candidate}).", "warning")
-            return redirect(url_for("gestor_menu.index"))
+            return redirect(_form_redirect)
 
         descripcion = (request.form.get("descripcion") or "").strip() or None
 

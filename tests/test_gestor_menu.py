@@ -3,7 +3,8 @@
 Tests cover:
 - is_accessible() logic (admin and pos roles granted, other roles denied)
 - crear_plato() handler: creates a Plato, rejects duplicate names
-- crear_menu() handler: creates a MenuDiario with OpcionMenuDia rows
+- crear_menu_dia_form() handler: returns the dedicated form template
+- crear_menu() handler: creates a MenuDiario with OpcionMenuDia rows, errors redirect to form
 - copiar_menu() handler: clones an existing MenuDiario to new dates
 """
 
@@ -251,3 +252,104 @@ class TestCopiarMenu:
             assert cloned.precio == Decimal("4000")
             assert len(cloned.opciones) == 1
             assert cloned.opciones[0].tipo_curso == TipoCurso.ENTRADA
+
+
+# ---------------------------------------------------------------------------
+# crear_menu_dia_form – dedicated GET form endpoint
+# ---------------------------------------------------------------------------
+
+class TestCrearMenuDiaForm:
+    """Verify that the dedicated form handler returns the expected template context."""
+
+    def test_handler_exists_on_view(self):
+        """GestorMenuView must expose a crear_menu_dia_form method."""
+        from app.extensions.admin import GestorMenuView
+        assert hasattr(GestorMenuView, "crear_menu_dia_form")
+        assert callable(GestorMenuView.crear_menu_dia_form)
+
+    def test_default_dia_is_tomorrow(self, app):
+        """The default_dia passed to the template should be tomorrow's date string."""
+        from datetime import date, timedelta
+        import unittest.mock as mock
+        from app.extensions.admin import GestorMenuView
+
+        view = object.__new__(GestorMenuView)
+
+        # Bypass _handle_view (access control) and mock render to capture context
+        with mock.patch.object(view, "_handle_view", return_value=None):
+            with mock.patch.object(view, "_get_platos_activos", return_value=[]):
+                with mock.patch.object(view, "render") as mock_render:
+                    mock_render.return_value = "rendered"
+                    with app.test_request_context("/crear-menu-dia"):
+                        view.crear_menu_dia_form()
+                        call_kwargs = mock_render.call_args
+
+        # The template name should be the dedicated form
+        assert call_kwargs[0][0] == "admin/crear_menu_dia.html"
+
+        # default_dia must equal tomorrow
+        kwargs = call_kwargs[1] if call_kwargs[1] else {}
+        tomorrow = (date.today() + timedelta(days=1)).isoformat()
+        assert kwargs.get("default_dia") == tomorrow
+
+    def test_template_file_exists(self):
+        """The crear_menu_dia.html template file must exist on disk."""
+        import os
+        template_path = os.path.join(
+            os.path.dirname(__file__),
+            "..", "app", "templates", "admin", "crear_menu_dia.html",
+        )
+        assert os.path.isfile(os.path.normpath(template_path))
+
+
+# ---------------------------------------------------------------------------
+# crear_menu POST – error redirects go to dedicated form (not index)
+# ---------------------------------------------------------------------------
+
+class TestCrearMenuPostRedirects:
+    """Verify that validation errors redirect to the dedicated form URL."""
+
+    def _call_crear_menu(self, app, form_data):
+        """Call view.crear_menu() bypassing the access-control wrapper.
+
+        Returns (response, captured_redirect_url) where the URL is what
+        url_for("gestor_menu.crear_menu_dia_form") resolved to inside the view.
+        """
+        import unittest.mock as mock
+        from app.extensions.admin import GestorMenuView
+
+        view = object.__new__(GestorMenuView)
+        captured = {}
+
+        def _fake_url_for(endpoint, **kwargs):
+            url = f"/data-manager/{endpoint.replace('.', '/')}"
+            captured["url_for_calls"] = captured.get("url_for_calls", [])
+            captured["url_for_calls"].append(endpoint)
+            return url
+
+        with mock.patch.object(view, "_handle_view", return_value=None):
+            with mock.patch("app.extensions.admin.flash"):
+                with mock.patch("app.extensions.admin.url_for", side_effect=_fake_url_for):
+                    with app.test_request_context("/crear-menu", method="POST", data=form_data):
+                        response = view.crear_menu()
+        return response, captured
+
+    def test_missing_date_redirects_to_form(self, app):
+        """A POST with no date should redirect to the dedicated form (not index)."""
+        response, captured = self._call_crear_menu(app, {"dia": "", "csrf_token": "test"})
+
+        assert response.status_code == 302
+        # The url_for call inside the view must be for the form, not the index
+        assert "gestor_menu.crear_menu_dia_form" in captured.get("url_for_calls", [])
+
+    def test_invalid_price_redirects_to_form(self, app):
+        """A POST with a non-numeric price should redirect to the dedicated form."""
+        from datetime import date, timedelta
+
+        valid_date = (date.today() + timedelta(days=99)).isoformat()
+        response, captured = self._call_crear_menu(app, {
+            "dia": valid_date, "precio": "not-a-number", "csrf_token": "test",
+        })
+
+        assert response.status_code == 302
+        assert "gestor_menu.crear_menu_dia_form" in captured.get("url_for_calls", [])
