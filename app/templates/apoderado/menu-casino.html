@@ -89,6 +89,11 @@
       })
       .then(html => {
         document.getElementById('contenido-modal').innerHTML = html;
+        // Detect rezagados menu — tracks late orders that affect lunch counts and delivery
+        const form = document.getElementById('formulario_menu');
+        if (form && form.dataset.rezagados === '1') {
+          if (typeof umami !== 'undefined') { umami.track('pedido_rezagados_inicio'); }
+        }
       })
       .catch(error => {
         console.error('Error:', error);

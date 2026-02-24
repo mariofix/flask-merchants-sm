@@ -462,7 +462,14 @@
   // Umami — session anchor; fires on every dashboard visit so Journeys and Retention
   // can link login → abono → pedido flows that happen in the same browser session
   document.addEventListener("DOMContentLoaded", function () {
-    if (typeof umami !== "undefined") { umami.track("apoderado_sesion_inicio"); }
+    if (typeof umami !== "undefined") {
+      umami.track("apoderado_sesion_inicio");
+      {% if apoderado.saldo_cuenta is not none and apoderado.saldo_cuenta < apoderado.limite_notificacion %}
+      // Goal: "Saldo Bajo" — tracks apoderados at risk of not being able to pay for lunches
+      // Historical problem: apoderados who didn't pay; high frequency here = collection issue
+      umami.track("apoderado_saldo_bajo");
+      {% endif %}
+    }
   });
 </script>
 {% endblock page_scripts -%}

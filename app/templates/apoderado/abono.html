@@ -80,3 +80,13 @@
 </div>
 
 {% endblock page_body %}
+
+{% block page_scripts %}
+<script>
+  // Umami — Abono funnel step 1: apoderado opened the deposit form
+  // The gap between this and abono_funnel_completado reveals payment abandonment
+  document.addEventListener("DOMContentLoaded", function () {
+    if (typeof umami !== "undefined") { umami.track("abono_funnel_inicio"); }
+  });
+</script>
+{% endblock page_scripts %}

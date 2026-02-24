@@ -272,8 +272,24 @@
         // Payment form is displayed — user is about to pay
         umami.track("pedido_funnel_pago_revision");
         {% elif (pago and pago.state == 'succeeded') or (orden and orden.pagado) %}
-        // Payment confirmed
-        umami.track("pedido_funnel_pago_completado");
+        // Payment confirmed — Goal "Almuerzo Confirmado"
+        // alumnos property counts individual lunches; use in Umami to measure total meals confirmed
+        {% set ns = namespace(total_alumnos=0) %}
+        {% for item in pedido %}
+          {% set ns.total_alumnos = ns.total_alumnos + (item.alumnos | length) %}
+        {% endfor %}
+        umami.track("pedido_funnel_pago_completado", { alumnos: {{ ns.total_alumnos }} });
+        {% endif %}
+        {% set ns = namespace(has_warning=false) %}
+        {% for item in pedido %}
+          {% for adv in item.advertencias %}
+            {% if adv.tipo == 'warning' %}{% set ns.has_warning = true %}{% endif %}
+          {% endfor %}
+        {% endfor %}
+        {% if ns.has_warning %}
+        // Goal: "Advertencia de Restricción" — tracks orders where an alumno may receive the wrong lunch
+        // Historical problem: alumnos with wrong meal due to unreported dietary restrictions
+        umami.track("pedido_advertencia_restriccion");
         {% endif %}
     });
 </script>

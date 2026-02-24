@@ -1,4 +1,4 @@
-<form id="formulario_menu">
+<form id="formulario_menu" {% if es_rezagados is defined and es_rezagados %}data-rezagados="1"{% endif %}>
   <input type="hidden" name="dia" value="{{ dia }}">
   {% if es_rezagados is defined and es_rezagados %}
   <div class="alert alert-info mb-3">

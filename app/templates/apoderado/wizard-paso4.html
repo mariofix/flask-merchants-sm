@@ -112,3 +112,13 @@ No
   </div>
 </div>
 {% endblock page_body %}
+
+{% block page_scripts %}
+<script>
+  // Umami — Wizard funnel complete: registration finished
+  // Goal: "Nuevo Apoderado Registrado" — every fire = one new family onboarded
+  document.addEventListener("DOMContentLoaded", function () {
+    if (typeof umami !== "undefined") { umami.track("usuario_wizard_completado"); }
+  });
+</script>
+{% endblock page_scripts %}
