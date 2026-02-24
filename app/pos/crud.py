@@ -39,6 +39,25 @@ class PosController:
             .all()
         )
 
+    def get_alumnos_con_almuerzo_pendiente(self, fecha: Optional[date] = None) -> list[Alumno]:
+        """Return active Alumno records that have a PENDIENTE OrdenCasino for *fecha* (default: today)."""
+        if fecha is None:
+            fecha = date.today()
+        return (
+            db.session.execute(
+                db.select(Alumno)
+                .join(OrdenCasino, OrdenCasino.alumno_id == Alumno.id)
+                .where(
+                    OrdenCasino.fecha == fecha,
+                    OrdenCasino.estado == EstadoAlmuerzo.PENDIENTE,
+                    Alumno.activo == True,  # noqa: E712
+                )
+                .order_by(Alumno.curso, Alumno.nombre)
+            )
+            .scalars()
+            .all()
+        )
+
     def get_alumno_by_tag(self, serial: str) -> Optional[Alumno]:
         """Return the Alumno matching *serial* (stored lowercase), or ``None``."""
         return db.session.execute(

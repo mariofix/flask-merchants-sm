@@ -115,7 +115,7 @@ def api_alumno(alumno_id: int):
 def casino():
     """POS Casino: NFC/QR tag scanner for lunch delivery."""
     recientes = ctrl.get_ordenes_entregadas_hoy()
-    alumnos = ctrl.get_alumnos_activos()
+    alumnos = ctrl.get_alumnos_con_almuerzo_pendiente()
     return render_template("pos/casino.html", recientes=recientes, alumnos=alumnos)
 
 
@@ -187,7 +187,10 @@ def entrega_almuerzo(orden_id: int):
         "ok": True,
         "orden_id": orden.id,
         "alumno_id": orden.alumno_id,
+        "alumno_nombre": orden.alumno.nombre,
+        "alumno_curso": orden.alumno.curso,
         "menu_slug": orden.menu_slug,
+        "menu": orden.menu_descripcion or orden.menu_slug,
         "estado": orden.estado.value,
     })
 
