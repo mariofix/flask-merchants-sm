@@ -110,8 +110,9 @@
       modalEl.style.display = 'none';
     }
   }
+  // Umami funnel — Step 1: user reaches the ordering page
   document.addEventListener("DOMContentLoaded", function () {
-
+    if (typeof umami !== "undefined") { umami.track("pedido_funnel_inicio"); }
 
     calendar = new FullCalendar.Calendar(calendarEl, {
       locale: 'es',
@@ -186,6 +187,8 @@
           alumnos: alumnos,
         }
       });
+      // Umami funnel — Step 2: user adds a menu item to the order
+      if (typeof umami !== "undefined") { umami.track("pedido_funnel_menu_agregado", { slug: selectedMenu.value }); }
       console.log("Menu:", selectedMenu.value);
       console.log("Info:", info);
       console.log("Alumnos:", alumnos);
@@ -206,6 +209,9 @@
 
   function submitCalendar(url, csrfToken) {
     const payload = collectCalendarData()
+
+    // Umami funnel — Step 3: user submits the order
+    if (typeof umami !== "undefined") { umami.track("pedido_funnel_pedido_enviado", { items: payload.length }); }
 
     fetch(url, {
       method: 'POST',

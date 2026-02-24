@@ -264,6 +264,19 @@
     }
 </script>
 {% endif %}
+<script>
+    // Umami funnel — Step 4 / 5: track payment page state
+    document.addEventListener("DOMContentLoaded", function () {
+        if (typeof umami === "undefined") { return; }
+        {% if orden and not (pago or orden.pagado) %}
+        // Payment form is displayed — user is about to pay
+        umami.track("pedido_funnel_pago_revision");
+        {% elif (pago and pago.state == 'succeeded') or (orden and orden.pagado) %}
+        // Payment confirmed
+        umami.track("pedido_funnel_pago_completado");
+        {% endif %}
+    });
+</script>
 {% endblock %}
 
 
