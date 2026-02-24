@@ -1,0 +1,254 @@
+{% extends 'admin/master.html' %}
+
+{% block body %}
+<div class="container-fluid py-4">
+  <h2 class="mb-1">🍽️ Gestor de Menús</h2>
+  <p class="text-muted mb-4">
+    Crea y gestiona platos y menús del día de forma rápida y sencilla.
+    Elige una de las tres opciones disponibles.
+  </p>
+
+  <!-- Flash messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="mb-4">
+        {% for category, message in messages %}
+          <div class="alert alert-{{ 'success' if category == 'success' else ('danger' if category == 'error' else ('warning' if category == 'warning' else 'info')) }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <div class="row g-4">
+
+    <!-- ── OPTION 1 ─────────────────────────────────────────────────── -->
+    <div class="col-lg-4">
+      <div class="card h-100 border-primary">
+        <div class="card-header bg-primary text-white">
+          <strong>① Crear Plato Rápido</strong>
+        </div>
+        <div class="card-body">
+          <p class="text-muted small mb-3">
+            Agrega un nuevo plato al catálogo. Puedes especificar sus características dietéticas.
+          </p>
+          <form method="post" action="{{ url_for('gestor_menu.crear_plato') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="mb-3">
+              <label for="plato_nombre" class="form-label fw-semibold">Nombre del plato <span class="text-danger">*</span></label>
+              <input type="text" id="plato_nombre" name="nombre" class="form-control"
+                     placeholder="Ej: Cazuela de Vacuno" required maxlength="255">
+            </div>
+
+            <p class="fw-semibold mb-1 small">Características dietéticas</p>
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="es_vegano" name="es_vegano" value="1">
+                  <label class="form-check-label small" for="es_vegano">Vegano</label>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="es_vegetariano" name="es_vegetariano" value="1">
+                  <label class="form-check-label small" for="es_vegetariano">Vegetariano</label>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="es_hipocalorico" name="es_hipocalorico" value="1">
+                  <label class="form-check-label small" for="es_hipocalorico">Hipocalórico</label>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="contiene_gluten" name="contiene_gluten" value="1" checked>
+                  <label class="form-check-label small" for="contiene_gluten">Contiene gluten</label>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="contiene_alergenos" name="contiene_alergenos" value="1">
+                  <label class="form-check-label small" for="contiene_alergenos">Contiene alérgenos</label>
+                </div>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">
+              ➕ Crear Plato
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── OPTION 2 ─────────────────────────────────────────────────── -->
+    <div class="col-lg-4">
+      <div class="card h-100 border-success">
+        <div class="card-header bg-success text-white">
+          <strong>② Crear Menú del Día</strong>
+        </div>
+        <div class="card-body">
+          <p class="text-muted small mb-3">
+            Crea el menú de un día asignando platos por curso (entrada, fondo, postre).
+          </p>
+          <form method="post" action="{{ url_for('gestor_menu.crear_menu') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="mb-3">
+              <label for="menu_dia" class="form-label fw-semibold">Fecha del menú <span class="text-danger">*</span></label>
+              <input type="date" id="menu_dia" name="dia" class="form-control" required>
+            </div>
+
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <label for="menu_precio" class="form-label fw-semibold small">Precio (CLP)</label>
+                <input type="number" id="menu_precio" name="precio" class="form-control form-control-sm"
+                       placeholder="Ej: 3000" min="0">
+              </div>
+              <div class="col-6">
+                <label for="menu_stock" class="form-label fw-semibold small">Stock</label>
+                <input type="number" id="menu_stock" name="stock" class="form-control form-control-sm"
+                       value="50" min="1">
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="menu_descripcion" class="form-label fw-semibold small">Descripción (opcional)</label>
+              <input type="text" id="menu_descripcion" name="descripcion" class="form-control form-control-sm"
+                     placeholder="Ej: Menú especial de lunes" maxlength="255">
+            </div>
+
+            {% if platos %}
+            <div class="mb-2">
+              <label class="form-label fw-semibold small">Entradas</label>
+              <select name="entradas" multiple class="form-select form-select-sm" size="3">
+                {% for p in platos %}
+                  <option value="{{ p.id }}">{{ p.nombre }}</option>
+                {% endfor %}
+              </select>
+              <div class="form-text">Ctrl+clic para seleccionar múltiples.</div>
+            </div>
+            <div class="mb-2">
+              <label class="form-label fw-semibold small">Fondos</label>
+              <select name="fondos" multiple class="form-select form-select-sm" size="3">
+                {% for p in platos %}
+                  <option value="{{ p.id }}">{{ p.nombre }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold small">Postres</label>
+              <select name="postres" multiple class="form-select form-select-sm" size="3">
+                {% for p in platos %}
+                  <option value="{{ p.id }}">{{ p.nombre }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            {% else %}
+            <div class="alert alert-warning small py-2">
+              No hay platos activos. Crea platos en la <strong>Opción ①</strong> primero.
+            </div>
+            {% endif %}
+
+            <button type="submit" class="btn btn-success w-100" {% if not platos %}disabled{% endif %}>
+              📅 Crear Menú del Día
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── OPTION 3 ─────────────────────────────────────────────────── -->
+    <div class="col-lg-4">
+      <div class="card h-100 border-warning">
+        <div class="card-header bg-warning text-dark">
+          <strong>③ Copiar Menú a Nuevas Fechas</strong>
+        </div>
+        <div class="card-body">
+          <p class="text-muted small mb-3">
+            Clona un menú existente (con todos sus platos) a una o varias fechas nuevas.
+          </p>
+          <form method="post" action="{{ url_for('gestor_menu.copiar_menu') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="mb-3">
+              <label for="menu_origen_id" class="form-label fw-semibold">Menú origen <span class="text-danger">*</span></label>
+              {% if menus %}
+              <select id="menu_origen_id" name="menu_origen_id" class="form-select form-select-sm" required>
+                <option value="">— Selecciona un menú —</option>
+                {% for m in menus %}
+                  <option value="{{ m.id }}">{{ m.dia.strftime('%d/%m/%Y') }} – {{ m.slug }}</option>
+                {% endfor %}
+              </select>
+              {% else %}
+              <p class="text-muted small">No hay menús disponibles para copiar.</p>
+              {% endif %}
+            </div>
+
+            <div class="mb-3">
+              <label for="fechas_destino" class="form-label fw-semibold">
+                Fechas destino <span class="text-danger">*</span>
+              </label>
+              <input type="text" id="fechas_destino" name="fechas_destino" class="form-control form-control-sm"
+                     placeholder="Ej: 2026-03-10, 2026-03-11, 2026-03-12">
+              <div class="form-text">Ingresa fechas separadas por comas en formato <code>AAAA-MM-DD</code>.</div>
+            </div>
+
+            <button type="submit" class="btn btn-warning w-100" {% if not menus %}disabled{% endif %}>
+              📋 Copiar Menú
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /row -->
+
+  <!-- Recent menus summary -->
+  {% if menus %}
+  <div class="card mt-5">
+    <div class="card-header"><strong>Menús Recientes</strong></div>
+    <div class="table-responsive">
+      <table class="table table-sm table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Fecha</th>
+            <th>Slug</th>
+            <th class="text-end">Precio</th>
+            <th class="text-center">Stock</th>
+            <th class="text-center">Activo</th>
+            <th>Platos</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for m in menus %}
+          <tr>
+            <td>{{ m.dia.strftime('%d/%m/%Y') }}</td>
+            <td><span class="font-monospace small">{{ m.slug }}</span></td>
+            <td class="text-end">{% if m.precio %}${{ "{:,}".format(m.precio|int) }}{% else %}—{% endif %}</td>
+            <td class="text-center">{{ m.stock }}</td>
+            <td class="text-center">
+              {% if m.activo %}<span class="badge bg-success">Sí</span>{% else %}<span class="badge bg-secondary">No</span>{% endif %}
+            </td>
+            <td>
+              <span class="text-muted small">
+                {{ m.opciones|length }} plato(s)
+                {% if m.entradas %} · E: {{ m.entradas|map(attribute='nombre')|join(', ') }}{% endif %}
+                {% if m.fondos %} · F: {{ m.fondos|map(attribute='nombre')|join(', ') }}{% endif %}
+                {% if m.postres %} · P: {{ m.postres|map(attribute='nombre')|join(', ') }}{% endif %}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+</div><!-- /container -->
+{% endblock %}
