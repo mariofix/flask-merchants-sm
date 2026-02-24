@@ -367,6 +367,8 @@ def pago_orden(orden):
     pago = None
     display_code = ""
     total = Decimal(0)
+    descuento_promocional = Decimal(0)
+    alumnos_con_descuento: list = []
 
     if pedido:
         all_alumno_ids = [
@@ -405,6 +407,15 @@ def pago_orden(orden):
             for item in resumen
             if item["detalle_menu"] is not None
         )
+
+        corte_setting = db.session.execute(
+            db.select(Settings).filter_by(slug="corte_promocional")
+        ).scalar_one_or_none()
+        corte_cfg = corte_setting.value if corte_setting and corte_setting.value else {}
+        descuento_info = ctrl.compute_descuento_promocional(resumen, corte_cfg)
+        descuento_promocional = descuento_info["descuento_total"]
+        alumnos_con_descuento = descuento_info["alumnos"]
+        total = total - descuento_promocional
 
         if request.method == "POST":
             forma_pago = request.form.get("forma-de-pago", "cafeteria")
@@ -496,4 +507,6 @@ def pago_orden(orden):
         "pos/venta-web.html",
         pedido=resumen, orden=pedido, total=total,
         pago=pago, display_code=display_code, apoderado=apoderado,
+        descuento_promocional=descuento_promocional,
+        alumnos_con_descuento=alumnos_con_descuento,
     )
