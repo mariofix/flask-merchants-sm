@@ -6,6 +6,7 @@ SQLAlchemy (via ``db``) and plain Python — no ``request``, ``current_user``, o
 ``url_for`` calls.  This makes every method independently testable.
 """
 
+import re
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 from typing import Optional
@@ -351,6 +352,51 @@ class ApoderadoController:
                 seen.add(key)
                 result.append(adv)
         return result
+
+    def compute_descuento_promocional(self, resumen: list, corte_promocional: dict) -> dict:
+        """Return the promotional discount for qualifying alumnos in *resumen*.
+
+        ``corte_promocional`` is the value of the ``corte_promocional`` Settings
+        row, expected to be ``{"curso": <int>, "descuento": <int>}``.  Any
+        alumno whose course number (leading digits of ``alumno.curso``) is
+        less than or equal to ``curso`` gets ``descuento`` subtracted from the
+        price of each lunch they appear in.
+
+        Returns ``{"descuento_total": Decimal, "alumnos": list[str]}``.
+        """
+        try:
+            curso_max = int(corte_promocional.get("curso", 0))
+            descuento_por_almuerzo = int(corte_promocional.get("descuento", 0))
+        except (TypeError, ValueError):
+            return {"descuento_total": Decimal(0), "alumnos": []}
+
+        if not curso_max or not descuento_por_almuerzo:
+            return {"descuento_total": Decimal(0), "alumnos": []}
+
+        total_descuento = Decimal(0)
+        seen_names: list[str] = []
+
+        for item in resumen:
+            for alumno in item.get("alumnos", []):
+                if hasattr(alumno, "curso"):
+                    curso_str = alumno.curso
+                    nombre = alumno.nombre if hasattr(alumno, "nombre") else "—"
+                elif isinstance(alumno, dict):
+                    curso_str = alumno.get("curso")
+                    nombre = alumno.get("nombre", "—")
+                else:
+                    continue
+
+                if not curso_str:
+                    continue
+
+                m = re.match(r"(\d+)", str(curso_str))
+                if m and int(m.group(1)) <= curso_max:
+                    total_descuento += Decimal(descuento_por_almuerzo)
+                    if nombre not in seen_names:
+                        seen_names.append(nombre)
+
+        return {"descuento_total": total_descuento, "alumnos": seen_names}
 
     def process_payment_completion(self, pedido: Pedido) -> None:
         """Create one OrdenCasino per item×alumno after a Pedido is paid.

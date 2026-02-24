@@ -419,3 +419,103 @@ class TestDeleteRestriccionAlumno:
         make_ctrl().delete_restriccion_alumno(alumno, -1)
         db_session.refresh(alumno)
         assert len(alumno.restricciones) == 1
+
+
+# ---------------------------------------------------------------------------
+# compute_descuento_promocional
+# ---------------------------------------------------------------------------
+
+class TestComputeDescuentoPromocional:
+    def setup_method(self):
+        self.ctrl = make_ctrl()
+
+    def _make_alumno(self, nombre, curso):
+        return SimpleNamespace(nombre=nombre, curso=curso)
+
+    def _make_item(self, alumnos):
+        return {"alumnos": alumnos}
+
+    def test_empty_resumen_returns_zero(self):
+        result = self.ctrl.compute_descuento_promocional([], {"curso": 3, "descuento": 600})
+        assert result["descuento_total"] == Decimal(0)
+        assert result["alumnos"] == []
+
+    def test_empty_config_returns_zero(self):
+        alumno = self._make_alumno("Ana", "2A")
+        result = self.ctrl.compute_descuento_promocional(
+            [self._make_item([alumno])], {}
+        )
+        assert result["descuento_total"] == Decimal(0)
+
+    def test_qualifying_alumno_gets_discount(self):
+        alumno = self._make_alumno("Ana", "2-A")
+        result = self.ctrl.compute_descuento_promocional(
+            [self._make_item([alumno])], {"curso": 3, "descuento": 600}
+        )
+        assert result["descuento_total"] == Decimal(600)
+        assert "Ana" in result["alumnos"]
+
+    def test_non_qualifying_alumno_no_discount(self):
+        alumno = self._make_alumno("Pedro", "4-B")
+        result = self.ctrl.compute_descuento_promocional(
+            [self._make_item([alumno])], {"curso": 3, "descuento": 600}
+        )
+        assert result["descuento_total"] == Decimal(0)
+        assert result["alumnos"] == []
+
+    def test_multiple_items_each_count_separately(self):
+        alumno = self._make_alumno("Ana", "1-A")
+        result = self.ctrl.compute_descuento_promocional(
+            [self._make_item([alumno]), self._make_item([alumno])],
+            {"curso": 3, "descuento": 600},
+        )
+        assert result["descuento_total"] == Decimal(1200)
+        assert result["alumnos"] == ["Ana"]  # listed once
+
+    def test_mixed_grades_only_qualifying_discounted(self):
+        a1 = self._make_alumno("Ana", "2-A")
+        a2 = self._make_alumno("Pedro", "5-B")
+        result = self.ctrl.compute_descuento_promocional(
+            [self._make_item([a1, a2])], {"curso": 3, "descuento": 600}
+        )
+        assert result["descuento_total"] == Decimal(600)
+        assert "Ana" in result["alumnos"]
+        assert "Pedro" not in result["alumnos"]
+
+    def test_alumno_dict_with_qualifying_grade(self):
+        alumno = {"nombre": "Luis", "curso": "3-A", "id": 1}
+        result = self.ctrl.compute_descuento_promocional(
+            [self._make_item([alumno])], {"curso": 3, "descuento": 600}
+        )
+        assert result["descuento_total"] == Decimal(600)
+        assert "Luis" in result["alumnos"]
+
+    def test_alumno_dict_without_curso_skipped(self):
+        alumno = {"nombre": "Luis", "curso": None, "id": 1}
+        result = self.ctrl.compute_descuento_promocional(
+            [self._make_item([alumno])], {"curso": 3, "descuento": 600}
+        )
+        assert result["descuento_total"] == Decimal(0)
+
+    def test_boundary_exactly_at_curso_max(self):
+        alumno = self._make_alumno("Eva", "3-B")
+        result = self.ctrl.compute_descuento_promocional(
+            [self._make_item([alumno])], {"curso": 3, "descuento": 600}
+        )
+        assert result["descuento_total"] == Decimal(600)
+
+    def test_roman_numeral_grade_not_discounted(self):
+        # High-school courses like "I-A", "II-B" have no leading digit
+        alumno = self._make_alumno("Carlos", "I-A")
+        result = self.ctrl.compute_descuento_promocional(
+            [self._make_item([alumno])], {"curso": 3, "descuento": 600}
+        )
+        assert result["descuento_total"] == Decimal(0)
+        assert result["alumnos"] == []
+
+    def test_invalid_config_values_return_zero(self):
+        alumno = self._make_alumno("Ana", "2-A")
+        result = self.ctrl.compute_descuento_promocional(
+            [self._make_item([alumno])], {"curso": "abc", "descuento": "xyz"}
+        )
+        assert result["descuento_total"] == Decimal(0)
