@@ -302,6 +302,78 @@ class TestCrearOrdenKiosko:
         assert orden.menu_slug == menu.slug
 
 
+# ---------------------------------------------------------------------------
+# canjear_con_credito
+# ---------------------------------------------------------------------------
+
+class TestCanjearConCredito:
+    def _make_menu(self, db_session, precio=Decimal("4000")):
+        from app.model import MenuDiario
+        menu = MenuDiario()
+        menu.dia = date.today()
+        menu.slug = f"menu-canje-{uuid.uuid4().hex[:8]}"
+        menu.descripcion = "Menú Canje Test"
+        menu.precio = precio
+        menu.activo = True
+        menu.fuera_stock = False
+        menu.es_permanente = False
+        db_session.add(menu)
+        db_session.commit()
+        return menu
+
+    def test_creates_entregado_order_and_deducts_saldo(self, db_session, sample_apoderado):
+        from app.model import EstadoAlmuerzo
+        sample_apoderado.saldo_cuenta = 10000
+        db_session.commit()
+        alumno = sample_apoderado.alumnos[0]
+        menu = self._make_menu(db_session)
+        orden = make_ctrl().canjear_con_credito(alumno, menu)
+        assert orden is not None
+        assert orden.alumno_id == alumno.id
+        assert orden.estado == EstadoAlmuerzo.ENTREGADO
+        assert orden.fecha_entrega is not None
+        assert orden.menu_slug == menu.slug
+        db_session.refresh(sample_apoderado)
+        assert sample_apoderado.saldo_cuenta == 6000
+
+    def test_returns_none_when_insufficient_credit(self, db_session, sample_apoderado):
+        sample_apoderado.saldo_cuenta = 100
+        db_session.commit()
+        alumno = sample_apoderado.alumnos[0]
+        menu = self._make_menu(db_session, precio=Decimal("4000"))
+        result = make_ctrl().canjear_con_credito(alumno, menu)
+        assert result is None
+        db_session.refresh(sample_apoderado)
+        assert sample_apoderado.saldo_cuenta == 100  # unchanged
+
+    def test_returns_none_when_zero_saldo(self, db_session, sample_apoderado):
+        sample_apoderado.saldo_cuenta = 0
+        db_session.commit()
+        alumno = sample_apoderado.alumnos[0]
+        menu = self._make_menu(db_session)
+        result = make_ctrl().canjear_con_credito(alumno, menu)
+        assert result is None
+
+    def test_returns_none_when_menu_has_no_price(self, db_session, sample_apoderado):
+        sample_apoderado.saldo_cuenta = 10000
+        db_session.commit()
+        alumno = sample_apoderado.alumnos[0]
+        menu = self._make_menu(db_session, precio=None)
+        result = make_ctrl().canjear_con_credito(alumno, menu)
+        assert result is None
+
+    def test_sets_apoderado_id_on_pedido(self, db_session, sample_apoderado):
+        from app.model import EstadoAlmuerzo, Pedido
+        from app.database import db as _db
+        sample_apoderado.saldo_cuenta = 10000
+        db_session.commit()
+        alumno = sample_apoderado.alumnos[0]
+        menu = self._make_menu(db_session)
+        orden = make_ctrl().canjear_con_credito(alumno, menu)
+        assert orden is not None
+        pedido = db_session.execute(_db.select(Pedido).filter_by(codigo=orden.pedido_codigo)).scalar_one()
+        assert pedido.apoderado_id == sample_apoderado.id
+
 
 # ---------------------------------------------------------------------------
 # get_dashboard_stats

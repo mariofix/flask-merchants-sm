@@ -210,6 +210,7 @@
 <script>
   // ── State ──────────────────────────────────────────────────────────────────
   let pendingEntregaUrl = null;   // URL for the current /entrega-almuerzo POST
+  let pendingCanjeCreditoData = null;  // {alumno_id, menu_slug, nombre, menu} for credit redemption
   let qrScanner = null;
   const csrfToken = "{{ csrf_token() }}";
 
@@ -223,7 +224,9 @@
     const orden   = data.orden;
     const yaEntregado = data.ya_entregado;
     const saldo   = data.saldo_apoderado !== undefined ? data.saldo_apoderado : null;
+    const menus   = data.menus_disponibles || [];
     pendingEntregaUrl = null;
+    pendingCanjeCreditoData = null;
 
     let estadoBadge, canjearBtn;
     if (yaEntregado) {
@@ -235,6 +238,14 @@
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l5 5l10 -10"/></svg>
         Canjear Almuerzo</button>`;
       pendingEntregaUrl = orden.entrega_url;
+    } else if (menus.length > 0) {
+      estadoBadge = '<span class="badge bg-info text-white">Sin reserva — canje con crédito disponible</span>';
+      const menuOpts = menus.map(m =>
+        `<button class="btn btn-outline-success w-100 mb-1" onclick="seleccionarMenuCanje(${alumno.id},'${m.slug}','${alumno.nombre}','${(m.descripcion||m.slug).replace(/'/g,"\\'")}',${m.precio})">
+          ${m.descripcion || m.slug} <span class="badge bg-secondary ms-1">$${m.precio.toLocaleString('es-CL')}</span>
+        </button>`
+      ).join('');
+      canjearBtn = `<div class="small text-muted mb-2">Saldo disponible: <strong>$${saldo.toLocaleString('es-CL')}</strong>. Seleccione menú a canjear:</div>${menuOpts}`;
     } else {
       estadoBadge = '<span class="badge bg-danger">Sin almuerzo hoy</span>';
       canjearBtn  = `<div class="alert alert-warning mb-0">Sin almuerzo reservado. El alumno debe acercarse a la cafetería del colegio.</div>`;
@@ -316,22 +327,46 @@
 
   function abrirConfirmar(url, nombre, menu) {
     pendingEntregaUrl = url;
+    pendingCanjeCreditoData = null;
     document.getElementById('confirm-detail').innerHTML =
       `<strong>${nombre}</strong><br><span class="text-muted">${menu}</span>`;
     new tabler.Modal(document.getElementById('confirmaAlmuerzoModal')).show();
   }
 
-  // ── Confirm delivery ───────────────────────────────────────────────────────
+  function seleccionarMenuCanje(alumnoId, menuSlug, alumnoNombre, menuDesc, precio) {
+    pendingCanjeCreditoData = { alumno_id: alumnoId, menu_slug: menuSlug };
+    pendingEntregaUrl = null;
+    document.getElementById('confirm-detail').innerHTML =
+      `<strong>${alumnoNombre}</strong><br><span class="text-muted">${menuDesc}</span><br><small class="text-secondary">Canje con crédito — $${precio.toLocaleString('es-CL')}</small>`;
+    new tabler.Modal(document.getElementById('confirmaAlmuerzoModal')).show();
+  }
+
+  // ── Confirm delivery or credit redemption ─────────────────────────────────
   document.getElementById('btn-confirm-entrega').addEventListener('click', async function () {
-    if (!pendingEntregaUrl) return;
+    if (!pendingEntregaUrl && !pendingCanjeCreditoData) return;
     this.disabled = true;
     this.textContent = 'Procesando…';
     try {
-      const resp = await fetch(pendingEntregaUrl, {
-        method: 'POST',
-        headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' },
-      });
-      const data = await resp.json();
+      let resp, data;
+      if (pendingCanjeCreditoData) {
+        resp = await fetch("{{ url_for('pos.api_canjear_credito') }}", {
+          method: 'POST',
+          headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' },
+          body: JSON.stringify(pendingCanjeCreditoData),
+        });
+        data = await resp.json();
+        if (data.ok) {
+          data.alumno_nombre = data.alumno_nombre;
+          data.alumno_curso  = data.alumno_curso;
+          data.menu          = data.menu;
+        }
+      } else {
+        resp = await fetch(pendingEntregaUrl, {
+          method: 'POST',
+          headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' },
+        });
+        data = await resp.json();
+      }
       tabler.Modal.getInstance(document.getElementById('confirmaAlmuerzoModal')).hide();
       if (data.ok) {
         // Prepend to the recent deliveries table
@@ -345,8 +380,9 @@
         tbody.insertBefore(tr, tbody.firstChild);
         document.getElementById('scan-result').style.display = 'none';
         pendingEntregaUrl = null;
+        pendingCanjeCreditoData = null;
       } else {
-        alert('Error: ' + (data.error || 'No se pudo entregar el almuerzo.'));
+        alert('Error: ' + (data.error || 'No se pudo procesar el canje.'));
       }
     } catch(e) {
       alert('Error de comunicación.');
@@ -428,6 +464,7 @@
 
   // ── Manual alumno entry ────────────────────────────────────────────────────
   let manualOrdenUrl = null;
+  let manualCanjeData = null;
   document.addEventListener("DOMContentLoaded", function () {
     window.TomSelect && new TomSelect(document.getElementById('lista-alumnos'), {
       maxItems: 1,
@@ -437,6 +474,7 @@
         const resultEl = document.getElementById('manual-result');
         const canjearBtn = document.getElementById('btn-canjear-manual');
         manualOrdenUrl = null;
+        manualCanjeData = null;
         canjearBtn.disabled = true;
         resultEl.style.display = 'none';
         if (!alumnoId) return;
@@ -447,18 +485,58 @@
           const alumno = data.alumno;
           const orden  = data.orden;
           const ya     = data.ya_entregado;
-          let badge;
-          if (ya) { badge = '<span class="badge bg-warning text-dark">Ya entregado hoy</span>'; }
-          else if (orden) { badge = '<span class="badge bg-success">Almuerzo disponible</span>'; manualOrdenUrl = orden.entrega_url; canjearBtn.disabled = false; }
-          else { badge = '<span class="badge bg-danger">Sin almuerzo hoy</span>'; }
+          const menus  = data.menus_disponibles || [];
+          let badge, extra = '';
+          if (ya) {
+            badge = '<span class="badge bg-warning text-dark">Ya entregado hoy</span>';
+          } else if (orden) {
+            badge = '<span class="badge bg-success">Almuerzo disponible</span>';
+            manualOrdenUrl = orden.entrega_url;
+            canjearBtn.disabled = false;
+          } else if (menus.length > 0) {
+            badge = '<span class="badge bg-info text-white">Sin reserva — crédito disponible</span>';
+            const saldo = data.saldo_apoderado || 0;
+            const menuBtns = menus.map(m =>
+              `<button type="button" class="btn btn-sm btn-outline-success me-1 mb-1 manual-canje-btn"
+                data-alumno-id="${alumno.id}" data-menu-slug="${m.slug}"
+                data-alumno-nombre="${alumno.nombre}" data-menu-desc="${(m.descripcion||m.slug).replace(/"/g,'&quot;')}" data-precio="${m.precio}">
+                ${m.descripcion || m.slug} <span class="badge bg-secondary">$${m.precio.toLocaleString('es-CL')}</span>
+              </button>`
+            ).join('');
+            extra = `<div class="mt-1 small text-muted">Saldo: <strong>$${saldo.toLocaleString('es-CL')}</strong></div><div class="mt-1">${menuBtns}</div>`;
+          } else {
+            badge = '<span class="badge bg-danger">Sin almuerzo hoy</span>';
+            extra = '<div class="w-100 mt-1 small text-warning">Sin almuerzo reservado. El alumno debe acercarse a la cafetería del colegio.</div>';
+          }
           const menuInfo = orden ? (orden.menu_descripcion || orden.menu_slug) : '';
-          const cafeteriaMsg = (!orden && !ya) ? '<div class="w-100 mt-1 small text-warning">Sin almuerzo reservado. El alumno debe acercarse a la cafetería del colegio.</div>' : '';
-          resultEl.innerHTML = `<div class="d-flex align-items-center gap-2 flex-wrap">${badge}<span class="text-muted small">${menuInfo}</span>${cafeteriaMsg}</div>`;
+          resultEl.innerHTML = `<div class="d-flex align-items-center gap-2 flex-wrap">${badge}<span class="text-muted small">${menuInfo}</span>${extra}</div>`;
           resultEl.style.display = '';
+          // Bind click handlers for credit canje buttons
+          resultEl.querySelectorAll('.manual-canje-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+              manualCanjeData = {
+                alumno_id: parseInt(this.dataset.alumnoId),
+                menu_slug: this.dataset.menuSlug,
+              };
+              manualOrdenUrl = null;
+              canjearBtn.disabled = false;
+              const ts = document.getElementById('lista-alumnos');
+              const opt = ts.options[ts.selectedIndex];
+              abrirConfirmarManualCanje(this.dataset.alumnoNombre, this.dataset.menuDesc, parseInt(this.dataset.precio));
+            });
+          });
         } catch(e) { resultEl.innerHTML = '<div class="alert alert-danger">Error de comunicación.</div>'; resultEl.style.display = ''; }
       }
     });
   });
+
+  function abrirConfirmarManualCanje(nombre, menu, precio) {
+    pendingCanjeCreditoData = manualCanjeData;
+    pendingEntregaUrl = null;
+    document.getElementById('confirm-detail').innerHTML =
+      `<strong>${nombre}</strong><br><span class="text-muted">${menu}</span><br><small class="text-secondary">Canje con crédito — $${precio.toLocaleString('es-CL')}</small>`;
+    new tabler.Modal(document.getElementById('confirmaAlmuerzoModal')).show();
+  }
 
   document.getElementById('btn-limpiar-manual').addEventListener('click', function () {
     const ts = document.getElementById('lista-alumnos').tomselect;
@@ -466,13 +544,15 @@
     document.getElementById('manual-result').style.display = 'none';
     document.getElementById('btn-canjear-manual').disabled = true;
     manualOrdenUrl = null;
+    manualCanjeData = null;
   });
 
   document.getElementById('btn-canjear-manual').addEventListener('click', function () {
-    if (!manualOrdenUrl) return;
-    const sel = document.getElementById('lista-alumnos');
-    const opt = sel.options[sel.selectedIndex];
-    abrirConfirmar(manualOrdenUrl, opt ? opt.text : 'Alumno', '');
+    if (manualOrdenUrl) {
+      const sel = document.getElementById('lista-alumnos');
+      const opt = sel.options[sel.selectedIndex];
+      abrirConfirmar(manualOrdenUrl, opt ? opt.text : 'Alumno', '');
+    }
   });
 </script>
 {% endblock page_scripts -%}

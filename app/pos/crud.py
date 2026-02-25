@@ -326,6 +326,51 @@ class PosController:
             "porcentaje_cobertura_nfc": int(alumnos_con_tag / total_alumnos * 100) if total_alumnos else 0,
         }
 
+    def canjear_con_credito(self, alumno: Alumno, menu: MenuDiario, fecha: Optional[date] = None) -> Optional[OrdenCasino]:
+        """Create an OrdenCasino using the apoderado's credit balance (canje directo).
+
+        This is used at the POS Casino when a student has no reservation but
+        the apoderado has enough credit to cover the menu price.  The menu
+        price is deducted from ``alumno.apoderado.saldo_cuenta`` and the order
+        is immediately marked as ENTREGADO.
+
+        Returns the new OrdenCasino, or ``None`` if there is insufficient
+        credit or the menu has no price.
+        """
+        if fecha is None:
+            fecha = date.today()
+
+        precio = int(menu.precio or 0)
+        saldo_actual = alumno.apoderado.saldo_cuenta or 0
+        if precio <= 0 or saldo_actual < precio:
+            return None
+
+        # Create the backing Pedido so pedido_codigo references a real order
+        pedido = Pedido()
+        pedido.extra_attrs = [{"slug": menu.slug, "date": fecha.isoformat(), "note": "canje_credito", "alumnos": [{"id": alumno.id}]}]
+        pedido.precio_total = precio
+        pedido.pagado = True
+        pedido.estado = EstadoPedido.PAGADO
+        pedido.fecha_pago = datetime.now()
+        pedido.apoderado_id = alumno.apoderado.id
+        db.session.add(pedido)
+        db.session.flush()
+
+        orden = OrdenCasino()
+        orden.pedido_codigo = pedido.codigo
+        orden.alumno_id = alumno.id
+        orden.menu_slug = menu.slug
+        orden.menu_descripcion = menu.descripcion
+        orden.menu_precio = menu.precio
+        orden.fecha = fecha
+        orden.estado = EstadoAlmuerzo.ENTREGADO
+        orden.fecha_entrega = datetime.now()
+        db.session.add(orden)
+
+        alumno.apoderado.saldo_cuenta = saldo_actual - precio
+        db.session.commit()
+        return orden
+
     def approve_abono(self, abono: Abono, pago: Payment) -> bool:
         """Mark *pago* as succeeded and credit *abono* amount to the apoderado.
 

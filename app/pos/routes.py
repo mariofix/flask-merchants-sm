@@ -66,6 +66,15 @@ def api_alumno_tag(serial: str):
             "entrega_url": url_for("pos.entrega_almuerzo", orden_id=orden.id),
             "courses": courses,
         }
+    saldo_apoderado = alumno.apoderado.saldo_cuenta or 0
+    menus_disponibles = []
+    if not orden_data and not result["ya_entregado"] and saldo_apoderado > 0:
+        menus_hoy = ctrl.get_menus_hoy()
+        menus_disponibles = [
+            {"slug": m.slug, "descripcion": m.descripcion, "precio": int(m.precio or 0)}
+            for m in menus_hoy
+            if m.precio and saldo_apoderado >= int(m.precio)
+        ]
     return jsonify({
         "encontrado": True,
         "serial": serial,
@@ -75,9 +84,10 @@ def api_alumno_tag(serial: str):
             "curso": alumno.curso,
             "restricciones": alumno.restricciones or [],
         },
-        "saldo_apoderado": alumno.apoderado.saldo_cuenta or 0,
+        "saldo_apoderado": saldo_apoderado,
         "orden": orden_data,
         "ya_entregado": result["ya_entregado"],
+        "menus_disponibles": menus_disponibles,
     })
 
 
@@ -91,6 +101,15 @@ def api_alumno(alumno_id: int):
         return jsonify({"encontrado": False, "alumno_id": alumno_id}), 404
 
     orden = result["orden"]
+    saldo_apoderado = alumno.apoderado.saldo_cuenta or 0
+    menus_disponibles = []
+    if not orden and not result["ya_entregado"] and saldo_apoderado > 0:
+        menus_hoy = ctrl.get_menus_hoy()
+        menus_disponibles = [
+            {"slug": m.slug, "descripcion": m.descripcion, "precio": int(m.precio or 0)}
+            for m in menus_hoy
+            if m.precio and saldo_apoderado >= int(m.precio)
+        ]
     return jsonify({
         "encontrado": True,
         "alumno": {
@@ -99,7 +118,7 @@ def api_alumno(alumno_id: int):
             "curso": alumno.curso,
             "restricciones": alumno.restricciones or [],
         },
-        "saldo_apoderado": alumno.apoderado.saldo_cuenta or 0,
+        "saldo_apoderado": saldo_apoderado,
         "orden": {
             "id": orden.id,
             "menu_descripcion": orden.menu_descripcion,
@@ -107,6 +126,7 @@ def api_alumno(alumno_id: int):
             "entrega_url": url_for("pos.entrega_almuerzo", orden_id=orden.id),
         } if orden else None,
         "ya_entregado": result["ya_entregado"],
+        "menus_disponibles": menus_disponibles,
     })
 
 
@@ -193,6 +213,50 @@ def entrega_almuerzo(orden_id: int):
         "menu": orden.menu_descripcion or orden.menu_slug,
         "estado": orden.estado.value,
     })
+
+
+@pos_bp.route("/api/canjear-credito", methods=["POST"])
+@roles_accepted("admin", "pos")
+@limiter.limit("60 per minute")
+def api_canjear_credito():
+    """Redeem today's lunch using the apoderado's credit balance (canje directo).
+
+    Body: ``{"alumno_id": <int>, "menu_slug": <str>}``
+    Returns JSON with the new OrdenCasino id on success.
+    """
+    payload = request.get_json(force=True) or {}
+    alumno_id = payload.get("alumno_id")
+    menu_slug = payload.get("menu_slug")
+
+    if not alumno_id or not menu_slug:
+        return jsonify({"error": "alumno_id y menu_slug son requeridos"}), 400
+
+    try:
+        alumno_id_int = int(alumno_id)
+    except (ValueError, TypeError):
+        return jsonify({"error": "alumno_id inválido"}), 400
+
+    alumno = db.session.get(Alumno, alumno_id_int)
+    if not alumno:
+        return jsonify({"error": "Alumno no encontrado"}), 404
+
+    menu = db.session.execute(db.select(MenuDiario).filter_by(slug=menu_slug)).scalar_one_or_none()
+    if not menu:
+        return jsonify({"error": "Menú no encontrado"}), 404
+
+    orden = ctrl.canjear_con_credito(alumno, menu)
+    if orden is None:
+        return jsonify({"error": "Saldo insuficiente para canjear este menú"}), 422
+
+    return jsonify({
+        "ok": True,
+        "orden_id": orden.id,
+        "alumno_nombre": alumno.nombre,
+        "alumno_curso": alumno.curso,
+        "menu": menu.descripcion,
+        "precio": int(menu.precio or 0),
+        "nuevo_saldo": alumno.apoderado.saldo_cuenta or 0,
+    }), 201
 
 
 @pos_bp.route("/buscar-abono", methods=["GET", "POST"])
