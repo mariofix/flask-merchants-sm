@@ -127,6 +127,10 @@ def create_app():
     app.register_blueprint(staff_bp, url_prefix="/staff")
     app.register_blueprint(docs_bp)
 
+    # Request-based scheduler for school staff periodic emails
+    from .staff.scheduler import check_and_fire_staff_jobs
+    app.before_request(check_and_fire_staff_jobs)
+
     # Celery
     celery_init_app(app)
 

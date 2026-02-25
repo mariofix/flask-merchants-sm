@@ -643,7 +643,7 @@ def send_confirmacion_staff_pedido_pagado(self, pedido_info: dict):
 def send_informe_mensual_staff(self):
     """Envía a cada miembro del personal su deuda del mes al final de cada mes.
 
-    Debe ejecutarse el último día del mes (e.g. via Celery Beat).
+    Disparado automáticamente por el scheduler de solicitudes (``app/staff/scheduler.py``).
     Incluye instrucciones para pagar en un plazo de 5 días hábiles.
     """
     with current_app.app_context():
@@ -715,7 +715,7 @@ def send_informe_mensual_staff(self):
 def send_informe_semanal_staff(self):
     """Envía el resumen semanal de deuda a los miembros del personal que lo soliciten.
 
-    Debe ejecutarse semanalmente (e.g. cada lunes via Celery Beat).
+    Disparado automáticamente por el scheduler de solicitudes (``app/staff/scheduler.py``).
     Solo se envía a quienes tienen ``informe_semanal=True``.
     """
     with current_app.app_context():
