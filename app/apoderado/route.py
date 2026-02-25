@@ -14,7 +14,7 @@ from flask_security import current_user, login_required, roles_accepted  # type:
 
 from ..database import db
 from ..extensions import limiter
-from ..model import Apoderado, MenuDiario, Payment, Pedido, Settings, EstadoPedido, Alumno
+from ..model import Apoderado, MenuDiario, Payment, Pedido, Settings, EstadoPedido, Alumno, OrdenCasino
 from .controller import ApoderadoController
 
 apoderado_bp = Blueprint("apoderado_cliente", __name__)
@@ -438,6 +438,63 @@ def pago_orden(orden):
                 pedido.fecha_pago = datetime.now()
                 db.session.commit()
                 ctrl.process_payment_completion(pedido)
+                return redirect(url_for("apoderado_cliente.pago_orden", orden=pedido.codigo))
+
+            # SaldoProvider: pay the remaining amount entirely from account balance
+            if forma_pago == "saldo":
+                saldo_necesario = int(descuento_saldo) + int(monto_a_pagar)
+                if not apoderado or not apoderado.saldo_cuenta or apoderado.saldo_cuenta < saldo_necesario:
+                    from flask import flash
+                    flash("Saldo insuficiente para completar el pago con saldo de cuenta.", "danger")
+                    return redirect(url_for("apoderado_cliente.pago_orden", orden=pedido.codigo))
+
+                saldo_antes = apoderado.saldo_cuenta
+                session = flask_merchants.get_client("saldo").payments.create_checkout(
+                    amount=monto_a_pagar,
+                    currency="CLP",
+                    success_url=url_for("apoderado_cliente.pago_orden", orden=pedido.codigo, _external=True),
+                    cancel_url=url_for("apoderado_cliente.pago_orden", orden=pedido.codigo, _external=True),
+                    metadata={
+                        "pedido_codigo": pedido.codigo,
+                        "apoderado_id": str(apoderado.id),
+                        "saldo_antes": saldo_antes,
+                        "model_property": "saldo_cuenta",
+                    },
+                )
+                # Deduct slider discount + saldo payment in one operation
+                apoderado.saldo_cuenta = saldo_antes - saldo_necesario
+                flask_merchants.save_session(
+                    session,
+                    model_class=Payment,
+                    request_payload={
+                        "pedido_codigo": pedido.codigo,
+                        "monto": str(monto_a_pagar),
+                        "currency": "CLP",
+                        "forma_pago": "saldo",
+                        "descuento_saldo": str(descuento_saldo),
+                        "saldo_antes": str(saldo_antes),
+                        "model_property": "saldo_cuenta",
+                    },
+                )
+                flask_merchants.update_state(session.session_id, "succeeded")
+                pedido.codigo_merchants = session.session_id
+                pedido.precio_total = total
+                pedido.estado = EstadoPedido.PAGADO
+                pedido.pagado = True
+                pedido.fecha_pago = datetime.now()
+                db.session.commit()
+                ctrl.process_payment_completion(pedido)
+                # Leave a note on each OrdenCasino record indicating payment via saldo
+                transaction_code = session.metadata.get("transaction_code", "")
+                total_fmt = f"{int(total):,}".replace(",", ".")
+                nota_saldo = f"Pagado con saldo de cuenta. Original: ${total_fmt}. Cod: {transaction_code}"
+                ordenes = db.session.execute(
+                    db.select(OrdenCasino).filter_by(pedido_codigo=pedido.codigo)
+                ).scalars().all()
+                for oc in ordenes:
+                    existing = oc.nota or ""
+                    oc.nota = (f"{existing}. {nota_saldo}" if existing else nota_saldo)[:255]
+                db.session.commit()
                 return redirect(url_for("apoderado_cliente.pago_orden", orden=pedido.codigo))
 
             session = flask_merchants.get_client(forma_pago).payments.create_checkout(

@@ -18,6 +18,7 @@ from .extensions.admin import admin, SecureRedisCli
 from .model import *  # noqa: F403
 from .pos.routes import pos_bp
 from .providers.cafeteria import CafeteriaProvider
+from .providers.saldo import SaldoProvider
 from .routes import core_bp
 from .tasks import MyMailUtil
 from .version import __version__
@@ -96,6 +97,7 @@ def create_app():
         from merchants.providers.khipu import KhipuProvider
         providers.append(KhipuProvider(api_key=khipu_api_key))
     providers.append(CafeteriaProvider())
+    providers.append(SaldoProvider())
 
     # merchants
     flask_merchants.init_app(app=app, db=db, models=[Payment], admin=admin, providers=providers)
