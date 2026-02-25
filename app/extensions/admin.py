@@ -25,6 +25,7 @@ from ..model import (
     Plato,
     Role,
     Settings,
+    TipoCurso,
     User,
     Abono,
     OrdenCasino,
@@ -1134,7 +1135,6 @@ class GenerarDatosView(BaseView):
 
             # Add opciones: 1-2 entradas, 2-3 fondos, 1-2 postres
             orden = 0
-            from ..model import TipoCurso
             for plato in random.sample(entradas, min(random.randint(1, 2), len(entradas))):
                 db.session.add(OpcionMenuDia(menu=menu, plato=plato, tipo_curso=TipoCurso.ENTRADA, orden=orden))
                 orden += 1
@@ -1223,6 +1223,243 @@ class GenerarDatosView(BaseView):
         return redirect(url_for("generar_datos.index"))
 
 
+class GestorMenuView(BaseView):
+    """Simplified menu and dish management view accessible to 'admin' or 'pos' roles.
+
+    Provides three workflow options:
+    1. Crear Plato Rápido  – add a new dish (Plato) with dietary flags.
+    2. Crear Menú del Día  – create a new MenuDiario and assign existing Platos by course.
+    3. Copiar Menú         – clone an existing MenuDiario to one or more new dates.
+    """
+
+    def is_accessible(self):
+        return (
+            current_user.is_active
+            and current_user.is_authenticated
+            and (current_user.has_role("admin") or current_user.has_role("pos"))
+        )
+
+    def _handle_view(self, name, **kwargs):
+        if not self.is_accessible():
+            if current_user.is_authenticated:
+                abort(403)
+            else:
+                return redirect(url_for("security.login", next=request.url))
+
+    def _get_platos_activos(self):
+        return (
+            db.session.execute(db.select(Plato).where(Plato.activo.is_(True)).order_by(Plato.nombre))
+            .scalars()
+            .all()
+        )
+
+    def _get_menus_recientes(self, limit: int = 30):
+        return (
+            db.session.execute(db.select(MenuDiario).order_by(MenuDiario.dia.desc()).limit(limit))
+            .scalars()
+            .all()
+        )
+
+    @expose("/", methods=["GET"])
+    def index(self):
+        """Landing page – shows the 3 workflow cards."""
+        return self.render(
+            "admin/gestor_menu.html",
+            platos=self._get_platos_activos(),
+            menus=self._get_menus_recientes(),
+        )
+
+    @expose("/crear-menu-dia", methods=["GET"])
+    def crear_menu_dia_form(self):
+        """Dedicated full-page form for creating a new MenuDiario (Option 2)."""
+        from datetime import date as _date, timedelta
+
+        platos = self._get_platos_activos()
+        # Suggest tomorrow as the default date
+        default_dia = (_date.today() + timedelta(days=1)).isoformat()
+        return self.render(
+            "admin/crear_menu_dia.html",
+            platos=platos,
+            default_dia=default_dia,
+        )
+
+    @expose("/crear-plato", methods=["POST"])
+    def crear_plato(self):
+        """Option 1: quickly create a new Plato."""
+        nombre = (request.form.get("nombre") or "").strip()
+        if not nombre:
+            flash("El nombre del plato no puede estar vacío.", "error")
+            return redirect(url_for("gestor_menu.index"))
+
+        existing = db.session.execute(db.select(Plato).filter_by(nombre=nombre)).scalar_one_or_none()
+        if existing:
+            flash(f"Ya existe un plato con el nombre «{nombre}».", "warning")
+            return redirect(url_for("gestor_menu.index"))
+
+        plato = Plato(
+            nombre=nombre,
+            activo=True,
+            es_vegano=bool(request.form.get("es_vegano")),
+            es_vegetariano=bool(request.form.get("es_vegetariano")),
+            es_hipocalorico=bool(request.form.get("es_hipocalorico")),
+            contiene_gluten=bool(request.form.get("contiene_gluten")),
+            contiene_alergenos=bool(request.form.get("contiene_alergenos")),
+        )
+        db.session.add(plato)
+        db.session.commit()
+        flash(f"Plato «{nombre}» creado exitosamente.", "success")
+        return redirect(url_for("gestor_menu.index"))
+
+    @expose("/crear-menu", methods=["POST"])
+    def crear_menu(self):
+        """Option 2: create a new MenuDiario with dish assignments."""
+        from datetime import date as _date
+        from decimal import Decimal, InvalidOperation
+
+        _form_redirect = url_for("gestor_menu.crear_menu_dia_form")
+
+        dia_str = (request.form.get("dia") or "").strip()
+        if not dia_str:
+            flash("Debes seleccionar una fecha para el menú.", "error")
+            return redirect(_form_redirect)
+        try:
+            dia = _date.fromisoformat(dia_str)
+        except ValueError:
+            flash("Fecha inválida.", "error")
+            return redirect(_form_redirect)
+
+        precio_str = (request.form.get("precio") or "").strip()
+        try:
+            precio = Decimal(precio_str) if precio_str else None
+        except InvalidOperation:
+            flash("Precio inválido.", "error")
+            return redirect(_form_redirect)
+
+        slug_candidate = slugify(f"menu-{dia.isoformat()}")
+        existing_menu = db.session.execute(db.select(MenuDiario).filter_by(slug=slug_candidate)).scalar_one_or_none()
+        if existing_menu:
+            flash(f"Ya existe un menú para la fecha {dia.isoformat()} (slug: {slug_candidate}).", "warning")
+            return redirect(_form_redirect)
+
+        descripcion = (request.form.get("descripcion") or "").strip() or None
+
+        menu = MenuDiario(
+            dia=dia,
+            slug=slug_candidate,
+            precio=precio,
+            descripcion=descripcion,
+            activo=True,
+            stock=int(request.form.get("stock") or 50),
+        )
+        db.session.add(menu)
+        db.session.flush()
+
+        entradas_ids = request.form.getlist("entradas")
+        fondos_ids = request.form.getlist("fondos")
+        postres_ids = request.form.getlist("postres")
+
+        orden = 0
+        for plato_id in entradas_ids:
+            plato = db.session.get(Plato, int(plato_id))
+            if plato:
+                db.session.add(OpcionMenuDia(menu=menu, plato=plato, tipo_curso=TipoCurso.ENTRADA, orden=orden))
+                orden += 1
+        for plato_id in fondos_ids:
+            plato = db.session.get(Plato, int(plato_id))
+            if plato:
+                db.session.add(OpcionMenuDia(menu=menu, plato=plato, tipo_curso=TipoCurso.FONDO, orden=orden))
+                orden += 1
+        for plato_id in postres_ids:
+            plato = db.session.get(Plato, int(plato_id))
+            if plato:
+                db.session.add(OpcionMenuDia(menu=menu, plato=plato, tipo_curso=TipoCurso.POSTRE, orden=orden))
+                orden += 1
+
+        db.session.commit()
+        flash(f"Menú para el {dia.strftime('%d/%m/%Y')} creado exitosamente.", "success")
+        return redirect(url_for("gestor_menu.index"))
+
+    @expose("/copiar-menu", methods=["POST"])
+    def copiar_menu(self):
+        """Option 3: clone an existing MenuDiario to new dates."""
+        from datetime import date as _date
+
+        menu_id_str = (request.form.get("menu_origen_id") or "").strip()
+        fechas_raw = (request.form.get("fechas_destino") or "").strip()
+
+        if not menu_id_str or not fechas_raw:
+            flash("Debes seleccionar el menú origen y al menos una fecha destino.", "error")
+            return redirect(url_for("gestor_menu.index"))
+
+        try:
+            menu_id = int(menu_id_str)
+        except ValueError:
+            flash("ID de menú inválido.", "error")
+            return redirect(url_for("gestor_menu.index"))
+
+        origen = db.session.get(MenuDiario, menu_id)
+        if not origen:
+            flash("Menú origen no encontrado.", "error")
+            return redirect(url_for("gestor_menu.index"))
+
+        fechas = [f.strip() for f in fechas_raw.split(",") if f.strip()]
+        if not fechas:
+            flash("Debes proporcionar al menos una fecha destino.", "error")
+            return redirect(url_for("gestor_menu.index"))
+
+        existing_slugs = {
+            row[0]
+            for row in db.session.execute(db.select(MenuDiario.slug)).all()
+        }
+
+        creados = 0
+        omitidos = []
+        for fecha_str in fechas:
+            try:
+                dia = _date.fromisoformat(fecha_str)
+            except ValueError:
+                omitidos.append(f"{fecha_str} (fecha inválida)")
+                continue
+
+            slug_candidate = slugify(f"menu-{dia.isoformat()}")
+            if slug_candidate in existing_slugs:
+                omitidos.append(f"{dia.isoformat()} (ya existe)")
+                continue
+
+            nuevo = MenuDiario(
+                dia=dia,
+                slug=slug_candidate,
+                precio=origen.precio,
+                descripcion=origen.descripcion,
+                activo=origen.activo,
+                stock=origen.stock,
+                es_permanente=origen.es_permanente,
+            )
+            db.session.add(nuevo)
+            db.session.flush()
+
+            for opcion in origen.opciones:
+                db.session.add(
+                    OpcionMenuDia(
+                        menu=nuevo,
+                        plato=opcion.plato,
+                        tipo_curso=opcion.tipo_curso,
+                        orden=opcion.orden,
+                    )
+                )
+
+            existing_slugs.add(slug_candidate)
+            creados += 1
+
+        db.session.commit()
+
+        if creados:
+            flash(f"Se copiaron {creados} menú(s) exitosamente.", "success")
+        if omitidos:
+            flash(f"Se omitieron {len(omitidos)} fecha(s): {', '.join(omitidos)}.", "warning")
+        return redirect(url_for("gestor_menu.index"))
+
+
 admin.add_view(PlatoAdminView(Plato, db.session, category="Casino"))
 admin.add_view(
     FileView(
@@ -1239,6 +1476,7 @@ admin.add_view(SecureModelView(Pedido, db.session, category="Casino", name="Pedi
 admin.add_view(AbonoAdminView(Abono, db.session, category="Casino", name="Abonos"))
 admin.add_view(SecureModelView(OrdenCasino, db.session, category="Casino", name="Ordenes"))
 admin.add_view(ResumenDiaAdminView(name="Resumen del Día", endpoint="resumen_dia", category="Casino"))
+admin.add_view(GestorMenuView(name="Gestor de Menús", endpoint="gestor_menu", category="Casino"))
 
 
 admin.add_view(UserView(User, db.session, category="Usuarios y Roles", name="Usuarios"))
