@@ -9,7 +9,7 @@ from datetime import datetime
 from decimal import Decimal, InvalidOperation
 
 from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for
-from flask_security import current_user, login_required, roles_accepted  # type: ignore
+from flask_security import current_user, roles_accepted  # type: ignore
 
 from ..database import db
 from ..extensions import limiter
@@ -45,17 +45,13 @@ def index():
 # ---------------------------------------------------------------------------
 
 @staff_bp.route("/setup", methods=["GET", "POST"])
-@login_required
+@roles_accepted("docente", "admin")
 def setup():
     if request.method == "POST":
-        staff = ctrl.create_staff(
+        ctrl.create_staff(
             nombre=request.form["nombre"],
             user=current_user,
         )
-        uds = db.session.get_bind()
-        from flask import current_app
-        uds = current_app.extensions["user_datastore"]
-        uds.add_role_to_user(current_user, "docente")
         db.session.commit()
         return redirect(url_for("staff.index"))
     return render_template("staff/setup.html")
