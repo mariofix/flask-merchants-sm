@@ -48,6 +48,7 @@ class Role(db.Model, fsqla.FsRoleMixin):
 
 class User(db.Model, fsqla.FsUserMixin):
     apoderado: Mapped["Apoderado"] = relationship(back_populates="usuario")
+    school_staff: Mapped["SchoolStaff"] = relationship(back_populates="usuario")
 
     def __str__(self):
         return f"{self.username}"
@@ -141,6 +142,68 @@ class Apoderado(db.Model, Timestamp):
 
     alumnos: Mapped[list["Alumno"]] = relationship(back_populates="apoderado")
     abonos: Mapped[list["Abono"]] = relationship(back_populates="apoderado", order_by=Abono.created.desc())
+
+    def __str__(self):
+        return f"{self.usuario.username}"
+
+
+class SchoolStaffPedido(db.Model, Timestamp):
+    """Registro de pedidos (compras) del personal del colegio."""
+
+    __tablename__ = "casino_staff_pedido"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    codigo: Mapped[str] = mapped_column(String(36), default=lambda: str(uuid.uuid4()), unique=True, nullable=False)
+    codigo_merchants: Mapped[str | None] = mapped_column(String(36), default=None, nullable=True, index=True)
+
+    estado: Mapped[EstadoPedido] = mapped_column(Enum(EstadoPedido), default=EstadoPedido.CREADO)
+    fecha_pedido: Mapped[datetime] = mapped_column(default=datetime.now(), index=True)
+    fecha_pago: Mapped[datetime | None] = mapped_column(nullable=True)
+
+    precio_total: Mapped[Decimal] = mapped_column(Numeric(10, 0), nullable=False)
+    tipo_pago: Mapped[TipoPago] = mapped_column(Enum(TipoPago), nullable=False, default=TipoPago.EFECTIVO)
+    pagado: Mapped[bool] = mapped_column(default=False)
+
+    extra_attrs: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+
+    staff_id: Mapped[int] = mapped_column(ForeignKey("casino_staff.id"), nullable=False, index=True)
+    staff: Mapped["SchoolStaff"] = relationship(back_populates="pedidos")
+
+    payment: Mapped["Payment | None"] = relationship(
+        "Payment",
+        primaryjoin="foreign(SchoolStaffPedido.codigo_merchants) == Payment.session_id",
+        uselist=False,
+        viewonly=True,
+    )
+
+    def __str__(self):
+        return f"{self.codigo} - {self.estado.value}"
+
+
+class SchoolStaff(db.Model, Timestamp):
+    """Personal del colegio que almuerza en el casino o compra en la cafetería.
+
+    Su cuenta es post-pago: acumula deuda que se liquida al final de cada mes.
+    """
+
+    __tablename__ = "casino_staff"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    nombre: Mapped[str] = mapped_column(String(255), nullable=False)
+
+    usuario_id: Mapped[int] = mapped_column(ForeignKey("user.id"), unique=True)
+    usuario: Mapped["User"] = relationship(back_populates="school_staff")
+
+    # Billing — None means unlimited credit
+    limite_cuenta: Mapped[int | None] = mapped_column(default=None, nullable=True)
+
+    # Notification preferences
+    informe_semanal: Mapped[bool] = mapped_column(default=False)
+
+    pedidos: Mapped[list["SchoolStaffPedido"]] = relationship(
+        back_populates="staff",
+        order_by=SchoolStaffPedido.fecha_pedido.desc(),
+    )
 
     def __str__(self):
         return f"{self.usuario.username}"

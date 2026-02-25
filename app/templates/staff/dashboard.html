@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block page_header -%}
+<div class="page-header d-print-none text-white">
+  <div class="container-xl">
+    <div class="row g-2 align-items-center">
+      <div class="col">
+        <div class="page-pretitle">Personal del colegio</div>
+        <h1 class="page-title">Mi cuenta</h1>
+      </div>
+      <div class="col-auto ms-auto">
+        <div class="btn-list">
+          {% if staff.limite_cuenta is not none and deuda >= staff.limite_cuenta %}
+          <span class="btn btn-danger btn-5">Límite alcanzado</span>
+          {% else %}
+          <span class="btn btn-warning btn-5">Deuda: ${{ deuda|int }}</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock page_header -%}
+
+{% block page_body %}
+<div class="container-xl">
+  <div class="row row-deck row-cards">
+    <div class="col-sm-12 col-lg-12">
+      <div class="card">
+        <div class="card-body">
+          <h3 class="h2">Hola {{ staff.nombre }}!</h3>
+          <div class="row g-3 mt-3">
+            <div class="col-auto">
+              <div class="subheader">Deuda mes actual</div>
+              <div class="h3">${{ deuda_mes|int }}</div>
+            </div>
+            <div class="col-auto">
+              <div class="subheader">Deuda total pendiente</div>
+              <div class="h3">${{ deuda|int }}</div>
+            </div>
+            {% if staff.limite_cuenta is not none %}
+            <div class="col-auto">
+              <div class="subheader">Límite de cuenta</div>
+              <div class="h3">${{ staff.limite_cuenta }}</div>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        <div class="card-footer">
+          <a href="{{ url_for('staff.menu_casino') }}" class="btn btn-primary me-2">Pedir almuerzo</a>
+          <a href="{{ url_for('staff.almuerzos') }}" class="btn btn-outline-secondary me-2">Mis pedidos</a>
+          <a href="{{ url_for('staff.ajustes') }}" class="btn btn-outline-secondary">Ajustes</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock page_body %}

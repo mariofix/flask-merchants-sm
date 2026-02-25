@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block page_header -%}
+<div class="page-header d-print-none text-white">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col">
+        <h1 class="fw-bold m-0">Mis pedidos</h1>
+      </div>
+      <div class="col-auto ms-auto">
+        <div class="btn-list">
+          <a href="{{ url_for('staff.menu_casino') }}" class="btn btn-primary btn-3">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-2">
+              <path d="M12 5l0 14" />
+              <path d="M5 12l14 0" />
+            </svg>
+            Nuevo Pedido
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock page_header -%}
+
+{% block page_body %}
+<div class="container-xl">
+  <div class="row g-3">
+    <div class="col">
+      {% if not pedidos_info %}
+      <div class="alert alert-info">
+        No hay pedidos registrados. ¡Haz tu primer pedido desde el menú del casino!
+      </div>
+      {% endif %}
+      <ul class="timeline">
+        {% for item in pedidos_info %}
+        {% set pedido = item.pedido %}
+        {% set pago = item.pago %}
+        <li class="timeline-event">
+          <div class="timeline-event-icon
+            {% if pedido.pagado %}bg-success-lt
+            {% elif pedido.estado.value == 'cancelada' %}bg-danger-lt
+            {% else %}bg-warning-lt{% endif %}">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M6 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+              <path d="M17 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+              <path d="M17 17h-11v-14h-2" />
+              <path d="M6 5l14 1l-1 7h-13" />
+            </svg>
+          </div>
+          <div class="card timeline-event-card">
+            <div class="card-body">
+              <div class="text-secondary float-end">{{ pedido.fecha_pedido.strftime('%d/%m/%Y %H:%M') }}</div>
+              <h4>Pedido #{{ pedido.codigo[:8].upper() }}</h4>
+              <p class="text-secondary">
+                Total: ${{ pedido.precio_total|int }}
+                &nbsp;·&nbsp;
+                <span class="badge {% if pedido.pagado %}bg-success{% elif pedido.estado.value == 'cancelada' %}bg-danger{% else %}bg-warning{% endif %}">
+                  {{ pedido.estado.value }}
+                </span>
+              </p>
+              {% if not pedido.pagado and pedido.estado.value != 'cancelada' %}
+              <a href="{{ url_for('staff.pago_orden', orden=pedido.codigo) }}" class="btn btn-sm btn-primary">
+                Pagar
+              </a>
+              {% endif %}
+            </div>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock page_body %}
