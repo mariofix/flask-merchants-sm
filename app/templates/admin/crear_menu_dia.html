@@ -27,6 +27,13 @@
 
   /* ── Dietary badges ─────────────────────────────────────────── */
   .badge-diet { font-size: .65rem; padding: .2em .45em; margin-left: .2rem; vertical-align: middle; }
+
+  /* ── Photo picker ───────────────────────────────────────────── */
+  .foto-grid { display: flex; flex-wrap: wrap; gap: .5rem; }
+  .foto-option { cursor: pointer; border: 3px solid transparent; border-radius: .375rem; overflow: hidden; }
+  .foto-option img { width: 80px; height: 60px; object-fit: cover; display: block; }
+  .foto-option input[type="radio"] { display: none; }
+  .foto-option:has(input:checked) { border-color: #198754; }
 </style>
 {% endblock %}
 
@@ -39,13 +46,13 @@
       <li class="breadcrumb-item">
         <a href="{{ url_for('gestor_menu.index') }}">🍽️ Gestor de Menús</a>
       </li>
-      <li class="breadcrumb-item active" aria-current="page">② Crear Menú del Día</li>
+      <li class="breadcrumb-item active" aria-current="page">① Crear Menú del Día</li>
     </ol>
   </nav>
 
   <h3 class="mb-1">📅 Crear Menú del Día</h3>
   <p class="text-muted mb-4">
-    Asigna platos a cada curso para el menú de un día específico. Los campos marcados con
+    Asigna un plato a cada curso para el menú de un día específico. Los campos marcados con
     <span class="text-danger">*</span> son obligatorios.
   </p>
 
@@ -87,10 +94,12 @@
             </div>
 
             <div class="mb-3">
-              <label for="descripcion" class="form-label fw-semibold">Descripción</label>
+              <label for="descripcion" class="form-label fw-semibold">
+                Descripción <span class="text-danger">*</span>
+              </label>
               <input type="text" id="descripcion" name="descripcion" class="form-control"
-                     placeholder="Ej: Menú especial del lunes" maxlength="255">
-              <div class="form-text">Visible en la web de pedidos.</div>
+                     placeholder="Ej: Menú especial del lunes" maxlength="255" required>
+              <div class="form-text">Se usa como identificador único del menú.</div>
             </div>
 
             <div class="mb-3">
@@ -136,21 +145,27 @@
           </div>
           <div class="card-body py-2">
             <div class="preview-course" id="prev-entradas">
-              <h6>Entradas</h6>
+              <h6>Entrada</h6>
               <div class="preview-items" id="prev-entradas-items">
                 <span class="preview-empty">— ninguna —</span>
               </div>
             </div>
             <div class="preview-course" id="prev-fondos">
-              <h6>Fondos</h6>
+              <h6>Fondo</h6>
               <div class="preview-items" id="prev-fondos-items">
                 <span class="preview-empty">— ninguno —</span>
               </div>
             </div>
             <div class="preview-course" id="prev-postres">
-              <h6>Postres</h6>
+              <h6>Postre</h6>
               <div class="preview-items" id="prev-postres-items">
                 <span class="preview-empty">— ninguno —</span>
+              </div>
+            </div>
+            <div class="preview-course" id="prev-foto">
+              <h6>Foto</h6>
+              <div class="preview-items" id="prev-foto-items">
+                <span class="preview-empty">— ninguna —</span>
               </div>
             </div>
             <p class="text-muted small mb-0 mt-2" id="prev-total">0 platos seleccionados</p>
@@ -159,19 +174,20 @@
 
       </div><!-- /col left -->
 
-      <!-- ── RIGHT: course pickers ─────────────────────────────────── -->
+      <!-- ── RIGHT: course pickers + photo ─────────────────────────── -->
       <div class="col-xl-9 col-lg-8">
         <div class="row g-3">
 
           {% for curso_key, curso_label, curso_color, curso_icon in [
-              ('entradas', 'Entradas',  'primary', '🥗'),
-              ('fondos',   'Fondos',    'success', '🍲'),
-              ('postres',  'Postres',   'warning', '🍮'),
+              ('entradas', 'Entrada',  'primary', '🥗'),
+              ('fondos',   'Fondo',    'success', '🍲'),
+              ('postres',  'Postre',   'warning', '🍮'),
           ] %}
           <div class="col-md-4">
             <div class="card h-100 border-{{ curso_color }}">
               <div class="card-header bg-{{ curso_color }} {% if curso_key == 'postres' %}text-dark{% else %}text-white{% endif %}">
                 <strong>{{ curso_icon }} {{ curso_label }}</strong>
+                <small class="ms-1 opacity-75">(elige uno)</small>
               </div>
               <div class="card-body p-2">
 
@@ -183,18 +199,12 @@
                        placeholder="Buscar plato…"
                        aria-label="Buscar {{ curso_label }}">
 
-                <!-- Count badge -->
-                <p class="small text-muted mb-1">
-                  <span id="{{ curso_key }}-count" class="fw-semibold text-{{ curso_color }}">0</span>
-                  seleccionado(s) de {{ platos|length }}
-                </p>
-
                 <!-- Plato list -->
                 <div class="plato-list" id="{{ curso_key }}-list">
                   {% for p in platos %}
                   <div class="form-check plato-item" data-nombre="{{ p.nombre | lower }}">
-                    <input class="form-check-input plato-checkbox"
-                           type="checkbox"
+                    <input class="form-check-input plato-radio"
+                           type="radio"
                            name="{{ curso_key }}"
                            value="{{ p.id }}"
                            id="{{ curso_key }}-plato-{{ p.id }}"
@@ -226,7 +236,31 @@
           </div><!-- /col -->
           {% endfor %}
 
-        </div><!-- /row -->
+        </div><!-- /row courses -->
+
+        <!-- ── Photo picker ──────────────────────────────────────── -->
+        {% if fotos %}
+        <div class="card mt-3 border-secondary">
+          <div class="card-header bg-secondary text-white">
+            <strong>🖼️ Foto del Menú</strong>
+            <small class="ms-1 opacity-75">(opcional, elige una)</small>
+          </div>
+          <div class="card-body p-3">
+            <div class="foto-grid">
+              {% for foto in fotos %}
+              <label class="foto-option" title="{{ foto }}">
+                <input type="radio" name="foto" value="{{ foto }}"
+                       id="foto-{{ loop.index }}" data-foto="{{ foto }}">
+                <img src="{{ url_for('static', filename='platos/' ~ foto) }}"
+                     alt="{{ foto }}" onerror="this.src='{{ url_for('static', filename='img/no-image.png') }}'">
+                <div class="text-center" style="font-size:.65rem; max-width:80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ foto }}</div>
+              </label>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
       </div><!-- /col right -->
 
     </div><!-- /row main -->
@@ -264,39 +298,46 @@
   function updatePreview() {
     let total = 0;
     COURSES.forEach(function (c) {
-      const checked = document.querySelectorAll(
-        'input[name="' + c.key + '"]:checked'
-      );
+      const checked = document.querySelector('input[name="' + c.key + '"]:checked');
       const container = document.getElementById("prev-" + c.key + "-items");
       container.innerHTML = "";
-      if (checked.length === 0) {
+      if (!checked) {
         container.innerHTML = '<span class="preview-empty">' + c.emptyMsg + "</span>";
       } else {
-        checked.forEach(function (cb) {
-          const div = document.createElement("div");
-          div.className = "preview-item";
-          div.textContent = "• " + cb.dataset.nombre;
-          container.appendChild(div);
-        });
+        const div = document.createElement("div");
+        div.className = "preview-item";
+        div.textContent = "• " + checked.dataset.nombre;
+        container.appendChild(div);
+        total += 1;
       }
-      total += checked.length;
     });
     document.getElementById("prev-total").textContent =
       total + (total === 1 ? " plato seleccionado" : " platos seleccionados");
+
+    /* foto preview */
+    const fotoChecked = document.querySelector('input[name="foto"]:checked');
+    const fotoContainer = document.getElementById("prev-foto-items");
+    if (fotoContainer) {
+      fotoContainer.innerHTML = fotoChecked
+        ? '<span class="preview-item">• ' + fotoChecked.dataset.foto + "</span>"
+        : '<span class="preview-empty">— ninguna —</span>';
+    }
   }
 
-  function updateCount(curso) {
-    const checked = document.querySelectorAll('input[name="' + curso + '"]:checked');
-    document.getElementById(curso + "-count").textContent = checked.length;
-  }
-
-  /* bind checkboxes */
-  document.querySelectorAll(".plato-checkbox").forEach(function (cb) {
-    cb.addEventListener("change", function () {
+  /* bind radio buttons */
+  document.querySelectorAll(".plato-radio").forEach(function (rb) {
+    rb.addEventListener("change", function () {
       updatePreview();
-      updateCount(this.dataset.curso);
     });
   });
+
+  /* bind foto radios */
+  document.querySelectorAll('input[name="foto"]').forEach(function (rb) {
+    rb.addEventListener("change", updatePreview);
+  });
+
+  /* initial render */
+  updatePreview();
 
   /* ── Live search / filter ──────────────────────────────────── */
   document.querySelectorAll(".plato-search").forEach(function (input) {
