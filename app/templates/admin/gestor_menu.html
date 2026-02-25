@@ -4,8 +4,8 @@
 <div class="container-fluid py-4">
   <h2 class="mb-1">🍽️ Gestor de Menús</h2>
   <p class="text-muted mb-4">
-    Crea y gestiona platos y menús del día de forma rápida y sencilla.
-    Elige una de las tres opciones disponibles.
+    Crea y gestiona menús del día de forma rápida y sencilla.
+    Elige una de las dos opciones disponibles.
   </p>
 
   <!-- Flash messages -->
@@ -25,75 +25,14 @@
   <div class="row g-4">
 
     <!-- ── OPTION 1 ─────────────────────────────────────────────────── -->
-    <div class="col-lg-4">
-      <div class="card h-100 border-primary">
-        <div class="card-header bg-primary text-white">
-          <strong>① Crear Plato Rápido</strong>
-        </div>
-        <div class="card-body">
-          <p class="text-muted small mb-3">
-            Agrega un nuevo plato al catálogo. Puedes especificar sus características dietéticas.
-          </p>
-          <form method="post" action="{{ url_for('gestor_menu.crear_plato') }}">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
-            <div class="mb-3">
-              <label for="plato_nombre" class="form-label fw-semibold">Nombre del plato <span class="text-danger">*</span></label>
-              <input type="text" id="plato_nombre" name="nombre" class="form-control"
-                     placeholder="Ej: Cazuela de Vacuno" required maxlength="255">
-            </div>
-
-            <p class="fw-semibold mb-1 small">Características dietéticas</p>
-            <div class="row g-2 mb-3">
-              <div class="col-6">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="es_vegano" name="es_vegano" value="1">
-                  <label class="form-check-label small" for="es_vegano">Vegano</label>
-                </div>
-              </div>
-              <div class="col-6">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="es_vegetariano" name="es_vegetariano" value="1">
-                  <label class="form-check-label small" for="es_vegetariano">Vegetariano</label>
-                </div>
-              </div>
-              <div class="col-6">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="es_hipocalorico" name="es_hipocalorico" value="1">
-                  <label class="form-check-label small" for="es_hipocalorico">Hipocalórico</label>
-                </div>
-              </div>
-              <div class="col-6">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="contiene_gluten" name="contiene_gluten" value="1" checked>
-                  <label class="form-check-label small" for="contiene_gluten">Contiene gluten</label>
-                </div>
-              </div>
-              <div class="col-6">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="contiene_alergenos" name="contiene_alergenos" value="1">
-                  <label class="form-check-label small" for="contiene_alergenos">Contiene alérgenos</label>
-                </div>
-              </div>
-            </div>
-
-            <button type="submit" class="btn btn-primary w-100">
-              ➕ Crear Plato
-            </button>
-          </form>
-        </div>
-      </div>
-    </div>
-
-    <!-- ── OPTION 2 ─────────────────────────────────────────────────── -->
-    <div class="col-lg-4">
+    <div class="col-lg-6">
       <div class="card h-100 border-success">
         <div class="card-header bg-success text-white">
-          <strong>② Crear Menú del Día</strong>
+          <strong>① Crear Menú del Día</strong>
         </div>
         <div class="card-body d-flex flex-column">
           <p class="text-muted small mb-3">
-            Crea el menú de un día asignando platos a cada curso (entrada, fondo, postre),
+            Crea el menú de un día asignando un plato a cada curso (entrada, fondo, postre),
             con precio, stock y descripción — todo en un formulario dedicado.
           </p>
           <ul class="list-unstyled small text-muted mb-4">
@@ -101,6 +40,7 @@
             <li>🔍 Búsqueda en tiempo real de platos por curso</li>
             <li>🏷️ Badges dietéticos (vegano, vegetariano, hipocalórico…)</li>
             <li>📋 Panel de resumen con los platos seleccionados</li>
+            <li>🖼️ Selección de imagen para el menú</li>
           </ul>
           <div class="mt-auto">
             <a href="{{ url_for('gestor_menu.crear_menu_dia_form') }}"
@@ -109,7 +49,7 @@
             </a>
             {% if not platos %}
             <div class="alert alert-warning mt-2 py-2 small mb-0">
-              No hay platos activos. Crea platos primero con la Opción ①.
+              No hay platos activos. Crea platos en el <a href="{{ url_for('plato.create_view') }}">catálogo de platos</a>.
             </div>
             {% endif %}
           </div>
@@ -117,11 +57,11 @@
       </div>
     </div>
 
-    <!-- ── OPTION 3 ─────────────────────────────────────────────────── -->
-    <div class="col-lg-4">
+    <!-- ── OPTION 2 ─────────────────────────────────────────────────── -->
+    <div class="col-lg-6">
       <div class="card h-100 border-warning">
         <div class="card-header bg-warning text-dark">
-          <strong>③ Copiar Menú a Nuevas Fechas</strong>
+          <strong>② Copiar Menú a Nuevas Fechas</strong>
         </div>
         <div class="card-body">
           <p class="text-muted small mb-3">

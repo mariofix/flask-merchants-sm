@@ -161,8 +161,9 @@ class TestCrearMenu:
             db_session.flush()
 
             dia = date.today() + timedelta(days=10)
-            slug = slugify(f"menu-{dia.isoformat()}")
-            menu = MenuDiario(dia=dia, slug=slug, precio=Decimal("3000"), activo=True, stock=30)
+            descripcion = "Menú test del día"
+            slug = slugify(descripcion)
+            menu = MenuDiario(dia=dia, slug=slug, descripcion=descripcion, precio=Decimal("3000"), activo=True, stock=30)
             db_session.add(menu)
             db_session.flush()
 
@@ -278,11 +279,12 @@ class TestCrearMenuDiaForm:
         # Bypass _handle_view (access control) and mock render to capture context
         with mock.patch.object(view, "_handle_view", return_value=None):
             with mock.patch.object(view, "_get_platos_activos", return_value=[]):
-                with mock.patch.object(view, "render") as mock_render:
-                    mock_render.return_value = "rendered"
-                    with app.test_request_context("/crear-menu-dia"):
-                        view.crear_menu_dia_form()
-                        call_kwargs = mock_render.call_args
+                with mock.patch.object(view, "_obtiene_fotos", return_value=[]):
+                    with mock.patch.object(view, "render") as mock_render:
+                        mock_render.return_value = "rendered"
+                        with app.test_request_context("/crear-menu-dia"):
+                            view.crear_menu_dia_form()
+                            call_kwargs = mock_render.call_args
 
         # The template name should be the dedicated form
         assert call_kwargs[0][0] == "admin/crear_menu_dia.html"
@@ -348,7 +350,20 @@ class TestCrearMenuPostRedirects:
 
         valid_date = (date.today() + timedelta(days=99)).isoformat()
         response, captured = self._call_crear_menu(app, {
-            "dia": valid_date, "precio": "not-a-number", "csrf_token": "test",
+            "dia": valid_date, "precio": "not-a-number", "descripcion": "Menú test",
+            "csrf_token": "test",
+        })
+
+        assert response.status_code == 302
+        assert "gestor_menu.crear_menu_dia_form" in captured.get("url_for_calls", [])
+
+    def test_missing_description_redirects_to_form(self, app):
+        """A POST with no description should redirect to the dedicated form."""
+        from datetime import date, timedelta
+
+        valid_date = (date.today() + timedelta(days=99)).isoformat()
+        response, captured = self._call_crear_menu(app, {
+            "dia": valid_date, "descripcion": "", "csrf_token": "test",
         })
 
         assert response.status_code == 302
