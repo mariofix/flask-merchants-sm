@@ -95,27 +95,39 @@ class ApoderadoController:
 
     def get_pedidos_for_apoderado(self, apoderado: Apoderado) -> list[dict]:
         """Return the last 30 pedidos (direct + legacy) enriched with payment info."""
-        pedidos_directos = db.session.execute(
-            db.select(Pedido)
-            .filter_by(apoderado_id=apoderado.id)
-            .order_by(Pedido.fecha_pedido.desc())
-            .limit(30)
-        ).scalars().all()
+        pedidos_directos = (
+            db.session.execute(
+                db.select(Pedido)
+                .filter_by(apoderado_id=apoderado.id)
+                .order_by(Pedido.fecha_pedido.desc())
+                .limit(30)
+            )
+            .scalars()
+            .all()
+        )
 
         alumno_ids = [a.id for a in apoderado.alumnos]
         codigos_directos = {p.codigo for p in pedidos_directos}
         pedidos_legacy = []
         if alumno_ids:
-            codigos_ordenes = db.session.execute(
-                db.select(OrdenCasino.pedido_codigo)
-                .where(OrdenCasino.alumno_id.in_(alumno_ids))
-                .distinct()
-            ).scalars().all()
+            codigos_ordenes = (
+                db.session.execute(
+                    db.select(OrdenCasino.pedido_codigo)
+                    .where(OrdenCasino.alumno_id.in_(alumno_ids))
+                    .distinct()
+                )
+                .scalars()
+                .all()
+            )
             codigos_legacy = [c for c in codigos_ordenes if c not in codigos_directos]
             if codigos_legacy:
-                pedidos_legacy = db.session.execute(
-                    db.select(Pedido).where(Pedido.codigo.in_(codigos_legacy))
-                ).scalars().all()
+                pedidos_legacy = (
+                    db.session.execute(
+                        db.select(Pedido).where(Pedido.codigo.in_(codigos_legacy))
+                    )
+                    .scalars()
+                    .all()
+                )
 
         todos = sorted(
             list(pedidos_directos) + list(pedidos_legacy),
@@ -130,9 +142,13 @@ class ApoderadoController:
                 pago = db.session.execute(
                     db.select(Payment).filter_by(session_id=pedido.codigo_merchants)
                 ).scalar_one_or_none()
-            ordenes = db.session.execute(
-                db.select(OrdenCasino).filter_by(pedido_codigo=pedido.codigo)
-            ).scalars().all()
+            ordenes = (
+                db.session.execute(
+                    db.select(OrdenCasino).filter_by(pedido_codigo=pedido.codigo)
+                )
+                .scalars()
+                .all()
+            )
             result.append({"pedido": pedido, "pago": pago, "ordenes": ordenes})
         return result
 
@@ -142,24 +158,36 @@ class ApoderadoController:
         codigos = [a.codigo for a in abono_list]
         pagos_by_codigo = {}
         if codigos:
-            pagos = db.session.execute(
-                db.select(Payment).where(Payment.session_id.in_(codigos))
-            ).scalars().all()
+            pagos = (
+                db.session.execute(
+                    db.select(Payment).where(Payment.session_id.in_(codigos))
+                )
+                .scalars()
+                .all()
+            )
             pagos_by_codigo = {p.session_id: p for p in pagos}
         return [{"abono": a, "pago": pagos_by_codigo.get(a.codigo)} for a in abono_list]
 
     def get_abono(self, codigo: str) -> tuple:
         """Return ``(Abono, Payment, display_code)`` for *codigo*, or ``(None, None, '')``."""
-        abono = db.session.execute(db.select(Abono).filter_by(codigo=codigo)).scalar_one_or_none()
-        pago = db.session.execute(db.select(Payment).filter_by(session_id=codigo)).scalar_one_or_none()
-        display_code = (pago.metadata_json or {}).get("display_code", "") if pago else ""
+        abono = db.session.execute(
+            db.select(Abono).filter_by(codigo=codigo)
+        ).scalar_one_or_none()
+        pago = db.session.execute(
+            db.select(Payment).filter_by(session_id=codigo)
+        ).scalar_one_or_none()
+        display_code = (
+            (pago.metadata_json or {}).get("display_code", "") if pago else ""
+        )
         return abono, pago, display_code
 
     # ------------------------------------------------------------------
     # Write helpers
     # ------------------------------------------------------------------
 
-    def toggle_alumno_activo(self, alumno: Alumno, motivo: str = "Bloqueado por apoderado") -> Alumno:
+    def toggle_alumno_activo(
+        self, alumno: Alumno, motivo: str = "Bloqueado por apoderado"
+    ) -> Alumno:
         """Toggle the ``activo`` flag on *alumno*.
 
         When deactivating, ``motivo`` is stored on the record so the UI can
@@ -188,7 +216,9 @@ class ApoderadoController:
         """
         for data in alumnos_data:
             alumno = Alumno()
-            alumno.slug = slugify(f"{data.get('nombre', '')} {data.get('edad', '')}")
+            alumno.slug = slugify(
+                f"{apoderado.nombre} {data.get('nombre', '')} {data.get('edad', '')}"
+            )
             alumno.nombre = data.get("nombre", "")
             alumno.curso = data.get("curso", "")
             alumno.apoderado = apoderado
@@ -198,7 +228,9 @@ class ApoderadoController:
 
     def update_preferences(self, apoderado: Apoderado, data: dict) -> None:
         """Apply wizard step-3 preferences to *apoderado* and cascade limits to alumnos."""
-        apoderado.comprobantes_transferencia = bool(data.get("notificacion_comprobante"))
+        apoderado.comprobantes_transferencia = bool(
+            data.get("notificacion_comprobante")
+        )
         apoderado.notificacion_compra = bool(data.get("notificacion_compra"))
         apoderado.informe_semanal = bool(data.get("informe_semanal"))
         apoderado.tag_compartido = bool(data.get("tag_compartido"))
@@ -212,7 +244,9 @@ class ApoderadoController:
             alumno.maximo_semanal = apoderado.maximo_semanal
         db.session.commit()
 
-    def create_abono(self, apoderado: Apoderado, monto: Decimal, forma_pago: str) -> Abono:
+    def create_abono(
+        self, apoderado: Apoderado, monto: Decimal, forma_pago: str
+    ) -> Abono:
         """Create and persist a new Abono record."""
         nuevo = Abono()
         nuevo.monto = monto
@@ -227,11 +261,15 @@ class ApoderadoController:
         """Persist changes from the /ajustes form for *apoderado* and *user*."""
         if apoderado:
             apoderado.nombre = data.get("nombre", apoderado.nombre)
-            apoderado.comprobantes_transferencia = bool(data.get("comprobantes_transferencia"))
+            apoderado.comprobantes_transferencia = bool(
+                data.get("comprobantes_transferencia")
+            )
             apoderado.notificacion_compra = bool(data.get("notificacion_compra"))
             apoderado.informe_semanal = bool(data.get("informe_semanal"))
             apoderado.tag_compartido = bool(data.get("tag_compartido"))
-            apoderado.copia_notificaciones = data.get("copia_notificaciones", apoderado.copia_notificaciones)
+            apoderado.copia_notificaciones = data.get(
+                "copia_notificaciones", apoderado.copia_notificaciones
+            )
             try:
                 if data.get("maximo_diario"):
                     apoderado.maximo_diario = int(data["maximo_diario"])
@@ -295,7 +333,9 @@ class ApoderadoController:
             return advertencias
 
         platos = [opcion.plato for opcion in menu.opciones]
-        menu_contiene_alergenos = any(getattr(p, "contiene_alergenos", False) for p in platos)
+        menu_contiene_alergenos = any(
+            getattr(p, "contiene_alergenos", False) for p in platos
+        )
         menu_es_vegano = any(getattr(p, "es_vegano", False) for p in platos)
         menu_es_vegetariano = any(getattr(p, "es_vegetariano", False) for p in platos)
 
@@ -322,26 +362,32 @@ class ApoderadoController:
                     tiene_vegetariano = True
 
             if menu_contiene_alergenos and alergias:
-                advertencias.append({
-                    "alumno": alumno.nombre,
-                    "tipo": "warning",
-                    "mensaje": (
-                        f"{alumno.nombre} tiene alergias declaradas "
-                        f"({', '.join(alergias)}) y este menú contiene alérgenos."
-                    ),
-                })
+                advertencias.append(
+                    {
+                        "alumno": alumno.nombre,
+                        "tipo": "warning",
+                        "mensaje": (
+                            f"{alumno.nombre} tiene alergias declaradas "
+                            f"({', '.join(alergias)}) y este menú contiene alérgenos."
+                        ),
+                    }
+                )
             if menu_es_vegano and tiene_vegano:
-                advertencias.append({
-                    "alumno": alumno.nombre,
-                    "tipo": "info",
-                    "mensaje": f"Este menú incluye un plato vegano (aplica a {alumno.nombre}).",
-                })
+                advertencias.append(
+                    {
+                        "alumno": alumno.nombre,
+                        "tipo": "info",
+                        "mensaje": f"Este menú incluye un plato vegano (aplica a {alumno.nombre}).",
+                    }
+                )
             elif menu_es_vegetariano and tiene_vegetariano:
-                advertencias.append({
-                    "alumno": alumno.nombre,
-                    "tipo": "info",
-                    "mensaje": f"Este menú incluye una opción vegetariana (aplica a {alumno.nombre}).",
-                })
+                advertencias.append(
+                    {
+                        "alumno": alumno.nombre,
+                        "tipo": "info",
+                        "mensaje": f"Este menú incluye una opción vegetariana (aplica a {alumno.nombre}).",
+                    }
+                )
 
         # Deduplicate while preserving order
         seen: set = set()
@@ -353,7 +399,9 @@ class ApoderadoController:
                 result.append(adv)
         return result
 
-    def compute_descuento_promocional(self, resumen: list, corte_promocional: dict) -> dict:
+    def compute_descuento_promocional(
+        self, resumen: list, corte_promocional: dict
+    ) -> dict:
         """Return the promotional discount for qualifying alumnos in *resumen*.
 
         ``corte_promocional`` is the value of the ``corte_promocional`` Settings
@@ -435,6 +483,7 @@ class ApoderadoController:
                 _, _, menu_rezagados_cfg = get_casino_timelimits()
                 if slug == menu_rezagados_cfg["slug"]:
                     from types import SimpleNamespace
+
                     menu = SimpleNamespace(
                         slug=menu_rezagados_cfg["slug"],
                         descripcion=menu_rezagados_cfg["descripcion"],
@@ -442,9 +491,12 @@ class ApoderadoController:
                     )
                 else:
                     from flask_merchants import merchants_audit
+
                     merchants_audit.warning(
                         "ordencasino_menu_not_found: pedido=%s slug=%r date=%r",
-                        pedido.codigo, slug, fecha_str,
+                        pedido.codigo,
+                        slug,
+                        fecha_str,
                     )
 
             alumno_names = []
@@ -468,21 +520,30 @@ class ApoderadoController:
                 alumno_names.append(alumno.nombre)
 
             if alumno_names:
-                email_items.append({
-                    "fecha": fecha_str,
-                    "descripcion": menu.descripcion if menu else slug,
-                    "alumnos_str": ", ".join(alumno_names),
-                    "precio": int(menu.precio) * len(alumno_names) if menu and menu.precio else 0,
-                    "nota": nota or "",
-                })
+                email_items.append(
+                    {
+                        "fecha": fecha_str,
+                        "descripcion": menu.descripcion if menu else slug,
+                        "alumnos_str": ", ".join(alumno_names),
+                        "precio": (
+                            int(menu.precio) * len(alumno_names)
+                            if menu and menu.precio
+                            else 0
+                        ),
+                        "nota": nota or "",
+                    }
+                )
 
         db.session.commit()
 
         if pedido.apoderado_id and email_items:
             from ..tasks import send_confirmacion_orden_pagado
-            send_confirmacion_orden_pagado.delay({
-                "apoderado_id": pedido.apoderado_id,
-                "pedido_codigo": pedido.codigo,
-                "total": int(pedido.precio_total),
-                "items": email_items,
-            })
+
+            send_confirmacion_orden_pagado.delay(
+                {
+                    "apoderado_id": pedido.apoderado_id,
+                    "pedido_codigo": pedido.codigo,
+                    "total": int(pedido.precio_total),
+                    "items": email_items,
+                }
+            )
