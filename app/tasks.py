@@ -581,3 +581,194 @@ def send_notificacion_admin_nuevo_apoderado(self, apoderado_info: dict):
                 admin_emails,
                 subject,
             )
+
+
+@shared_task(bind=True, ignore_result=False)
+def send_confirmacion_staff_pedido_pagado(self, pedido_info: dict):
+    """Notifica al personal del colegio la confirmación de su pedido pagado."""
+    with current_app.app_context():
+        from .database import db
+        from .model import SchoolStaff
+
+        staff_id = pedido_info.get("staff_id")
+        if not staff_id:
+            return
+
+        staff = db.session.get(SchoolStaff, int(staff_id))
+        if not staff:
+            return
+
+        email = staff.usuario.email if staff.usuario else None
+        if not email:
+            return
+
+        pedido_codigo = pedido_info.get("pedido_codigo", "")
+        pedido_codigo_short = pedido_codigo[:8].upper() if pedido_codigo else ""
+        total = pedido_info.get("total", 0)
+
+        subject = f"Confirmación de pedido #{pedido_codigo_short}"
+        body = (
+            f"Hola {staff.nombre},\n\n"
+            f"Tu pedido ha sido confirmado.\n\n"
+            f"N° de pedido: {pedido_codigo_short}\n"
+            f"Total: ${int(total):,}\n\n"
+            f"Saludos,\nCafetería SaborMirandiano"
+        )
+        html = render_template(
+            "staff/emails/confirmacion_pedido.html",
+            nombre_staff=staff.nombre,
+            pedido_codigo=pedido_codigo_short,
+            total=total,
+        )
+        from_email = _get_from_email()
+        with mail.get_connection() as connection:
+            msg = EmailMultiAlternatives(
+                subject=subject,
+                body=body,
+                from_email=from_email,
+                to=[email],
+                connection=connection,
+            )
+            msg.attach_alternative(html, "text/html")
+            msg.send()
+            merchants_audit.info(
+                "email_sent: from=%r to=%r subject=%r",
+                from_email,
+                [email],
+                subject,
+            )
+
+
+@shared_task(bind=True, ignore_result=False)
+def send_informe_mensual_staff(self):
+    """Envía a cada miembro del personal su deuda del mes al final de cada mes.
+
+    Disparado automáticamente por el scheduler de solicitudes (``app/staff/scheduler.py``).
+    Incluye instrucciones para pagar en un plazo de 5 días hábiles.
+    """
+    with current_app.app_context():
+        from .database import db
+        from .model import SchoolStaff, SchoolStaffPedido, EstadoPedido
+        from sqlalchemy import and_, func
+        from decimal import Decimal
+        import datetime as _dt
+
+        today = _dt.date.today()
+        inicio_mes = today.replace(day=1)
+
+        all_staff = db.session.execute(db.select(SchoolStaff)).scalars().all()
+        from_email = _get_from_email()
+
+        for staff in all_staff:
+            email = staff.usuario.email if staff.usuario else None
+            if not email:
+                continue
+
+            deuda = db.session.execute(
+                db.select(func.coalesce(func.sum(SchoolStaffPedido.precio_total), 0)).where(
+                    and_(
+                        SchoolStaffPedido.staff_id == staff.id,
+                        SchoolStaffPedido.pagado == False,  # noqa: E712
+                        SchoolStaffPedido.estado != EstadoPedido.CANCELADA,
+                        SchoolStaffPedido.fecha_pedido >= inicio_mes,
+                    )
+                )
+            ).scalar() or Decimal(0)
+
+            if deuda <= 0:
+                continue
+
+            subject = f"Estado de cuenta mensual – ${int(deuda):,} a pagar"
+            body = (
+                f"Hola {staff.nombre},\n\n"
+                f"El saldo pendiente de tu cuenta del casino correspondiente al mes de "
+                f"{today.strftime('%B %Y')} es de ${int(deuda):,}.\n\n"
+                f"Tienes 5 días hábiles a partir de hoy para realizar el pago.\n\n"
+                f"Puedes pagar en la cafetería del colegio o a través de la plataforma.\n\n"
+                f"Saludos,\nCafetería SaborMirandiano"
+            )
+            html = render_template(
+                "staff/emails/informe_mensual.html",
+                nombre_staff=staff.nombre,
+                deuda=int(deuda),
+                mes=today.strftime("%B %Y"),
+            )
+            with mail.get_connection() as connection:
+                msg = EmailMultiAlternatives(
+                    subject=subject,
+                    body=body,
+                    from_email=from_email,
+                    to=[email],
+                    connection=connection,
+                )
+                msg.attach_alternative(html, "text/html")
+                msg.send()
+                merchants_audit.info(
+                    "email_sent: from=%r to=%r subject=%r",
+                    from_email,
+                    [email],
+                    subject,
+                )
+
+
+@shared_task(bind=True, ignore_result=False)
+def send_informe_semanal_staff(self):
+    """Envía el resumen semanal de deuda a los miembros del personal que lo soliciten.
+
+    Disparado automáticamente por el scheduler de solicitudes (``app/staff/scheduler.py``).
+    Solo se envía a quienes tienen ``informe_semanal=True``.
+    """
+    with current_app.app_context():
+        from .database import db
+        from .model import SchoolStaff, SchoolStaffPedido, EstadoPedido
+        from sqlalchemy import and_, func
+        from decimal import Decimal
+
+        all_staff = db.session.execute(
+            db.select(SchoolStaff).filter_by(informe_semanal=True)
+        ).scalars().all()
+        from_email = _get_from_email()
+
+        for staff in all_staff:
+            email = staff.usuario.email if staff.usuario else None
+            if not email:
+                continue
+
+            deuda = db.session.execute(
+                db.select(func.coalesce(func.sum(SchoolStaffPedido.precio_total), 0)).where(
+                    and_(
+                        SchoolStaffPedido.staff_id == staff.id,
+                        SchoolStaffPedido.pagado == False,  # noqa: E712
+                        SchoolStaffPedido.estado != EstadoPedido.CANCELADA,
+                    )
+                )
+            ).scalar() or Decimal(0)
+
+            subject = f"Resumen semanal de cuenta – saldo pendiente ${int(deuda):,}"
+            body = (
+                f"Hola {staff.nombre},\n\n"
+                f"Tu saldo pendiente en la cafetería del colegio es de ${int(deuda):,}.\n\n"
+                f"Recuerda que la deuda se cobra al final de cada mes.\n\n"
+                f"Saludos,\nCafetería SaborMirandiano"
+            )
+            html = render_template(
+                "staff/emails/informe_semanal.html",
+                nombre_staff=staff.nombre,
+                deuda=int(deuda),
+            )
+            with mail.get_connection() as connection:
+                msg = EmailMultiAlternatives(
+                    subject=subject,
+                    body=body,
+                    from_email=from_email,
+                    to=[email],
+                    connection=connection,
+                )
+                msg.attach_alternative(html, "text/html")
+                msg.send()
+                merchants_audit.info(
+                    "email_sent: from=%r to=%r subject=%r",
+                    from_email,
+                    [email],
+                    subject,
+                )

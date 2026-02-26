@@ -20,6 +20,7 @@ from .pos.routes import pos_bp
 from .providers.cafeteria import CafeteriaProvider
 from .providers.saldo import SaldoProvider
 from .routes import core_bp
+from .staff.route import staff_bp
 from .tasks import MyMailUtil
 from .version import __version__
 
@@ -123,7 +124,12 @@ def create_app():
     app.register_blueprint(core_bp)
     app.register_blueprint(apoderado_bp, url_prefix="/apoderado")
     app.register_blueprint(pos_bp, url_prefix="/pos")
+    app.register_blueprint(staff_bp, url_prefix="/staff")
     app.register_blueprint(docs_bp)
+
+    # Request-based scheduler for school staff periodic emails
+    from .staff.scheduler import check_and_fire_staff_jobs
+    app.before_request(check_and_fire_staff_jobs)
 
     # Celery
     celery_init_app(app)

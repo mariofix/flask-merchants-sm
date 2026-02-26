@@ -110,3 +110,21 @@ CELERY = {
     "worker_concurrency": 1,
     "worker_max_tasks_per_child": 1,
 }
+
+# ------------------------------------------------------------------
+# School staff periodic email scheduler
+# Runs are triggered on the first matching Flask request (no Celery Beat needed).
+# ------------------------------------------------------------------
+
+# Day of month (1-31) to send the monthly billing email.
+# 0 (default) means the last day of each month.
+STAFF_INFORME_MENSUAL_DIA: int = 0
+
+# Hour (0-23, local time) at which the monthly email window opens.
+STAFF_INFORME_MENSUAL_HORA: int = 8
+
+# Weekday (0=Monday … 6=Sunday) to send the weekly standing-bill email.
+STAFF_INFORME_SEMANAL_DIA: int = 0  # Monday
+
+# Hour (0-23, local time) at which the weekly email window opens.
+STAFF_INFORME_SEMANAL_HORA: int = 8

@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block page_header -%}
+<div class="page-header d-print-none text-white">
+  <div class="container-xl">
+    <div class="row g-2 align-items-center">
+      <div class="col">
+        <h1 class="page-title">Pago de pedido</h1>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock page_header -%}
+
+{% block page_body %}
+<div class="container-xl">
+  {% if not orden %}
+  <div class="alert alert-danger">Pedido no encontrado.</div>
+  {% else %}
+  <div class="row g-3">
+    <div class="col-lg-8">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Resumen del pedido #{{ orden.codigo[:8].upper() }}</h3>
+        </div>
+        <div class="card-body">
+          {% if pedido %}
+          <table class="table table-sm">
+            <thead>
+              <tr><th>Fecha</th><th>Menú</th><th>Nota</th><th>Precio</th></tr>
+            </thead>
+            <tbody>
+              {% for item in pedido %}
+              <tr>
+                <td>{{ item.fecha }}</td>
+                <td>
+                  {% if item.detalle_menu %}
+                  {{ item.detalle_menu.descripcion or item.menu }}
+                  {% else %}
+                  {{ item.menu }}
+                  {% endif %}
+                </td>
+                <td>{{ item.nota or '' }}</td>
+                <td>
+                  {% if item.detalle_menu %}${{ item.detalle_menu.precio|int }}{% else %}—{% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+            <tfoot>
+              <tr><td colspan="3" class="fw-bold text-end">Total</td><td class="fw-bold">${{ total|int }}</td></tr>
+            </tfoot>
+          </table>
+          {% else %}
+          <p class="text-muted">Sin detalle de pedido.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      {% if orden.pagado %}
+      <div class="card">
+        <div class="card-body text-center">
+          <span class="badge bg-success mb-2">Pagado</span>
+          <p>Tu pedido ha sido confirmado.</p>
+          {% if display_code %}
+          <p class="fw-bold fs-3">{{ display_code }}</p>
+          {% endif %}
+          <a href="{{ url_for('staff.almuerzos') }}" class="btn btn-outline-secondary">Ver mis pedidos</a>
+        </div>
+      </div>
+      {% else %}
+      <div class="card">
+        <div class="card-header"><h3 class="card-title">Forma de pago</h3></div>
+        <div class="card-body">
+          <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {% for provider in payment_providers %}
+            <div class="form-check mb-2">
+              <input class="form-check-input" type="radio" name="forma-de-pago"
+                     id="pago_{{ provider.key }}" value="{{ provider.key }}" required>
+              <label class="form-check-label" for="pago_{{ provider.key }}">
+                <strong>{{ provider.title }}</strong>
+                {% if provider.subtitle %}<br><small class="text-muted">{{ provider.subtitle }}</small>{% endif %}
+              </label>
+            </div>
+            {% endfor %}
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="radio" name="forma-de-pago"
+                     id="pago_cuenta" value="cuenta" required>
+              <label class="form-check-label" for="pago_cuenta">
+                <strong>Cargar a cuenta</strong>
+                <br><small class="text-muted">Se cargará a tu cuenta post-pago</small>
+              </label>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Confirmar pago ${{ total|int }}</button>
+          </form>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock page_body %}
