@@ -8,7 +8,7 @@ a Flask response (render_template / redirect / jsonify).
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
 
-from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for
+from flask import Blueprint, abort, flash, jsonify, redirect, render_template, request, url_for
 from flask_security import current_user, roles_accepted  # type: ignore
 
 from ..database import db
@@ -29,7 +29,7 @@ ctrl = SchoolStaffController()
 def index():
     staff = ctrl.get_staff(current_user)
     if not staff:
-        return redirect(url_for("staff.setup"))
+        abort(404)
     deuda = ctrl.get_deuda_actual(staff)
     deuda_mes = ctrl.get_deuda_mes_actual(staff)
     return render_template(
@@ -41,23 +41,6 @@ def index():
 
 
 # ---------------------------------------------------------------------------
-# Registration / setup
-# ---------------------------------------------------------------------------
-
-@staff_bp.route("/setup", methods=["GET", "POST"])
-@roles_accepted("docente", "admin")
-def setup():
-    if request.method == "POST":
-        ctrl.create_staff(
-            nombre=request.form["nombre"],
-            user=current_user,
-        )
-        db.session.commit()
-        return redirect(url_for("staff.index"))
-    return render_template("staff/setup.html")
-
-
-# ---------------------------------------------------------------------------
 # Purchase history
 # ---------------------------------------------------------------------------
 
@@ -66,7 +49,7 @@ def setup():
 def almuerzos():
     staff = ctrl.get_staff(current_user)
     if not staff:
-        return redirect(url_for("staff.setup"))
+        abort(404)
     pedidos_info = ctrl.get_pedidos(staff)
     return render_template("staff/almuerzos.html", pedidos_info=pedidos_info, staff=staff)
 
@@ -218,7 +201,7 @@ def pago_orden(orden):
 def ajustes():
     staff = ctrl.get_staff(current_user)
     if not staff:
-        return redirect(url_for("staff.setup"))
+        abort(404)
     if request.method == "POST":
         ctrl.update_ajustes(staff, current_user, request.form)
         flash("Cambios guardados correctamente.", "success")
