@@ -1340,6 +1340,7 @@ class GestorMenuView(BaseView):
             foto_principal=foto_principal,
             activo=True,
             stock=int(request.form.get("stock") or 50),
+            es_permanente=False,
         )
         db.session.add(menu)
         db.session.flush()

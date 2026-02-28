@@ -10,6 +10,7 @@ instance/*
 .webassets-cache
 .env
 *.code-workspace
+.vscode/
 
 ### Flask.Python Stack ###
 # Byte-compiled / optimized / DLL files

@@ -5,7 +5,7 @@ description = "SaborMirandiano"
 authors = [{ name = "Mario Hernandez", email = "mariofix@proton.me" }]
 license = { text = "MIT" }
 readme = "README.md"
-requires-python = ">=3.12,<4.0.0"
+requires-python = "=3.14"
 dependencies = [
     "flask (>=3.1.2,<4.0.0)",
     "flask-security[babel,common,fsqla] (>=5.6.2,<6.0.0)",
