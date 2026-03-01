@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Volantes de Registro – Sabor Mirandiano</title>
+  <style>
+    body { font-family: Inter, sans-serif; background: #f0f4f8; padding: 2rem; }
+    h1 { color: #0455A4; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1.5rem; margin-top: 2rem; }
+    .card { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.12); padding: 1.5rem; text-align: center; }
+    .card h3 { margin: 0 0 .5rem; color: #0455A4; }
+    .card p { color: #666; font-size: .9rem; margin: 0 0 1rem; }
+    .btn { display: inline-block; padding: .5rem 1.25rem; background: #4299e1; color: white;
+           text-decoration: none; border-radius: 6px; font-size: .9rem; }
+    .btn:hover { background: #0455A4; }
+    .badge { display: inline-block; font-size: .7rem; padding: .2rem .5rem; border-radius: 9999px;
+             margin-bottom: .5rem; }
+    .badge-joven { background: #bee3f8; color: #0455A4; }
+    .badge-adulto { background: #fefcbf; color: #744210; }
+  </style>
+</head>
+<body>
+  <h1>📄 Volantes de Registro – Sabor Mirandiano</h1>
+  <p>Selecciona un volante para previsualizar e imprimir (Ctrl+P / Cmd+P).</p>
+  <div class="grid">
+    {% for key, (template, label) in flyers.items() %}
+    <div class="card">
+      {% if key.startswith('joven') %}
+        <span class="badge badge-joven">👦 Jóvenes (&lt;39 años)</span>
+      {% else %}
+        <span class="badge badge-adulto">👨 Adultos (40+ años)</span>
+      {% endif %}
+      <h3>{{ label }}</h3>
+      <p>Volante tamaño carta (8.5×11")</p>
+      <a class="btn" href="{{ url_for('flyers.flyer', flyer_id=key) }}" target="_blank">Ver volante</a>
+    </div>
+    {% endfor %}
+  </div>
+</body>
+</html>

@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Regístrate – Sabor Mirandiano</title>
+  <style>
+    @page { size: letter portrait; margin: 0; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #fff;
+      color: #1a202c;
+      width: 8.5in;
+      height: 11in;
+      overflow: hidden;
+    }
+    .page {
+      width: 8.5in;
+      height: 11in;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Top accent bar ── */
+    .accent-bar {
+      height: .18in;
+      background: linear-gradient(90deg, #0455A4, #4299e1);
+    }
+
+    /* ── Header ── */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: .28in .6in .18in;
+      border-bottom: 2px solid #e2e8f0;
+    }
+    .logos { display: flex; align-items: center; gap: .3in; }
+    .logo-box {
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      width: 1.05in;
+      height: .7in;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: .04in;
+    }
+    .logo-box.school { border-style: dashed; color: #a0aec0; font-size: 8pt; }
+    .header-right { text-align: right; }
+    .header-right .site { font-size: 11pt; font-weight: 700; color: #0455A4; }
+    .header-right .sub { font-size: 9pt; color: #718096; margin-top: 2px; }
+
+    /* ── Hero ── */
+    .hero {
+      background: #ebf8ff;
+      padding: .32in .6in .28in;
+      display: flex;
+      align-items: center;
+      gap: .4in;
+    }
+    .hero-text h1 {
+      font-size: 30pt;
+      font-weight: 900;
+      color: #0455A4;
+      line-height: 1.1;
+    }
+    .hero-text h1 em { color: #4299e1; font-style: normal; }
+    .hero-text p { font-size: 12pt; color: #4a5568; margin-top: .1in; line-height: 1.5; }
+    .hero-badge {
+      flex-shrink: 0;
+      background: #0455A4;
+      color: white;
+      border-radius: 50%;
+      width: 1.1in;
+      height: 1.1in;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    .hero-badge .mins { font-size: 28pt; font-weight: 900; line-height: 1; }
+    .hero-badge .mins-label { font-size: 7.5pt; opacity: .9; line-height: 1.2; }
+
+    /* ── Steps ── */
+    .steps-title {
+      padding: .22in .6in .12in;
+      font-size: 10pt;
+      font-weight: 800;
+      color: #4299e1;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: .14in;
+      padding: 0 .6in;
+      flex: 1;
+    }
+    .step {
+      display: flex;
+      align-items: stretch;
+      gap: .22in;
+    }
+    .step-indicator {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .step-circle {
+      width: .52in;
+      height: .52in;
+      border-radius: 50%;
+      background: #0455A4;
+      color: white;
+      font-size: 20pt;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .step-line {
+      width: 2px;
+      flex: 1;
+      background: #bee3f8;
+      margin: .04in 0;
+    }
+    .step:last-child .step-line { display: none; }
+    .step-body {
+      padding: .05in 0 .2in;
+    }
+    .step-body h2 {
+      font-size: 14pt;
+      font-weight: 800;
+      color: #1a202c;
+    }
+    .step-body p {
+      font-size: 10.5pt;
+      color: #4a5568;
+      margin-top: .05in;
+      line-height: 1.5;
+    }
+
+    /* ── Footer / QR ── */
+    .footer {
+      border-top: 2px solid #e2e8f0;
+      padding: .2in .6in .25in;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #f7fafc;
+    }
+    .footer-info h3 { font-size: 13pt; font-weight: 800; color: #0455A4; }
+    .footer-info p { font-size: 10pt; color: #4a5568; margin-top: .06in; line-height: 1.5; }
+    .qr-block { display: flex; align-items: center; gap: .18in; }
+    .qr-block img {
+      width: 1.1in;
+      height: 1.1in;
+      border: 3px solid #0455A4;
+      border-radius: 8px;
+      padding: .04in;
+      background: white;
+    }
+    .qr-text { font-size: 9pt; color: #4a5568; text-align: center; margin-top: .04in; line-height: 1.3; }
+
+    /* ── Bottom bar ── */
+    .bottom-bar {
+      height: .12in;
+      background: linear-gradient(90deg, #0455A4, #4299e1);
+    }
+
+    @media print {
+      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+  <div class="accent-bar"></div>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logos">
+      <div class="logo-box">
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0455A4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 11h16a1 1 0 0 1 1 1v.5c0 1.5-2.517 5.573-4 6.5v1a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1v-1C5.313 18.054 3 14.108 3 12.5V12a1 1 0 0 1 1-1"/>
+          <path d="M8 7c1.657 0 3-.895 3-2s-1.343-2-3-2-3 .895-3 2 1.343 2 3 2"/>
+          <path d="M11 5h9"/>
+        </svg>
+        <span style="font-size:7.5pt;color:#0455A4;font-weight:700;text-align:center;line-height:1.2">Sabor<br>Mirandiano</span>
+      </div>
+      <div class="logo-box school">
+        <span style="font-size:8pt;text-align:center;line-height:1.4">Logo<br>Colegio</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="site">sabormirandiano.cl</div>
+      <div class="sub">Casino Escolar Digital</div>
+    </div>
+  </div>
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-text">
+      <h1>Crea tu cuenta<br>y gestiona el <em>casino</em></h1>
+      <p>Registra a tus alumnos, haz pedidos y paga en línea.<br>Todo desde tu teléfono o computador.</p>
+    </div>
+    <div class="hero-badge">
+      <span class="mins">5</span>
+      <span class="mins-label">minutos<br>para registrarte</span>
+    </div>
+  </div>
+
+  <!-- Steps title -->
+  <div class="steps-title">📋 Sólo 4 pasos</div>
+
+  <!-- 4 Steps with connector lines -->
+  <div class="steps">
+
+    <div class="step">
+      <div class="step-indicator">
+        <div class="step-circle">1</div>
+        <div class="step-line"></div>
+      </div>
+      <div class="step-body">
+        <h2>Crea tu cuenta</h2>
+        <p>Ingresa a <strong>sabormirandiano.cl/register</strong> o escanea el código QR. Necesitas tu correo electrónico, número de celular y una contraseña.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-indicator">
+        <div class="step-circle">2</div>
+        <div class="step-line"></div>
+      </div>
+      <div class="step-body">
+        <h2>Confirma tu correo electrónico</h2>
+        <p>Revisa tu bandeja de entrada (y la carpeta de spam). Haz clic en el enlace de confirmación para activar tu cuenta.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-indicator">
+        <div class="step-circle">3</div>
+        <div class="step-line"></div>
+      </div>
+      <div class="step-body">
+        <h2>Ingresa los datos de tus alumnos</h2>
+        <p>Agrega nombre completo, curso y edad de cada hijo/a. Puedes indicar restricciones alimentarias (alergias, vegetarianismo, etc.).</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-indicator">
+        <div class="step-circle" style="background:#4299e1;">4</div>
+        <div class="step-line"></div>
+      </div>
+      <div class="step-body">
+        <h2>¡Configura y listo!</h2>
+        <p>Elige cómo recibir notificaciones y establece límites de gasto diario o semanal. ¡Ya puedes hacer pedidos al casino!</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Footer with QR -->
+  <div class="footer">
+    <div class="footer-info">
+      <h3>¿Tienes dudas?</h3>
+      <p>Revisa la guía en <strong>sabormirandiano.cl/docs</strong><br>o consulta en la oficina del casino escolar.</p>
+    </div>
+    <div class="qr-block">
+      <div>
+        <img src="{{ qr_uri }}" alt="QR registro">
+        <div class="qr-text">Escanea para<br>registrarte</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-bar"></div>
+</div>
+</body>
+</html>
