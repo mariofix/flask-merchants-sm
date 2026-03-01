@@ -801,7 +801,7 @@
 <script>
   // ── QR Tag handler for iPhone/iPad (mirrors NFC handler logic) ─────────────
   function normalizeTag(raw) {
-    return (raw || '').replace(/:/g, '').toLowerCase().trim();
+    return (raw || '').toLowerCase().trim();
   }
 
   function createQRHandler(config) {
