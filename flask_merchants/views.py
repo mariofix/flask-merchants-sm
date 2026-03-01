@@ -158,27 +158,9 @@ def create_blueprint(ext: "FlaskMerchants") -> Blueprint:
 
     @bp.route("/webhook", methods=["POST"])
     def webhook():
-        """Receive and process incoming provider webhook events.
-
-        When ``MERCHANTS_WEBHOOK_SECRET`` is set on the app config the
-        request signature is verified before processing.
-        """
-        from flask import current_app
-
-        secret: str | None = current_app.config.get("MERCHANTS_WEBHOOK_SECRET")
+        """Receive and process incoming provider webhook events."""
         payload: bytes = request.get_data()
         headers: dict[str, str] = dict(request.headers)
-
-        if secret:
-            signature = headers.get("X-Merchants-Signature", "")
-            try:
-                merchants.verify_signature(
-                    payload=payload,
-                    secret=secret,
-                    signature=signature,
-                )
-            except merchants.WebhookVerificationError:
-                return jsonify({"error": "invalid signature"}), 400
 
         try:
             event = ext.client._provider.parse_webhook(payload, headers)
@@ -198,9 +180,9 @@ def create_blueprint(ext: "FlaskMerchants") -> Blueprint:
             }
         )
 
-    # Mark both webhook views as exempt from Flask-WTF CSRF protection so that
-    # payment providers (which don't send CSRF tokens) can POST to them.
-    webhook.csrf_exempt = True  # type: ignore[attr-defined]
+    # CSRF exemption for both webhook views is handled by FlaskMerchants.init_app
+    # which calls csrf_ext.exempt() on these view functions after blueprint
+    # registration. Setting an attribute here would have no effect on Flask-WTF.
 
     @bp.route("/webhook/<provider>", methods=["POST"])
     def webhook_provider(provider: str):
@@ -243,7 +225,5 @@ def create_blueprint(ext: "FlaskMerchants") -> Blueprint:
                 "state": event.state.value,
             }
         )
-
-    webhook_provider.csrf_exempt = True  # type: ignore[attr-defined]
 
     return bp
