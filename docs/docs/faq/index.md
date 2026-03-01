@@ -7,7 +7,7 @@ Respuestas a las consultas más comunes del personal del casino, administradores
 ## Cuenta y Acceso
 
 ??? question "¿Cómo creo mi cuenta de apoderado?"
-    Para registrarse como apoderado, primero debe tener una cuenta de usuario en el sistema (con correo electrónico y contraseña). Una vez que inicie sesión, el sistema lo guiará automáticamente por el [asistente de registro](../como-hacer/registro-apoderado.md) en 4 pasos.
+    Para registrarse como apoderado, primero debe tener una cuenta de usuario en el sistema (con correo electrónico y contraseña). Una vez que inicie sesión, el sistema lo guiará automáticamente por el [asistente de registro](../como-hacer/registro-apoderado.md) en 3 pasos.
 
 ??? question "¿Puedo tener más de un apoderado asociado a un alumno?"
     El sistema actualmente asocia cada alumno a un único apoderado. Para situaciones especiales (tutores compartidos), contacte al administrador del casino.
@@ -48,7 +48,7 @@ Respuestas a las consultas más comunes del personal del casino, administradores
     Contacte al personal del casino antes del horario límite para cancelar el pedido y evitar el descuento del saldo.
 
 ??? question "¿El sistema me avisa cuando mi hijo retira el almuerzo?"
-    Si tiene activada la opción **Notificación de compra** en sus [ajustes](../como-hacer/ajustar-configuracion.md), recibirá un correo cuando se registre la entrega.
+    Si tiene activada la opción **Notificación de compra** en sus ajustes de cuenta, recibirá un correo cuando se registre la entrega.
 
 ??? question "¿Puedo ver qué menú se sirve cada día?"
     El menú diario es visible en la sección **Menú Casino** del portal, donde puede ver las opciones disponibles para cada fecha.
@@ -73,14 +73,14 @@ Respuestas a las consultas más comunes del personal del casino, administradores
 ??? question "¿Por qué no recibo correos de notificación?"
     Verifique lo siguiente:
 
-    1. Que las notificaciones estén activadas en sus [ajustes](../como-hacer/ajustar-configuracion.md).
+    1. Que las notificaciones estén activadas en sus ajustes de cuenta.
     2. Que el correo no haya llegado a la carpeta de **spam** o **correo no deseado**.
     3. Que la dirección de correo registrada sea correcta.
 
     Si el problema persiste, contacte al administrador del casino.
 
 ??? question "¿Puedo recibir las notificaciones en más de un correo?"
-    Sí. Configure un **correo alternativo** en la sección de [ajustes](../como-hacer/ajustar-configuracion.md) para que las notificaciones también lleguen a esa dirección.
+    Sí. Configure un **correo alternativo** en sus ajustes de cuenta para que las notificaciones también lleguen a esa dirección.
 
 ---
 
