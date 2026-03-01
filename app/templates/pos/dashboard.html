@@ -191,6 +191,40 @@
                   </svg>
                   Registrar TAG
                 </a>
+
+                <a href="#" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modal-validacion-qr" aria-label="Abre Modal de Validacion de TAG por QR (iPhone/iPad)">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-qrcode">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <path d="M4 4m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
+                    <path d="M7 7l0 .01" />
+                    <path d="M14 4m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
+                    <path d="M17 7l0 .01" />
+                    <path d="M4 14m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
+                    <path d="M7 17l0 .01" />
+                    <path d="M14 14l.01 0" />
+                    <path d="M14 17l.01 0" />
+                    <path d="M17 14l.01 0" />
+                    <path d="M17 17l.01 0" />
+                  </svg>
+                  Validar QR
+                </a>
+
+                <a href="#" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#modal-registro-qr" aria-label="Abre Modal de Asignacion de TAG por QR (iPhone/iPad)">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-qrcode">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <path d="M4 4m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
+                    <path d="M7 7l0 .01" />
+                    <path d="M14 4m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
+                    <path d="M17 7l0 .01" />
+                    <path d="M4 14m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
+                    <path d="M7 17l0 .01" />
+                    <path d="M14 14l.01 0" />
+                    <path d="M14 17l.01 0" />
+                    <path d="M17 14l.01 0" />
+                    <path d="M17 17l.01 0" />
+                  </svg>
+                  Asignar QR
+                </a>
               </div>
             </div>
           </div>
@@ -459,6 +493,119 @@
     </div>
   </div>
 </div>
+{# ── Modal: Validar TAG via QR (iPhone/iPad) ──────────────────────────────── #}
+<div class="modal modal-blur fade" id="modal-validacion-qr" tabindex="-3" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Valida TAG (QR — iPhone/iPad)</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-md-12">
+            <div class="card">
+              <div class="card-body">
+                <div class="alert alert-info" role="alert">
+                  <div class="alert-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon alert-icon icon-2">
+                      <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" />
+                      <path d="M12 9h.01" />
+                      <path d="M11 12h1v4h1" />
+                    </svg>
+                  </div>
+                  Para iPhone/iPad: escanea el código QR impreso en el sticker NFC del alumno.
+                </div>
+                <label class="form-label strong">Número de Serie del sticker NFC (leído por QR)</label>
+                <div class="row g-2">
+                  <div class="col input-icon">
+                    <input type="text" value="" id="tag-qr-valida-input" name="tag-qr-valida" class="form-control" readonly />
+                    <span class="input-icon-addon">
+                      <div id="spinner-qr-valida" class="spinner-border spinner-border-sm text-secondary" role="status" style="display:none;"></div>
+                    </span>
+                    <div class="invalid-feedback" id="qr-error-valida"></div>
+                  </div>
+                </div>
+                <div id="qr-reader-valida" class="mt-3" style="width:100%;"></div>
+                <div id="qr-reader-valida-status" class="text-muted small mt-1"></div>
+              </div>
+              <div class="card-footer">
+                <div class="row align-items-center">
+                  <div class="col">Requiere cámara — compatible con Safari en iPhone/iPad</div>
+                  <div class="col-auto">
+                    <button type="button" class="btn btn-primary btn-2" id="btn-confirmar-qr-valida" disabled> Confirmar Lectura </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# ── Modal: Asignar TAG via QR (iPhone/iPad) ───────────────────────────────── #}
+<div class="modal modal-blur fade" id="modal-registro-qr" tabindex="-4" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Asignar TAG (QR — iPhone/iPad)</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form action="" method="post" name="asignacion-tag-qr">
+          <div class="row">
+            <div class="col-md-12">
+              <div class="card">
+                <div class="card-body">
+                  <div class="mb-3">
+                    <label class="form-label strong">Alumnos sin Tag asignado</label>
+                    <select name="alumno_sin_tag" id="alumno_sin_tag_qr" class="form-select">
+                      {% for a in alumnos_sin_tag -%}
+                      <option value="{{ a.id }}">{{ a.curso }} - {{ a.nombre }}</option>
+                      {% endfor-%}
+                    </select>
+                  </div>
+                  <div class="alert alert-info" role="alert">
+                    <div class="alert-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon alert-icon icon-2">
+                        <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" />
+                        <path d="M12 9h.01" />
+                        <path d="M11 12h1v4h1" />
+                      </svg>
+                    </div>
+                    Para iPhone/iPad: escanea el código QR impreso en el sticker NFC del alumno.
+                  </div>
+                  <label class="form-label strong">Número de Serie del sticker NFC (leído por QR)</label>
+                  <div class="row g-2">
+                    <div class="col input-icon">
+                      <input type="text" name="tag-nfc" id="tag-qr-asigna" class="form-control" readonly />
+                      <span class="input-icon-addon">
+                        <div id="spinner-qr" class="spinner-border spinner-border-sm text-secondary" role="status" style="display:none;"></div>
+                      </span>
+                      <div class="invalid-feedback" id="qr-error"></div>
+                    </div>
+                  </div>
+                  <div id="qr-reader-asigna" class="mt-3" style="width:100%;"></div>
+                  <div id="qr-reader-asigna-status" class="text-muted small mt-1"></div>
+                </div>
+                <div class="card-footer">
+                  <div class="row align-items-center">
+                    <div class="col">Requiere cámara — compatible con Safari en iPhone/iPad</div>
+                    <div class="col-auto">
+                      <button type="submit" class="btn btn-primary btn-2" id="submit-asigna-qr"> Confirmar Lectura </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock page_body -%}
 
 
@@ -628,6 +775,151 @@
     if (!isValid) {
       e.preventDefault();
     }
+  });
+</script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+  // ── QR Tag handler for iPhone/iPad (mirrors NFC handler logic) ─────────────
+  function normalizeTag(raw) {
+    return (raw || '').replace(/:/g, '').toLowerCase().trim();
+  }
+
+  function createQRHandler(config) {
+    const { readerId, statusId, inputId, spinnerId, errorId, confirmBtnId, checkAssignment } = config;
+
+    let qrScanner = null;
+
+    const input = document.getElementById(inputId);
+    const spinner = document.getElementById(spinnerId);
+    const errorEl = document.getElementById(errorId);
+    const confirmBtn = document.getElementById(confirmBtnId);
+
+    function setError(msg) {
+      errorEl.textContent = msg;
+      input.classList.add('is-invalid');
+      input.classList.remove('is-valid');
+      spinner.style.display = 'none';
+      if (confirmBtn) confirmBtn.disabled = true;
+    }
+
+    function setSuccess() {
+      errorEl.textContent = '';
+      input.classList.remove('is-invalid');
+      input.classList.add('is-valid');
+      spinner.style.display = 'none';
+      if (confirmBtn) confirmBtn.disabled = false;
+    }
+
+    async function validateSerial(serial) {
+      spinner.style.display = 'block';
+      try {
+        const res = await fetch(`/pos/valida_tag/${serial}`);
+        const data = await res.json();
+
+        if (!res.ok) {
+          if (checkAssignment) {
+            setSuccess();
+          } else {
+            setError(data.error || 'TAG no encontrado');
+          }
+        } else {
+          if (checkAssignment) {
+            setError(data.mensaje || 'TAG ya está asignado a otro alumno');
+          } else {
+            setSuccess();
+          }
+        }
+      } catch (err) {
+        setError('Error al validar el TAG. Intente de nuevo.');
+      }
+    }
+
+    function startScanner() {
+      if (qrScanner) return;
+      if (!window.isSecureContext) {
+        setError('Se requiere HTTPS para acceder a la cámara.');
+        return;
+      }
+      const qr = new Html5Qrcode(readerId);
+      qrScanner = qr;
+      document.getElementById(statusId).textContent = 'Apunta la cámara al código QR del sticker…';
+      qr.start(
+        { facingMode: 'environment' },
+        { fps: 15, qrbox: 220 },
+        async (decoded) => {
+          const serial = normalizeTag(decoded);
+          input.value = serial;
+          document.getElementById(statusId).textContent = 'Código leído: ' + serial;
+          await qr.stop();
+          qrScanner = null;
+          await validateSerial(serial);
+        }
+      ).catch((err) => {
+        qrScanner = null;
+        setError('No se pudo iniciar la cámara: ' + err);
+      });
+    }
+
+    function stopScanner() {
+      if (qrScanner) {
+        qrScanner.stop().catch(() => {}).finally(() => { qrScanner = null; });
+      }
+    }
+
+    return { startScanner, stopScanner };
+  }
+
+  // ── Validación QR modal ────────────────────────────────────────────────────
+  const qrValidar = createQRHandler({
+    readerId: 'qr-reader-valida',
+    statusId: 'qr-reader-valida-status',
+    inputId: 'tag-qr-valida-input',
+    spinnerId: 'spinner-qr-valida',
+    errorId: 'qr-error-valida',
+    confirmBtnId: 'btn-confirmar-qr-valida',
+    checkAssignment: false,
+  });
+
+  const modalValidaQr = document.getElementById('modal-validacion-qr');
+  modalValidaQr.addEventListener('shown.bs.modal', () => qrValidar.startScanner());
+  modalValidaQr.addEventListener('hidden.bs.modal', () => qrValidar.stopScanner());
+
+  // ── Asignación QR modal ────────────────────────────────────────────────────
+  const qrAsignar = createQRHandler({
+    readerId: 'qr-reader-asigna',
+    statusId: 'qr-reader-asigna-status',
+    inputId: 'tag-qr-asigna',
+    spinnerId: 'spinner-qr',
+    errorId: 'qr-error',
+    confirmBtnId: null,
+    checkAssignment: true,
+  });
+
+  const modalRegistroQr = document.getElementById('modal-registro-qr');
+  modalRegistroQr.addEventListener('shown.bs.modal', () => qrAsignar.startScanner());
+  modalRegistroQr.addEventListener('hidden.bs.modal', () => qrAsignar.stopScanner());
+
+  // Form submission validation for QR assignment
+  document.getElementById('submit-asigna-qr').addEventListener('click', function (e) {
+    const tagInput = document.getElementById('tag-qr-asigna');
+    const selectEl = document.getElementById('alumno_sin_tag_qr');
+    const errorEl = document.getElementById('qr-error');
+    let isValid = true;
+
+    if (!tagInput.value || tagInput.classList.contains('is-invalid')) {
+      errorEl.textContent = 'Escanee un TAG válido antes de continuar.';
+      tagInput.classList.add('is-invalid');
+      isValid = false;
+    }
+
+    if (!selectEl.value) {
+      selectEl.classList.add('is-invalid');
+      isValid = false;
+    } else {
+      selectEl.classList.remove('is-invalid');
+    }
+
+    if (!isValid) e.preventDefault();
   });
 </script>
 <script>
