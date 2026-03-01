@@ -69,5 +69,9 @@ nav:
       - Abonar Saldo: como-hacer/abonar-saldo.md
       - Pedir Almuerzos del Casino: como-hacer/pedir-almuerzo.md
       - Consultar Datos Históricos: como-hacer/historial.md
+  - Cosas Administrativas:
+      - Gestor de Menús: admin/gestor-menus.md
+      - Asignar Tag a un Alumno: admin/tag-alumno.md
+      - Aprobar Abonos en Cafetería: admin/aprobar-abonos.md
   - Preguntas Frecuentes: faq/index.md
   - Glosario: glosario.md

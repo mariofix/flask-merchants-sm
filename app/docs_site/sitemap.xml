@@ -1,43 +1,59 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
-         <loc>https://localhost/docs/</loc>
-         <lastmod>2026-02-22</lastmod>
+         <loc>https://sabormirandiano.cl/docs/</loc>
+         <lastmod>2026-03-01</lastmod>
     </url>
     <url>
-         <loc>https://localhost/docs/glosario/</loc>
-         <lastmod>2026-02-22</lastmod>
+         <loc>https://sabormirandiano.cl/docs/glosario/</loc>
+         <lastmod>2026-03-01</lastmod>
     </url>
     <url>
-         <loc>https://localhost/docs/como-hacer/abonar-saldo/</loc>
-         <lastmod>2026-02-22</lastmod>
+         <loc>https://sabormirandiano.cl/docs/admin/aprobar-abonos/</loc>
+         <lastmod>2026-03-01</lastmod>
     </url>
     <url>
-         <loc>https://localhost/docs/como-hacer/ajustar-configuracion/</loc>
-         <lastmod>2026-02-22</lastmod>
+         <loc>https://sabormirandiano.cl/docs/admin/gestor-menus/</loc>
+         <lastmod>2026-03-01</lastmod>
     </url>
     <url>
-         <loc>https://localhost/docs/como-hacer/ficha-alumno/</loc>
-         <lastmod>2026-02-22</lastmod>
+         <loc>https://sabormirandiano.cl/docs/admin/tag-alumno/</loc>
+         <lastmod>2026-03-01</lastmod>
     </url>
     <url>
-         <loc>https://localhost/docs/como-hacer/historial-abonos/</loc>
-         <lastmod>2026-02-22</lastmod>
+         <loc>https://sabormirandiano.cl/docs/como-hacer/abonar-saldo/</loc>
+         <lastmod>2026-03-01</lastmod>
     </url>
     <url>
-         <loc>https://localhost/docs/como-hacer/historial-pedidos/</loc>
-         <lastmod>2026-02-22</lastmod>
+         <loc>https://sabormirandiano.cl/docs/como-hacer/ajustar-configuracion/</loc>
+         <lastmod>2026-03-01</lastmod>
     </url>
     <url>
-         <loc>https://localhost/docs/como-hacer/pedir-almuerzo/</loc>
-         <lastmod>2026-02-22</lastmod>
+         <loc>https://sabormirandiano.cl/docs/como-hacer/ficha-alumno/</loc>
+         <lastmod>2026-03-01</lastmod>
     </url>
     <url>
-         <loc>https://localhost/docs/como-hacer/registro-apoderado/</loc>
-         <lastmod>2026-02-22</lastmod>
+         <loc>https://sabormirandiano.cl/docs/como-hacer/historial-abonos/</loc>
+         <lastmod>2026-03-01</lastmod>
     </url>
     <url>
-         <loc>https://localhost/docs/faq/</loc>
-         <lastmod>2026-02-22</lastmod>
+         <loc>https://sabormirandiano.cl/docs/como-hacer/historial-pedidos/</loc>
+         <lastmod>2026-03-01</lastmod>
+    </url>
+    <url>
+         <loc>https://sabormirandiano.cl/docs/como-hacer/historial/</loc>
+         <lastmod>2026-03-01</lastmod>
+    </url>
+    <url>
+         <loc>https://sabormirandiano.cl/docs/como-hacer/pedir-almuerzo/</loc>
+         <lastmod>2026-03-01</lastmod>
+    </url>
+    <url>
+         <loc>https://sabormirandiano.cl/docs/como-hacer/registro-apoderado/</loc>
+         <lastmod>2026-03-01</lastmod>
+    </url>
+    <url>
+         <loc>https://sabormirandiano.cl/docs/faq/</loc>
+         <lastmod>2026-03-01</lastmod>
     </url>
 </urlset>

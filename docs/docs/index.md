@@ -13,7 +13,7 @@ Esta guía está dirigida a los apoderados que gestionan los pedidos de almuerzo
 | Perfil | Descripción |
 |---|---|
 | **Apoderado** | Familiar o tutor legal del alumno que gestiona las compras, abonos y preferencias de consumo. |
-| **Administrador** | Personal del casino o del colegio con acceso completo al sistema. |
+| **Administrador / POS** | Personal del casino o del colegio con acceso completo al sistema, incluyendo las guías administrativas. |
 
 ---
 
@@ -50,6 +50,34 @@ Esta guía está dirigida a los apoderados que gestionan los pedidos de almuerzo
     Respuestas a las dudas más comunes del personal y apoderados.
 
     [:octicons-arrow-right-24: Ver FAQ](faq/index.md)
+
+</div>
+
+---
+
+## Guías Administrativas
+
+Las siguientes guías están disponibles para el personal del casino con acceso al panel administrativo.
+
+<div class="grid cards" markdown>
+
+- :material-food-variant: **Gestor de Menús**
+
+    Cómo crear menús diarios asignando platos por curso, y cómo copiarlos a nuevas fechas.
+
+    [:octicons-arrow-right-24: Ver guía](admin/gestor-menus.md)
+
+- :material-nfc: **Asignar Tag a un Alumno**
+
+    Cómo generar un código QR o leer un tag NFC para identificar al alumno en el casino.
+
+    [:octicons-arrow-right-24: Ver guía](admin/tag-alumno.md)
+
+- :material-cash-check: **Aprobar Abonos en Cafetería**
+
+    Cómo confirmar y aprobar los pagos presenciales de abono de saldo en el panel administrativo.
+
+    [:octicons-arrow-right-24: Ver guía](admin/aprobar-abonos.md)
 
 </div>
 
