@@ -57,7 +57,7 @@ def create_app():
     if broker_url and broker_url.startswith("redis"):
         admin.add_view(
             SecureRedisCli(
-                _redis.from_url(broker_url),
+                _redis.from_url(broker_url, socket_connect_timeout=2),
                 name="Redis Cola",
                 endpoint="redis_broker",
                 category="Herramientas",
@@ -66,7 +66,7 @@ def create_app():
     if result_backend and result_backend.startswith("redis") and result_backend != broker_url:
         admin.add_view(
             SecureRedisCli(
-                _redis.from_url(result_backend),
+                _redis.from_url(result_backend, socket_connect_timeout=2),
                 name="Redis Resultados",
                 endpoint="redis_results",
                 category="Herramientas",
