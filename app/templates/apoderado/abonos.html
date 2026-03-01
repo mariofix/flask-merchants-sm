@@ -197,6 +197,12 @@
 
 {% block page_scripts %}
 <script>
+  // Umami — Journey anchor: apoderado browsed their deposit history
+  // Use in Journeys to map: dashboard → abonos → nuevo abono
+  document.addEventListener("DOMContentLoaded", function () {
+    if (typeof umami !== "undefined") { umami.track("apoderado_abonos_vista"); }
+  });
+
   const form = document.querySelector('.needs-validation');
 
   form.addEventListener('submit', (e) => {
