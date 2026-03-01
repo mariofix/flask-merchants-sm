@@ -77,8 +77,9 @@ class KhipuProvider(Provider):
             "cancel_url": cancel_url,
             "notify_api_version": "3.0",
         }
-        if self._notify_url:
-            params["notify_url"] = self._notify_url
+        notify_url = (metadata or {}).get("notify_url") or self._notify_url
+        if notify_url:
+            params["notify_url"] = notify_url
         if metadata and metadata.get("order_id"):
             params["transaction_id"] = str(metadata["order_id"])
 
