@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Registro de Apoderado – Sabor Mirandiano</title>
+  <style>
+    @page { size: letter portrait; margin: 0; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Georgia, 'Times New Roman', serif;
+      background: #fff;
+      color: #1a202c;
+      width: 8.5in;
+      height: 11in;
+      overflow: hidden;
+    }
+    .page {
+      width: 8.5in;
+      height: 11in;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Institutional header ── */
+    .header {
+      background: #0455A4;
+      color: white;
+      padding: .35in .65in .3in;
+    }
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: .18in;
+      padding-bottom: .18in;
+      border-bottom: 1px solid rgba(255,255,255,.35);
+    }
+    .logos { display: flex; align-items: center; gap: .3in; }
+    .logo-box {
+      background: rgba(255,255,255,.12);
+      border: 2px solid rgba(255,255,255,.4);
+      border-radius: 8px;
+      width: 1.15in;
+      height: .75in;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: .06in;
+    }
+    .logo-box.school { border-style: dashed; }
+    .logo-box span { font-size: 7.5pt; opacity: .85; text-align: center; line-height: 1.2; font-family: Arial, sans-serif; }
+    .header-org { text-align: right; }
+    .header-org .name { font-size: 12pt; font-weight: bold; font-family: Arial, sans-serif; }
+    .header-org .sub { font-size: 9pt; opacity: .8; font-family: Arial, sans-serif; margin-top: 2px; }
+    .header-title {
+      font-size: 22pt;
+      font-weight: bold;
+      font-family: Arial, sans-serif;
+      letter-spacing: .02em;
+    }
+    .header-subtitle {
+      font-size: 11pt;
+      opacity: .9;
+      font-family: Arial, sans-serif;
+      margin-top: .06in;
+    }
+
+    /* ── Intro box ── */
+    .intro {
+      background: #ebf8ff;
+      border-left: 5px solid #0455A4;
+      margin: .3in .6in .15in;
+      padding: .2in .25in;
+    }
+    .intro p {
+      font-family: Arial, sans-serif;
+      font-size: 11pt;
+      color: #2d3748;
+      line-height: 1.6;
+    }
+
+    /* ── Steps ── */
+    .steps-heading {
+      font-family: Arial, sans-serif;
+      font-size: 10pt;
+      font-weight: bold;
+      color: #0455A4;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      margin: .1in .6in .1in;
+    }
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: .12in;
+      padding: 0 .6in;
+      flex: 1;
+    }
+    .step {
+      display: flex;
+      border: 1.5px solid #bee3f8;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .step-num-col {
+      background: #0455A4;
+      color: white;
+      min-width: .72in;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: Arial, sans-serif;
+      font-size: 28pt;
+      font-weight: bold;
+    }
+    .step-body {
+      padding: .18in .22in;
+      flex: 1;
+    }
+    .step-body h2 {
+      font-family: Arial, sans-serif;
+      font-size: 13pt;
+      font-weight: bold;
+      color: #0455A4;
+      margin-bottom: .07in;
+    }
+    .step-body p {
+      font-family: Arial, sans-serif;
+      font-size: 10.5pt;
+      color: #2d3748;
+      line-height: 1.6;
+    }
+    .step:nth-child(even) .step-num-col { background: #2b6cb0; }
+
+    /* ── Footer ── */
+    .footer {
+      border-top: 2px solid #0455A4;
+      padding: .2in .6in .3in;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: .15in;
+    }
+    .footer-text { font-family: Arial, sans-serif; }
+    .footer-text h3 { font-size: 12pt; color: #0455A4; font-weight: bold; }
+    .footer-text p { font-size: 10pt; color: #4a5568; margin-top: .06in; line-height: 1.55; }
+    .qr-block { display: flex; align-items: center; gap: .15in; flex-direction: column; }
+    .qr-block img {
+      width: 1.1in;
+      height: 1.1in;
+      border: 2.5px solid #0455A4;
+      border-radius: 6px;
+      padding: .04in;
+      background: white;
+    }
+    .qr-caption { font-family: Arial, sans-serif; font-size: 8.5pt; color: #4a5568; text-align: center; line-height: 1.3; }
+
+    /* ── Bottom rule ── */
+    .bottom-rule {
+      height: .1in;
+      background: #0455A4;
+    }
+
+    @media print {
+      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Institutional header -->
+  <div class="header">
+    <div class="header-top">
+      <div class="logos">
+        <div class="logo-box">
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 11h16a1 1 0 0 1 1 1v.5c0 1.5-2.517 5.573-4 6.5v1a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1v-1C5.313 18.054 3 14.108 3 12.5V12a1 1 0 0 1 1-1"/>
+            <path d="M8 7c1.657 0 3-.895 3-2s-1.343-2-3-2-3 .895-3 2 1.343 2 3 2"/>
+            <path d="M11 5h9"/>
+          </svg>
+          <span>Sabor<br>Mirandiano</span>
+        </div>
+        <div class="logo-box school">
+          <span>Logo<br>Colegio</span>
+        </div>
+      </div>
+      <div class="header-org">
+        <div class="name">sabormirandiano.cl</div>
+        <div class="sub">Sistema de Casino Escolar</div>
+      </div>
+    </div>
+    <div class="header-title">Guía de Registro para Apoderados</div>
+    <div class="header-subtitle">Siga estos 4 pasos para crear su cuenta y administrar el casino de sus alumnos</div>
+  </div>
+
+  <!-- Intro -->
+  <div class="intro">
+    <p>Estimado/a apoderado/a: mediante este sistema usted podrá registrar a sus alumnos, realizar pedidos al casino escolar y efectuar pagos en línea de manera segura y conveniente. El proceso de registro toma menos de 5 minutos.</p>
+  </div>
+
+  <div class="steps-heading">Proceso de registro — Paso a paso</div>
+
+  <!-- Steps -->
+  <div class="steps">
+
+    <div class="step">
+      <div class="step-num-col">1</div>
+      <div class="step-body">
+        <h2>Creación de cuenta</h2>
+        <p>Ingrese a <strong>sabormirandiano.cl/register</strong> o escanee el código QR con su teléfono. Deberá indicar su correo electrónico, número de teléfono celular y crear una contraseña.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num-col">2</div>
+      <div class="step-body">
+        <h2>Confirmación de correo electrónico</h2>
+        <p>Recibirá un correo de confirmación. Haga clic en el enlace para activar su cuenta. Si no lo encuentra en su bandeja de entrada, revise la carpeta de correo no deseado (spam).</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num-col">3</div>
+      <div class="step-body">
+        <h2>Registro de alumnos</h2>
+        <p>Ingrese los datos de cada alumno: nombre completo, curso y edad. Puede registrar más de un alumno. Si corresponde, indique restricciones o alergias alimentarias.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num-col">4</div>
+      <div class="step-body">
+        <h2>Configuración de preferencias</h2>
+        <p>Defina límites de gasto diario o semanal y elija cómo recibir notificaciones. Una vez completado este paso, su cuenta quedará activa y podrá comenzar a usar el sistema.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <div class="footer-text">
+      <h3>¿Necesita asistencia?</h3>
+      <p>Consulte la documentación en <strong>sabormirandiano.cl/docs</strong><br>o diríjase a la oficina del casino escolar.</p>
+    </div>
+    <div class="qr-block">
+      <img src="{{ qr_uri }}" alt="QR código registro">
+      <div class="qr-caption">Escanee para<br>acceder al registro</div>
+    </div>
+  </div>
+
+  <div class="bottom-rule"></div>
+</div>
+</body>
+</html>

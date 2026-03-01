@@ -10,6 +10,7 @@ from flask_security.datastore import SQLAlchemyUserDatastore
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from .apoderado.route import apoderado_bp
+from .flyers.route import flyers_bp
 from .celery import celery_init_app
 from .docs import docs_bp
 from .database import db, migrations
@@ -183,6 +184,7 @@ def create_app():
     app.register_blueprint(pos_bp, url_prefix="/pos")
     app.register_blueprint(staff_bp, url_prefix="/staff")
     app.register_blueprint(docs_bp)
+    app.register_blueprint(flyers_bp)
 
     # Request-based scheduler for school staff periodic emails
     from .staff.scheduler import check_and_fire_staff_jobs

@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Cómo Registrarse – Sabor Mirandiano</title>
+  <style>
+    @page { size: letter portrait; margin: 0; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: #fff;
+      color: #1a202c;
+      width: 8.5in;
+      height: 11in;
+      overflow: hidden;
+    }
+    .page {
+      width: 8.5in;
+      height: 11in;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Two-column header ── */
+    .header {
+      display: flex;
+      align-items: stretch;
+      border-bottom: 3px solid #0455A4;
+    }
+    .header-blue {
+      background: #0455A4;
+      padding: .32in .45in .32in .55in;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .header-blue h1 {
+      font-size: 20pt;
+      color: white;
+      font-weight: 900;
+      line-height: 1.2;
+    }
+    .header-blue p {
+      font-size: 10pt;
+      color: rgba(255,255,255,.85);
+      margin-top: .08in;
+    }
+    .header-logos {
+      background: #ebf8ff;
+      padding: .25in .45in;
+      display: flex;
+      align-items: center;
+      gap: .25in;
+    }
+    .logo-box {
+      border: 2px solid #bee3f8;
+      border-radius: 8px;
+      width: 1.1in;
+      height: .75in;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: .05in;
+    }
+    .logo-box.school { border-style: dashed; border-color: #a0aec0; color: #a0aec0; }
+    .logo-box span { font-size: 7.5pt; color: #0455A4; font-weight: 700; text-align: center; line-height: 1.2; }
+    .logo-box.school span { color: #a0aec0; font-weight: normal; }
+
+    /* ── Intro bar ── */
+    .intro-bar {
+      background: #f7fafc;
+      padding: .18in .55in;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: .2in;
+    }
+    .intro-bar .icon-wrap {
+      width: .5in;
+      height: .5in;
+      background: #bee3f8;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .intro-bar p {
+      font-size: 11pt;
+      color: #2d3748;
+      line-height: 1.55;
+    }
+
+    /* ── Steps – numbered guide style ── */
+    .steps {
+      flex: 1;
+      padding: .22in .55in .05in;
+      display: flex;
+      flex-direction: column;
+      gap: .16in;
+    }
+    .step {
+      display: grid;
+      grid-template-columns: .62in 1fr;
+      gap: .18in;
+      align-items: start;
+    }
+    .step-badge {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .step-badge .num {
+      width: .55in;
+      height: .55in;
+      border-radius: 50%;
+      background: #0455A4;
+      color: white;
+      font-size: 22pt;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .step-badge .step-tag {
+      margin-top: .06in;
+      font-size: 7.5pt;
+      color: #718096;
+      text-align: center;
+      line-height: 1.2;
+    }
+    .step-content {
+      border-left: 3px solid #bee3f8;
+      padding-left: .18in;
+    }
+    .step-content h2 {
+      font-size: 13pt;
+      font-weight: bold;
+      color: #0455A4;
+      margin-bottom: .07in;
+    }
+    .step-content p {
+      font-size: 10.5pt;
+      color: #2d3748;
+      line-height: 1.6;
+    }
+    .step-content .tip {
+      margin-top: .07in;
+      background: #ebf8ff;
+      border-radius: 5px;
+      padding: .07in .12in;
+      font-size: 9.5pt;
+      color: #2b6cb0;
+    }
+    .step-content .tip strong { color: #0455A4; }
+
+    /* ── QR / Footer ── */
+    .footer {
+      background: #0455A4;
+      padding: .2in .55in .3in;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: .1in;
+    }
+    .footer-left h3 {
+      color: white;
+      font-size: 14pt;
+      font-weight: bold;
+    }
+    .footer-left p {
+      color: rgba(255,255,255,.85);
+      font-size: 10pt;
+      margin-top: .06in;
+      line-height: 1.5;
+    }
+    .footer-left .url {
+      color: #bee3f8;
+      font-size: 12pt;
+      font-weight: bold;
+      margin-top: .09in;
+      display: block;
+    }
+    .qr-col { text-align: center; }
+    .qr-col img {
+      width: 1.15in;
+      height: 1.15in;
+      background: white;
+      border-radius: 8px;
+      padding: .05in;
+      display: block;
+    }
+    .qr-col .qr-text {
+      color: rgba(255,255,255,.85);
+      font-size: 8.5pt;
+      margin-top: .06in;
+      line-height: 1.3;
+    }
+
+    @media print {
+      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header: blue title + logos -->
+  <div class="header">
+    <div class="header-blue">
+      <h1>Cómo Registrarse en<br>Sabor Mirandiano</h1>
+      <p>Guía paso a paso para apoderados · Casino Escolar Digital</p>
+    </div>
+    <div class="header-logos">
+      <div class="logo-box">
+        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0455A4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 11h16a1 1 0 0 1 1 1v.5c0 1.5-2.517 5.573-4 6.5v1a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1v-1C5.313 18.054 3 14.108 3 12.5V12a1 1 0 0 1 1-1"/>
+          <path d="M8 7c1.657 0 3-.895 3-2s-1.343-2-3-2-3 .895-3 2 1.343 2 3 2"/>
+          <path d="M11 5h9"/>
+        </svg>
+        <span>Sabor<br>Mirandiano</span>
+      </div>
+      <div class="logo-box school">
+        <span style="font-size:8pt;">Logo<br>Colegio</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Intro bar -->
+  <div class="intro-bar">
+    <div class="icon-wrap">
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0455A4" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/>
+        <path d="M12 8v4"/>
+        <path d="M12 16v.01"/>
+      </svg>
+    </div>
+    <p>Para comenzar a usar el sistema sólo necesita un correo electrónico y su número de teléfono celular. El proceso toma menos de 5 minutos.</p>
+  </div>
+
+  <!-- 4 Steps -->
+  <div class="steps">
+
+    <div class="step">
+      <div class="step-badge">
+        <div class="num">1</div>
+        <div class="step-tag">Registro</div>
+      </div>
+      <div class="step-content">
+        <h2>Ingrese a la página de registro</h2>
+        <p>Abra su navegador y vaya a <strong>sabormirandiano.cl/register</strong>, o apunte su teléfono al código QR de este volante. Complete los campos de correo electrónico, número de celular y contraseña.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-badge">
+        <div class="num" style="background:#2b6cb0;">2</div>
+        <div class="step-tag">Confirmación</div>
+      </div>
+      <div class="step-content">
+        <h2>Confirme su dirección de correo</h2>
+        <p>Recibirá un mensaje de correo electrónico con un enlace de verificación. Haga clic en ese enlace para activar su cuenta.</p>
+        <div class="tip"><strong>Consejo:</strong> Si no recibe el correo en 5 minutos, revise la carpeta de correo no deseado o spam.</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-badge">
+        <div class="num" style="background:#2c7a7b;">3</div>
+        <div class="step-tag">Alumnos</div>
+      </div>
+      <div class="step-content">
+        <h2>Registre los datos de sus alumnos</h2>
+        <p>Ingrese el nombre completo, curso y edad de cada hijo o hija. Puede registrar más de un alumno. Indique si tiene restricciones alimentarias (alergias, intolerancias, etc.).</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-badge">
+        <div class="num" style="background:#4299e1;">4</div>
+        <div class="step-tag">Configuración</div>
+      </div>
+      <div class="step-content">
+        <h2>Configure sus preferencias</h2>
+        <p>Establezca límites de gasto diario o semanal y elija recibir notificaciones por correo. Al terminar este paso, su cuenta estará completamente activa.</p>
+        <div class="tip"><strong>¡Listo!</strong> Ya puede revisar el menú, hacer pedidos y pagar en línea desde su celular o computador.</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Footer with QR -->
+  <div class="footer">
+    <div class="footer-left">
+      <h3>¿Necesita ayuda?</h3>
+      <p>Consulte la documentación en nuestro sitio web<br>o diríjase al personal del casino escolar.</p>
+      <span class="url">sabormirandiano.cl/docs</span>
+    </div>
+    <div class="qr-col">
+      <img src="{{ qr_uri }}" alt="QR Registro">
+      <div class="qr-text">Escanee con su<br>teléfono para registrarse</div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

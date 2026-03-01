@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Únete a Sabor Mirandiano</title>
+  <style>
+    @page { size: letter portrait; margin: 0; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #fff;
+      width: 8.5in;
+      height: 11in;
+      overflow: hidden;
+    }
+    .page {
+      width: 8.5in;
+      height: 11in;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Vibrant top section ── */
+    .top-section {
+      background: linear-gradient(135deg, #0455A4 0%, #4299e1 60%, #63b3ed 100%);
+      padding: .4in .6in .35in;
+      color: white;
+    }
+    .top-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: .2in;
+    }
+    .logos { display: flex; gap: .25in; }
+    .logo-pill {
+      background: rgba(255,255,255,.2);
+      border: 1.5px solid rgba(255,255,255,.5);
+      border-radius: 50px;
+      padding: .08in .22in;
+      display: flex;
+      align-items: center;
+      gap: .1in;
+      font-size: 9pt;
+      font-weight: 600;
+    }
+    .logo-pill.school { border-style: dashed; font-size: 8.5pt; opacity: .85; }
+    .site-tag {
+      background: rgba(255,255,255,.15);
+      border-radius: 8px;
+      padding: .07in .18in;
+      font-size: 10pt;
+      font-weight: 700;
+      letter-spacing: .02em;
+    }
+    .top-hero h1 {
+      font-size: 34pt;
+      font-weight: 900;
+      line-height: 1.05;
+    }
+    .top-hero h1 .highlight {
+      background: rgba(255,255,255,.25);
+      border-radius: 6px;
+      padding: 0 .1in;
+      display: inline;
+    }
+    .top-hero p {
+      margin-top: .12in;
+      font-size: 12.5pt;
+      opacity: .92;
+    }
+
+    /* ── Steps cards ── */
+    .cards-section {
+      flex: 1;
+      padding: .28in .5in .15in;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .2in;
+    }
+    .card {
+      border-radius: 14px;
+      overflow: hidden;
+      border: 2px solid #e2e8f0;
+      display: flex;
+      flex-direction: column;
+    }
+    .card-header {
+      padding: .15in .22in .12in;
+      display: flex;
+      align-items: center;
+      gap: .14in;
+    }
+    .card-num {
+      width: .48in;
+      height: .48in;
+      border-radius: 50%;
+      color: white;
+      font-size: 22pt;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .card-header h2 {
+      font-size: 13.5pt;
+      font-weight: 800;
+      color: #1a202c;
+    }
+    .card-body {
+      padding: .05in .22in .22in;
+      flex: 1;
+    }
+    .card-body p {
+      font-size: 10pt;
+      color: #4a5568;
+      line-height: 1.55;
+    }
+    /* Step colors */
+    .c1 .card-header { background: #ebf8ff; }
+    .c1 .card-num { background: #0455A4; }
+    .c2 .card-header { background: #e6fffa; }
+    .c2 .card-num { background: #2b6cb0; }
+    .c3 .card-header { background: #fffaf0; }
+    .c3 .card-num { background: #2c7a7b; }
+    .c4 .card-header { background: #faf5ff; }
+    .c4 .card-num { background: #4299e1; }
+
+    /* ── Bottom section ── */
+    .bottom-section {
+      background: #f7fafc;
+      border-top: 2px solid #e2e8f0;
+      padding: .18in .5in .28in;
+      display: flex;
+      align-items: center;
+      gap: .35in;
+    }
+    .qr-wrap {
+      flex-shrink: 0;
+      text-align: center;
+    }
+    .qr-wrap img {
+      width: 1.15in;
+      height: 1.15in;
+      border: 3px solid #0455A4;
+      border-radius: 10px;
+      padding: .05in;
+      background: white;
+      display: block;
+    }
+    .qr-wrap .qr-caption {
+      font-size: 8pt;
+      color: #718096;
+      margin-top: .05in;
+      line-height: 1.3;
+    }
+    .bottom-text h3 {
+      font-size: 15pt;
+      font-weight: 900;
+      color: #0455A4;
+    }
+    .bottom-text p {
+      font-size: 10.5pt;
+      color: #4a5568;
+      margin-top: .08in;
+      line-height: 1.5;
+    }
+    .bottom-text .url-chip {
+      display: inline-block;
+      background: #0455A4;
+      color: white;
+      border-radius: 50px;
+      padding: .04in .18in;
+      font-size: 10pt;
+      font-weight: 700;
+      margin-top: .1in;
+    }
+
+    @media print {
+      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Top vibrant section -->
+  <div class="top-section">
+    <div class="top-header">
+      <div class="logos">
+        <div class="logo-pill">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 11h16a1 1 0 0 1 1 1v.5c0 1.5-2.517 5.573-4 6.5v1a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1v-1C5.313 18.054 3 14.108 3 12.5V12a1 1 0 0 1 1-1"/>
+            <path d="M8 7c1.657 0 3-.895 3-2s-1.343-2-3-2-3 .895-3 2 1.343 2 3 2"/>
+            <path d="M11 5h9"/>
+          </svg>
+          Sabor Mirandiano
+        </div>
+        <div class="logo-pill school">📍 Logo Colegio</div>
+      </div>
+      <div class="site-tag">sabormirandiano.cl</div>
+    </div>
+    <div class="top-hero">
+      <h1>¡Únete y lleva el<br>casino <span class="highlight">en tu mano</span>!</h1>
+      <p>Registra a tus alumnos y haz pedidos al casino escolar en línea.</p>
+    </div>
+  </div>
+
+  <!-- 4 Step Cards -->
+  <div class="cards-section">
+    <div class="card c1">
+      <div class="card-header">
+        <div class="card-num">1</div>
+        <h2>Crea tu cuenta</h2>
+      </div>
+      <div class="card-body">
+        <p>Ve a <strong>sabormirandiano.cl/register</strong> o escanea el código QR. Ingresa tu correo electrónico, número de celular y una contraseña segura.</p>
+      </div>
+    </div>
+
+    <div class="card c2">
+      <div class="card-header">
+        <div class="card-num">2</div>
+        <h2>Confirma tu correo</h2>
+      </div>
+      <div class="card-body">
+        <p>Te enviaremos un correo de confirmación. Haz clic en el enlace para activar tu cuenta. Revisa también en la carpeta de spam.</p>
+      </div>
+    </div>
+
+    <div class="card c3">
+      <div class="card-header">
+        <div class="card-num">3</div>
+        <h2>Registra tus alumnos</h2>
+      </div>
+      <div class="card-body">
+        <p>Ingresa el nombre completo, curso y edad de cada alumno. También puedes indicar alergias o restricciones alimentarias.</p>
+      </div>
+    </div>
+
+    <div class="card c4">
+      <div class="card-header">
+        <div class="card-num">4</div>
+        <h2>¡Configura y disfruta!</h2>
+      </div>
+      <div class="card-body">
+        <p>Personaliza notificaciones, establece límites de gasto y comienza a hacer pedidos al casino. ¡Todo en un mismo lugar!</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom: QR + CTA -->
+  <div class="bottom-section">
+    <div class="qr-wrap">
+      <img src="{{ qr_uri }}" alt="QR registro">
+      <div class="qr-caption">Escanea para<br>registrarte ahora</div>
+    </div>
+    <div class="bottom-text">
+      <h3>¿Empezamos?</h3>
+      <p>Es gratis y sólo toma unos minutos. Gestiona todo el tema del casino de tus hijos fácilmente desde tu celular o computador.</p>
+      <span class="url-chip">sabormirandiano.cl/register</span>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
