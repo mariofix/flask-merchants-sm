@@ -21,13 +21,17 @@ Example - manual registration::
 Example - automatic registration (pass ``admin=`` to FlaskMerchants)::
 
     from flask import Flask
+    from flask_sqlalchemy import SQLAlchemy
     from flask_admin import Admin
     from flask_merchants import FlaskMerchants
+    from flask_merchants.models import Base, Payment
 
     app = Flask(__name__)
+    db = SQLAlchemy(model_class=Base)
     admin = Admin(app, name="My Shop")
-    ext = FlaskMerchants(app, admin=admin)
-    # PaymentView and ProvidersView are automatically added under category="Merchants"
+    ext = FlaskMerchants(app, db=db, models=[Payment], admin=admin)
+    # A plain ModelView for Payment (can_view_details=True) and a ProvidersView
+    # are automatically added under category="Merchants".
 """
 
 from __future__ import annotations
@@ -519,12 +523,19 @@ def register_admin_views(
 ) -> None:
     """Register the standard Merchants admin views into *admin*.
 
-    This registers :class:`PaymentView` and :class:`ProvidersView` under
-    ``category="Merchants"``.  It is called automatically when you pass
-    ``admin=`` to :class:`~flask_merchants.FlaskMerchants`::
+    When a SQLAlchemy *db* was supplied to the extension a plain
+    :class:`~flask_admin.contrib.sqla.ModelView` with ``can_view_details=True``
+    is registered for each payment model class.  When no *db* is configured
+    the in-memory :class:`PaymentView` is used as a fallback.
+
+    :class:`ProvidersView` is always registered under ``category="Merchants"``.
+
+    Called automatically when you pass ``admin=`` to
+    :class:`~flask_merchants.FlaskMerchants`::
 
         admin = Admin(app, name="My Shop")
-        ext = FlaskMerchants(app, admin=admin)
+        ext = FlaskMerchants(app, db=db, models=[Payment], admin=admin)
+        # A ModelView for Payment and a ProvidersView are added automatically.
 
     You can also call it manually if you need finer control::
 
@@ -541,14 +552,33 @@ def register_admin_views(
         payment_name: Display name for the Payments menu item.
         provider_name: Display name for the Providers menu item.
     """
-    admin.add_view(
-        PaymentView(
-            ext,
-            name=payment_name,
-            endpoint="merchants_payments",
-            category="Merchants",
+    if ext._db is not None:
+        from flask_admin.contrib.sqla import ModelView as SqlaModelView
+
+        class _PaymentSqlaView(SqlaModelView):
+            can_view_details = True
+
+        for model_cls in ext._get_model_classes():
+            endpoint = f"merchants_{model_cls.__tablename__}"
+            admin.add_view(
+                _PaymentSqlaView(
+                    model_cls,
+                    ext._db.session,
+                    name=payment_name,
+                    endpoint=endpoint,
+                    category="Merchants",
+                )
+            )
+    else:
+        admin.add_view(
+            PaymentView(
+                ext,
+                name=payment_name,
+                endpoint="merchants_payments",
+                category="Merchants",
+            )
         )
-    )
+
     admin.add_view(
         ProvidersView(
             ext,

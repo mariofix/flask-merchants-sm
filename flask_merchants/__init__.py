@@ -270,10 +270,14 @@ class FlaskMerchants:
             models: A list of SQLAlchemy model classes (each mixing in
                 :class:`~flask_merchants.models.PaymentMixin`).  Overrides the
                 value passed to ``__init__``.
-            admin: A :class:`flask_admin.Admin` instance.  When supplied,
-                :class:`~flask_merchants.contrib.admin.PaymentView` and
-                :class:`~flask_merchants.contrib.admin.ProvidersView` are
-                automatically registered under ``category="Merchants"``.
+            admin: A :class:`flask_admin.Admin` instance.  When supplied and
+                a *db* is configured, a :class:`~flask_admin.contrib.sqla.ModelView`
+                with ``can_view_details=True`` is automatically registered for
+                each payment model class under ``category="Merchants"``.  When
+                no *db* is configured the in-memory
+                :class:`~flask_merchants.contrib.admin.PaymentView` is used as
+                a fallback.  :class:`~flask_merchants.contrib.admin.ProvidersView`
+                is always added.
                 Overrides the value passed to ``__init__``.
 
         Any providers supplied via *provider* / *providers* are registered into

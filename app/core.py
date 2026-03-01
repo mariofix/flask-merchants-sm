@@ -101,7 +101,7 @@ def create_app():
     providers.append(SaldoProvider())
 
     # merchants
-    flask_merchants.init_app(app=app, db=db, models=[Payment], providers=providers)
+    flask_merchants.init_app(app=app, db=db, models=[Payment], admin=admin, providers=providers)
 
     # Register Khipu abono approval webhook handler.
     # When Khipu notifies /merchants/webhook/khipu that a payment succeeded,
