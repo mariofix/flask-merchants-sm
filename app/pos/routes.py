@@ -5,7 +5,7 @@ from flask_security import current_user, login_required, roles_accepted
 
 from ..database import db
 from ..extensions import limiter
-from ..model import EstadoPedido, Pedido, Abono, Payment, Alumno, MenuDiario
+from ..model import EstadoPedido, Pedido, Abono, Payment, Alumno, MenuDiario, Settings
 from .crud import PosController
 
 # from .reader import registra_lectura
@@ -144,6 +144,30 @@ def casino():
 def lector():
     """Standalone kiosk NFC reader: full-screen canteen tag scanner for the mounted phone."""
     return render_template("pos/lector.html")
+
+
+@pos_bp.route("/lector-qr", methods=["GET"])
+@roles_accepted("admin", "pos")
+def lector_qr():
+    """Standalone kiosk QR reader: full-screen canteen QR scanner for the mounted phone.
+
+    Camera facing mode is fixed by the Settings row with slug 'camara-lector-qr-casino'.
+    Accepted values: 'frontal' (front camera) or 'trasera' (rear camera, default).
+    """
+    setting = db.session.execute(
+        db.select(Settings).filter_by(slug="camara-lector-qr-casino")
+    ).scalar_one_or_none()
+
+    camara_val = setting.value if setting and setting.value is not None else None
+    if isinstance(camara_val, str):
+        camara = camara_val
+    elif isinstance(camara_val, dict):
+        camara = camara_val.get("camara") or camara_val.get("value") or ""
+    else:
+        camara = ""
+
+    facing_mode = "user" if camara == "frontal" else "environment"
+    return render_template("pos/lector-qr.html", facing_mode=facing_mode)
 
 
 @pos_bp.route("/kiosko", methods=["GET"])
