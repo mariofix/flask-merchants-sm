@@ -184,3 +184,13 @@
   </div>
 </div>
 {% endblock page_body %}
+
+{% block page_scripts %}
+<script>
+  // Umami — Journey anchor: apoderado browsed their lunch order history
+  // Use in Journeys to map: dashboard → almuerzos → nuevo pedido
+  document.addEventListener("DOMContentLoaded", function () {
+    if (typeof umami !== "undefined") { umami.track("apoderado_almuerzos_vista"); }
+  });
+</script>
+{% endblock page_scripts %}

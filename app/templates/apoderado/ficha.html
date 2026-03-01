@@ -237,4 +237,10 @@
   });
 </script>
 {% endif %}
+<script>
+  // Umami — Journey anchor: apoderado viewed a student's card (engagement with student management)
+  document.addEventListener('DOMContentLoaded', function () {
+    if (typeof umami !== "undefined") { umami.track("apoderado_ficha_alumno_vista"); }
+  });
+</script>
 {% endblock page_scripts %}

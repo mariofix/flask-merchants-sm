@@ -57,12 +57,21 @@
   </div>
 </div>
 <script>
+  // Umami — Registration funnel step 1: visitor reached the sign-up page
+  document.addEventListener("DOMContentLoaded", function () {
+    if (typeof umami !== "undefined") { umami.track("usuario_registro_inicio"); }
+  });
+
   const register_form = document.querySelector('.needs-validation');
 
   register_form.addEventListener('submit', (e) => {
     if (!register_form.checkValidity()) {
       e.preventDefault();
       e.stopPropagation();
+    } else {
+      // Umami — Registration funnel step 2: form passed validation, user clicked "Crear Cuenta"
+      // Goal "Cuenta Creada" — gap vs usuario_registro_inicio reveals drop-off before account creation
+      if (typeof umami !== "undefined") { umami.track("usuario_registro_completado"); }
     }
 
     register_form.classList.add('was-validated');
