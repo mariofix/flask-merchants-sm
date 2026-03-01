@@ -8,16 +8,18 @@
         position: relative;
     }
 
-    .nfc-scan-btn {
+    .nfc-btn-group {
         position: absolute;
         right: 5px;
         top: 50%;
         transform: translateY(-50%);
         z-index: 5;
+        display: flex;
+        gap: 4px;
     }
 
     #tag-input {
-        padding-right: 140px;
+        padding-right: 230px;
     }
 
     .nfc-spinner {
@@ -55,16 +57,29 @@
             input.parentNode.insertBefore(wrapper, input);
             wrapper.appendChild(input);
 
+            // Crear grupo de botones
+            const btnGroup = document.createElement('div');
+            btnGroup.className = 'nfc-btn-group';
+            wrapper.appendChild(btnGroup);
+
+            // Crear botón de generación de QR
+            const btnGenerate = document.createElement('button');
+            btnGenerate.type = 'button';
+            btnGenerate.className = 'btn btn-sm btn-success';
+            btnGenerate.id = 'btn-generate-qr';
+            btnGenerate.textContent = 'Generar QR';
+            btnGroup.appendChild(btnGenerate);
+
             // Crear botón de escaneo
             const btnScan = document.createElement('button');
             btnScan.type = 'button';
-            btnScan.className = 'btn btn-sm btn-primary nfc-scan-btn';
+            btnScan.className = 'btn btn-sm btn-primary';
             btnScan.id = 'btn-nfc-scan';
             btnScan.innerHTML = `
       <span class="spinner-border spinner-border-sm nfc-spinner" id="nfc-spinner" role="status"></span>
       <span id="btn-nfc-text">📡 Escanear</span>
     `;
-            wrapper.appendChild(btnScan);
+            btnGroup.appendChild(btnScan);
 
             // Crear elemento de error
             const errorDiv = document.createElement('div');
@@ -99,6 +114,25 @@
                 input.classList.remove('is-invalid');
                 input.classList.remove('is-valid');
             }
+
+            function generateYoutubeId() {
+                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-';
+                let result = '';
+                const array = new Uint8Array(8);
+                crypto.getRandomValues(array);
+                for (let i = 0; i < 8; i++) {
+                    result += chars[array[i] % chars.length];
+                }
+                return result;
+            }
+
+            btnGenerate.addEventListener('click', function () {
+                clearError();
+                const id = generateYoutubeId();
+                input.value = id;
+                input.readOnly = false;
+                setSuccess();
+            });
 
             async function escanearNFC() {
                 clearError();

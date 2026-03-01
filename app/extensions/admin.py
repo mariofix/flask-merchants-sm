@@ -2,6 +2,7 @@ import os
 import os.path as op
 
 from flask import flash, request, redirect, abort, url_for, current_app
+from markupsafe import Markup, escape
 from pathlib import Path
 from flask_admin import Admin, AdminIndexView, BaseView, expose
 from flask_admin.actions import action
@@ -279,6 +280,20 @@ class ApoderadoAdminView(SecureModelView):
             flash(f"Error al vaciar tabla: {exc}", "error")
 
 
+def _alumno_tag_formatter(view, context, model, name):
+    tag = model.tag
+    if not tag:
+        return ''
+    safe_tag = escape(tag)
+    return Markup(
+        f'<div style="display:flex;flex-direction:column;align-items:center;gap:4px">'
+        f'<div class="qr-code-container" data-tag="{safe_tag}"></div>'
+        f'<small style="font-size:0.7em;word-break:break-all;text-align:center;'
+        f'max-width:90px;font-family:monospace">{safe_tag}</small>'
+        f'</div>'
+    )
+
+
 class AlumnoAdminView(SecureModelView):
 
     column_list = [
@@ -289,6 +304,13 @@ class AlumnoAdminView(SecureModelView):
         "maximo_semanal",
         "tag",
         "created",
+    ]
+
+    column_formatters = {"tag": _alumno_tag_formatter}
+
+    extra_js = [
+        "/static/tabler/libs/qrcodejs/qrcode.min.js",
+        "/static/tabler/js/alumno-qr-init.js",
     ]
 
     form_overrides = {"tag": StringField}
