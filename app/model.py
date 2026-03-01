@@ -67,6 +67,14 @@ class Payment(db.Model, PaymentMixin):
         viewonly=True,
     )
 
+    abono: Mapped["Abono | None"] = relationship(
+        "Abono",
+        primaryjoin="Payment.session_id == foreign(Abono.codigo)",
+        back_populates="payment",
+        uselist=False,
+        viewonly=True,
+    )
+
     def __str__(self):
         return f"{self.id}"
 
@@ -83,6 +91,14 @@ class Abono(db.Model, Timestamp):
 
     apoderado_id: Mapped[int] = mapped_column(ForeignKey("casino_apoderado.id"))
     apoderado: Mapped["Apoderado"] = relationship(back_populates="abonos")
+
+    payment: Mapped["Payment | None"] = relationship(
+        "Payment",
+        primaryjoin="foreign(Abono.codigo) == Payment.session_id",
+        back_populates="abono",
+        uselist=False,
+        viewonly=True,
+    )
 
     def __str__(self):
         return f"{self.codigo}"
