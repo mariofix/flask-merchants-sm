@@ -23,7 +23,7 @@ class StripeProvider(Provider):
     - Stripe-style status strings in state normalisation.
 
     .. note::
-        This is a stub – it does not call the real Stripe API.
+        This is a stub - it does not call the real Stripe API.
         Replace ``base_url`` and inject a real transport to connect to Stripe.
 
     Args:

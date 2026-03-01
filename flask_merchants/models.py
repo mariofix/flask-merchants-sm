@@ -90,7 +90,7 @@ class PaymentMixin:
         """Reject unknown state values at the SQLAlchemy attribute level.
 
         SQLAlchemy calls this automatically whenever ``state`` is assigned,
-        including during bulk operations and direct ORM updates – giving a
+        including during bulk operations and direct ORM updates - giving a
         single, reliable place to enforce the payment lifecycle invariant
         regardless of which code path triggered the change.
 

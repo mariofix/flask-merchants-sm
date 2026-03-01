@@ -37,7 +37,7 @@ class PaymentsResource:
             metadata: Optional key-value pairs passed to the provider.
 
         Returns:
-            :class:`~merchants.models.CheckoutSession` – redirect the user to
+            :class:`~merchants.models.CheckoutSession` - redirect the user to
             ``session.redirect_url``.
 
         Raises:

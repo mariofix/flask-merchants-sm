@@ -28,7 +28,7 @@ def _get_view():
 
 
 # ---------------------------------------------------------------------------
-# is_accessible – role-based access control
+# is_accessible - role-based access control
 # ---------------------------------------------------------------------------
 
 class TestGestorMenuViewIsAccessible:
@@ -94,7 +94,7 @@ class TestGestorMenuViewIsAccessible:
 
 
 # ---------------------------------------------------------------------------
-# crear_plato – business logic
+# crear_plato - business logic
 # ---------------------------------------------------------------------------
 
 class TestCrearPlato:
@@ -146,7 +146,7 @@ class TestCrearPlato:
 
 
 # ---------------------------------------------------------------------------
-# crear_menu – business logic
+# crear_menu - business logic
 # ---------------------------------------------------------------------------
 
 class TestCrearMenu:
@@ -195,7 +195,7 @@ class TestCrearMenu:
 
 
 # ---------------------------------------------------------------------------
-# copiar_menu – business logic
+# copiar_menu - business logic
 # ---------------------------------------------------------------------------
 
 class TestCopiarMenu:
@@ -256,7 +256,7 @@ class TestCopiarMenu:
 
 
 # ---------------------------------------------------------------------------
-# crear_menu_dia_form – dedicated GET form endpoint
+# crear_menu_dia_form - dedicated GET form endpoint
 # ---------------------------------------------------------------------------
 
 class TestCrearMenuDiaForm:
@@ -305,7 +305,7 @@ class TestCrearMenuDiaForm:
 
 
 # ---------------------------------------------------------------------------
-# crear_menu POST – error redirects go to dedicated form (not index)
+# crear_menu POST - error redirects go to dedicated form (not index)
 # ---------------------------------------------------------------------------
 
 class TestCrearMenuPostRedirects:

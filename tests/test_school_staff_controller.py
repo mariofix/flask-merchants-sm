@@ -156,7 +156,7 @@ class TestPuedeComprar:
 
     def test_over_limit_returns_false(self, db_session, sample_staff):
         from app.model import SchoolStaffPedido, EstadoPedido
-        # Add debt of 45000, limit is 50000 — can't add 10000 more
+        # Add debt of 45000, limit is 50000 - can't add 10000 more
         p = SchoolStaffPedido()
         p.staff_id = sample_staff.id
         p.precio_total = Decimal(45000)

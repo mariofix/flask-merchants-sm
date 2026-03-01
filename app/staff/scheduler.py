@@ -5,7 +5,7 @@ whether the monthly billing email or the weekly standing-bill email is due,
 fires the matching Celery task, and records the run time in the ``Settings``
 table so it does not fire again in the same window.
 
-Configuration (all optional — safe defaults are used when absent):
+Configuration (all optional - safe defaults are used when absent):
 
 ``STAFF_INFORME_MENSUAL_DIA``
     Day-of-month (int, 1-31) on which the monthly billing email is sent.
@@ -72,7 +72,7 @@ def _set_last_run(slug: str, dt: datetime) -> None:
 def check_and_fire_staff_jobs() -> None:
     """Check if any periodic staff email job is due and fire it.
 
-    Safe to call on every request — exits quickly when nothing is due.
+    Safe to call on every request - exits quickly when nothing is due.
     Catches all exceptions so a scheduler error never breaks a user request.
     """
     try:

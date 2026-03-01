@@ -70,7 +70,7 @@ def _in_scope_get_routes(app):
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Fixture — full app backed by SQLite in-memory
+# Fixture - full app backed by SQLite in-memory
 # ──────────────────────────────────────────────────────────────────────────────
 
 

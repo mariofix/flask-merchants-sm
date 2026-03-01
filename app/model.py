@@ -210,7 +210,7 @@ class SchoolStaff(db.Model, Timestamp):
     usuario_id: Mapped[int] = mapped_column(ForeignKey("user.id"), unique=True)
     usuario: Mapped["User"] = relationship(back_populates="school_staff")
 
-    # Billing — None means unlimited credit
+    # Billing - None means unlimited credit
     limite_cuenta: Mapped[int | None] = mapped_column(default=None, nullable=True)
 
     # Notification preferences
@@ -366,14 +366,14 @@ class OrdenCasino(db.Model, Timestamp):
 
     id: Mapped[int] = mapped_column(primary_key=True)
 
-    # Hard string copy of the originating pedido — intentionally not a FK so
+    # Hard string copy of the originating pedido - intentionally not a FK so
     # the record survives if the pedido is ever deleted.
     pedido_codigo: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
 
     alumno_id: Mapped[int] = mapped_column(ForeignKey("alumno.id"), index=True)
     alumno: Mapped["Alumno"] = relationship("Alumno")
 
-    # Hard string copies of the menu — intentionally no FK so the record
+    # Hard string copies of the menu - intentionally no FK so the record
     # survives if the MenuDiario is ever deleted.
     menu_slug: Mapped[str] = mapped_column(String(255), nullable=False)
     menu_descripcion: Mapped[str | None] = mapped_column(String(2048), nullable=True)

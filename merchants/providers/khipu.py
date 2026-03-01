@@ -1,4 +1,4 @@
-"""Khipu provider – wraps the ``khipu-tools`` package."""
+"""Khipu provider - wraps the ``khipu-tools`` package."""
 from __future__ import annotations
 
 import json
