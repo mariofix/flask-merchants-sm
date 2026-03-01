@@ -9,19 +9,23 @@ Para que sus alumnos puedan pedir almuerzos en el casino, su cuenta debe tener *
 1. Inicie sesión y acceda al menú principal.
 2. Haga clic en **Abonar Saldo** en el panel de navegación.
 3. Ingrese el **monto** que desea abonar (en pesos chilenos).
+    - **Mínimo:** $2.000
+    - **Máximo:** $100.000
 4. Seleccione la **forma de pago**:
 
-=== "Pago en Cafetería"
-    - Seleccione **Cafetería** como forma de pago.
-    - El sistema generará un código de pago y registrará el abono como **pendiente**.
-    - Acérquese a la caja del casino con el código para completar el pago presencialmente.
+=== "Transferencia Electrónica (Khipu)"
+    - Seleccione **Transferencia Electrónica** como forma de pago.
+    - Haga clic en **Abonar** y será redirigido automáticamente a **Khipu** para completar el pago en línea.
+    - Puede pagar desde la aplicación de su banco o siguiendo las instrucciones en pantalla.
+    - Una vez confirmado el pago, el saldo se acredita automáticamente en su cuenta.
 
-=== "Transferencia Bancaria"
-    - Seleccione **Transferencia** como forma de pago.
-    - Realice la transferencia a la cuenta bancaria del casino indicada en el correo de confirmación.
-    - El personal del casino actualizará su saldo una vez verificado el depósito.
+=== "Efectivo / Tarjetas en Cafetería"
+    - Seleccione **Efectivo/Tarjetas** como forma de pago.
+    - El sistema generará un **código de pago** y registrará el abono.
+    - Acérquese a la caja del casino con el código para completar el pago presencialmente (efectivo o tarjeta).
+    - El personal del casino confirmará el pago y acreditará el saldo.
 
-5. Haga clic en **Confirmar Abono**.
+5. Haga clic en **Abonar**.
 
 ---
 
@@ -44,7 +48,7 @@ Tras confirmar el abono, el sistema muestra la página de **Detalle del Abono** 
 | Estado | Descripción |
 |---|---|
 | **Creado** | El abono fue registrado, aún no hay confirmación de pago. |
-| **Procesando** | El pago está en proceso de verificación (pago en cafetería). |
+| **Procesando** | El pago está en proceso de verificación (pago presencial en cafetería). |
 | **Completado** | El saldo fue acreditado exitosamente a su cuenta. |
 | **Cancelado** | El abono fue cancelado. El saldo no fue acreditado. |
 
@@ -53,14 +57,17 @@ Tras confirmar el abono, el sistema muestra la página de **Detalle del Abono** 
 ## Preguntas frecuentes
 
 ??? question "¿Cuánto tiempo demora en acreditarse el saldo?"
-    - **Pago en cafetería**: El saldo se acredita al momento del pago presencial.
-    - **Transferencia bancaria**: Hasta 24 horas hábiles después de realizada la transferencia.
+    - **Transferencia Electrónica (Khipu)**: El saldo se acredita automáticamente una vez que Khipu confirma el pago, generalmente en segundos.
+    - **Pago en cafetería**: El saldo se acredita al momento en que el personal del casino confirma el pago presencial.
 
-??? question "¿Cuál es el monto mínimo de abono?"
-    El monto mínimo puede variar. Consulte con el personal del casino para conocer el mínimo vigente.
+??? question "¿Cuál es el monto mínimo y máximo de abono?"
+    El monto mínimo es **$2.000** y el máximo es **$100.000** por operación.
 
 ??? question "¿Puedo abonar saldo para varios alumnos a la vez?"
     El saldo se acredita a la **cuenta del apoderado**, no por alumno individual. Todos sus alumnos registrados comparten el saldo de la cuenta.
 
-??? question "¿Qué pasa si realizo una transferencia por un monto incorrecto?"
-    Contacte al personal del casino con el comprobante de transferencia para que puedan corregir el monto manualmente.
+??? question "¿Qué pasa si realizo el pago por un monto incorrecto?"
+    Contacte al personal del casino con el comprobante de pago para que puedan corregir el monto manualmente.
+
+??? question "¿Puedo usar el saldo de mi cuenta para pagar los almuerzos directamente?"
+    Sí. Al momento de confirmar un pedido de almuerzo, puede elegir pagar total o parcialmente con el **saldo disponible** en su cuenta.

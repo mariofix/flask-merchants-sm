@@ -1,7 +1,10 @@
 site_name: Manual de Operaciones — Casino Sabor Mirandiano
 site_description: Guía de operaciones para el personal de casino y administradores
 site_author: Sabor Mirandiano
-site_url: https://localhost/docs/
+site_url: https://sabormirandiano.cl/docs/
+
+repo_url: https://sabormirandiano.cl
+repo_name: Portal de Apoderados
 
 docs_dir: docs
 site_dir: ../app/docs_site
@@ -11,13 +14,13 @@ theme:
   language: es
   palette:
     - scheme: default
-      primary: teal
+      primary: blue
       accent: orange
       toggle:
         icon: material/brightness-7
         name: Cambiar a modo oscuro
     - scheme: slate
-      primary: teal
+      primary: blue
       accent: orange
       toggle:
         icon: material/brightness-4
@@ -26,11 +29,20 @@ theme:
     - navigation.tabs
     - navigation.sections
     - navigation.top
+    - navigation.footer
     - search.highlight
     - search.suggest
     - content.tabs.link
+    - toc.follow
   icon:
-    repo: fontawesome/brands/github
+    repo: fontawesome/solid/house
+
+extra:
+  homepage: https://sabormirandiano.cl
+  social:
+    - icon: fontawesome/solid/house
+      link: https://sabormirandiano.cl
+      name: Volver al Portal
 
 plugins:
   - search:
@@ -56,9 +68,6 @@ nav:
       - Registrarse como Apoderado: como-hacer/registro-apoderado.md
       - Abonar Saldo: como-hacer/abonar-saldo.md
       - Pedir Almuerzos del Casino: como-hacer/pedir-almuerzo.md
-      - Consultar Historial de Pedidos: como-hacer/historial-pedidos.md
-      - Consultar Historial de Abonos: como-hacer/historial-abonos.md
-      - Ver la Ficha de un Alumno: como-hacer/ficha-alumno.md
-      - Ajustar Configuración de la Cuenta: como-hacer/ajustar-configuracion.md
+      - Consultar Datos Históricos: como-hacer/historial.md
   - Preguntas Frecuentes: faq/index.md
   - Glosario: glosario.md

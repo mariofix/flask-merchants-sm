@@ -1,7 +1,10 @@
 # Manual de Operaciones — Casino Sabor Mirandiano
 
 Bienvenido al **Manual de Operaciones** del sistema de gestión del Casino Sabor Mirandiano.
-Esta guía está dirigida al personal de casino y a los administradores del establecimiento.
+Esta guía está dirigida a los apoderados que gestionan los pedidos de almuerzos y abonos de saldo de sus alumnos.
+
+!!! tip "Acceso al Portal"
+    Este manual documenta el uso del portal en línea. Para ingresar directamente al sistema, visite **[sabormirandiano.cl](https://sabormirandiano.cl)**.
 
 ---
 
@@ -36,29 +39,11 @@ Esta guía está dirigida al personal de casino y a los administradores del esta
 
     [:octicons-arrow-right-24: Ver guía](como-hacer/pedir-almuerzo.md)
 
-- :material-history: **Historial de Pedidos**
+- :material-history: **Consultar Datos Históricos**
 
-    Cómo revisar los pedidos de almuerzos realizados y su estado.
+    Cómo revisar el historial de pedidos de almuerzos y el historial de abonos de saldo.
 
-    [:octicons-arrow-right-24: Ver guía](como-hacer/historial-pedidos.md)
-
-- :material-receipt: **Historial de Abonos**
-
-    Cómo consultar todos los abonos realizados a la cuenta.
-
-    [:octicons-arrow-right-24: Ver guía](como-hacer/historial-abonos.md)
-
-- :material-account-school: **Ficha del Alumno**
-
-    Cómo ver el detalle de consumo y la información de cada alumno.
-
-    [:octicons-arrow-right-24: Ver guía](como-hacer/ficha-alumno.md)
-
-- :material-cog: **Ajustar Configuración**
-
-    Cómo modificar los límites de gasto, notificaciones y preferencias de la cuenta.
-
-    [:octicons-arrow-right-24: Ver guía](como-hacer/ajustar-configuracion.md)
+    [:octicons-arrow-right-24: Ver guía](como-hacer/historial.md)
 
 - :material-help-circle: **Preguntas Frecuentes**
 
