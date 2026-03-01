@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+  <title>Lector QR Casino</title>
+  <link href="{{ url_for('static', filename='tabler/css/tabler.css', v=app_version) }}" rel="stylesheet" />
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    #kiosko-screen {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.4s ease;
+    }
+
+    /* ── Idle state ── */
+    #kiosko-screen.state-idle {
+      background: #1a1a2e;
+      color: #fff;
+    }
+    #kiosko-screen.state-idle .main-text {
+      font-size: 1.6rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      text-align: center;
+      padding: 0 2rem;
+      margin-top: 1.25rem;
+    }
+    #qr-reader {
+      width: 300px;
+      border-radius: 1rem;
+      overflow: hidden;
+    }
+    /* Remove the html5-qrcode default header/footer chrome */
+    #qr-reader__header_message,
+    #qr-reader__dashboard_section_csr,
+    #qr-reader__filescan_input,
+    #qr-reader__status_span {
+      display: none !important;
+    }
+
+    /* ── Searching state ── */
+    #kiosko-screen.state-searching {
+      background: #1a1a2e;
+      color: #fff;
+    }
+    .spinner-ring {
+      width: 80px;
+      height: 80px;
+      border: 6px solid rgba(255,255,255,0.2);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+      margin-bottom: 2rem;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* ── Confirm state ── */
+    #kiosko-screen.state-confirm {
+      background: rgba(0,0,0,0.65);
+      color: #fff;
+    }
+    .confirm-card {
+      background: #fff;
+      color: #1a1a2e;
+      border-radius: 1.25rem;
+      padding: 2rem 2.5rem;
+      max-width: 420px;
+      width: 90vw;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+      text-align: center;
+    }
+    .confirm-card .question-icon {
+      color: #f59f00;
+      margin-bottom: 1rem;
+    }
+    .confirm-card h2 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 1.25rem;
+    }
+    .menu-detalles {
+      background: #f8f9fa;
+      border-radius: 0.75rem;
+      padding: 1rem 1.25rem;
+      text-align: left;
+      margin-bottom: 1.5rem;
+      font-size: 0.95rem;
+      line-height: 1.7;
+    }
+    .menu-detalles .menu-nombre {
+      font-weight: 700;
+      font-size: 1.05rem;
+      margin-bottom: 0.5rem;
+      color: #1a1a2e;
+    }
+    .menu-detalles .curso-row {
+      color: #495057;
+    }
+    .menu-detalles .curso-row span.label {
+      font-weight: 600;
+      color: #1a1a2e;
+    }
+    .confirm-btns {
+      display: flex;
+      gap: 0.75rem;
+    }
+    .confirm-btns button {
+      flex: 1;
+      padding: 0.75rem 0;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 0.6rem;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .confirm-btns button:active { opacity: 0.8; }
+    .btn-cancelar {
+      background: #e9ecef;
+      color: #495057;
+    }
+    .btn-confirmar {
+      background: #2fb344;
+      color: #fff;
+    }
+
+    /* ── Success state ── */
+    #kiosko-screen.state-success {
+      background: #2fb344;
+      color: #fff;
+    }
+    #kiosko-screen.state-success .main-text {
+      font-size: 2rem;
+      font-weight: 700;
+      text-align: center;
+      padding: 0 2rem;
+      margin-top: 1.5rem;
+    }
+
+    /* ── Error state ── */
+    #kiosko-screen.state-error {
+      background: #d63939;
+      color: #fff;
+    }
+    #kiosko-screen.state-error .main-text {
+      font-size: 1.75rem;
+      font-weight: 700;
+      text-align: center;
+      padding: 0 2.5rem;
+      margin-top: 1.5rem;
+    }
+
+    /* ── No camera state ── */
+    #kiosko-screen.state-idle .no-camera-msg {
+      font-size: 1.1rem;
+      color: rgba(255,255,255,0.7);
+      text-align: center;
+      padding: 1rem 2rem;
+    }
+  </style>
+</head>
+<body>
+<div id="kiosko-screen" class="state-idle">
+
+  {# ── Idle ── #}
+  <div id="view-idle" style="display:flex; flex-direction:column; align-items:center;">
+    <div id="qr-reader"></div>
+    <div id="no-camera-msg" class="no-camera-msg" style="display:none;">
+      Cámara no disponible.<br>Esta página requiere HTTPS.
+    </div>
+    <div class="main-text">Escanee su código QR</div>
+  </div>
+
+  {# ── Searching ── #}
+  <div id="view-searching" style="display:none; flex-direction:column; align-items:center;">
+    <div class="spinner-ring"></div>
+    <div style="font-size:1.6rem; font-weight:600; text-align:center; padding:0 2rem;">
+      Buscando… por favor espere
+    </div>
+  </div>
+
+  {# ── Confirm ── #}
+  <div id="view-confirm" style="display:none; align-items:center; justify-content:center; width:100%; height:100%; flex-direction:column;">
+    <div class="confirm-card">
+      <div class="question-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24"
+          fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+          <circle cx="12" cy="12" r="9"/>
+          <path d="M12 17l0 .01"/>
+          <path d="M12 13.5a1.5 1.5 0 0 1 1 -1.5a2.6 2.6 0 1 0 -3 -4"/>
+        </svg>
+      </div>
+      <h2>Tiene un almuerzo reservado</h2>
+      <div class="menu-detalles" id="menu-detalles-box"></div>
+      <div class="confirm-btns">
+        <button class="btn-cancelar" id="btn-cancelar">Cancelar</button>
+        <button class="btn-confirmar" id="btn-confirmar">Confirmar Canje</button>
+      </div>
+    </div>
+  </div>
+
+  {# ── Success ── #}
+  <div id="view-success" style="display:none; flex-direction:column; align-items:center;">
+    <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 24 24"
+      fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9"/>
+      <path d="M9 12l2 2l4 -4"/>
+    </svg>
+    <div class="main-text">Su reserva ha sido confirmada, avance</div>
+  </div>
+
+  {# ── Error ── #}
+  <div id="view-error" style="display:none; flex-direction:column; align-items:center;">
+    <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 24 24"
+      fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9"/>
+      <path d="M12 8l0 4"/>
+      <path d="M12 16l.01 0"/>
+    </svg>
+    <div class="main-text">Sin almuerzo reservado. Acérquese a la cafetería del colegio.</div>
+  </div>
+
+</div>
+
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+  // ── Config ─────────────────────────────────────────────────────────────────
+  const FACING_MODE   = '{{ facing_mode }}';   // 'user' (front) or 'environment' (rear)
+  const csrfToken     = "{{ csrf_token() }}";
+  const RESET_DELAY_MS = 4000;   // auto-reset after success/error
+
+  // ── State machine ──────────────────────────────────────────────────────────
+  const screen = document.getElementById('kiosko-screen');
+  const views  = {
+    idle:      document.getElementById('view-idle'),
+    searching: document.getElementById('view-searching'),
+    confirm:   document.getElementById('view-confirm'),
+    success:   document.getElementById('view-success'),
+    error:     document.getElementById('view-error'),
+  };
+
+  let pendingEntregaUrl = null;
+  let resetTimer        = null;
+  let qrScanner         = null;
+
+  function showView(name) {
+    for (const [key, el] of Object.entries(views)) {
+      el.style.display = (key === name) ? 'flex' : 'none';
+    }
+    screen.className = 'state-' + name;
+    if (name === 'idle') {
+      startQR();
+    }
+  }
+
+  function scheduleReset(ms) {
+    clearTimeout(resetTimer);
+    resetTimer = setTimeout(() => showView('idle'), ms);
+  }
+
+  // ── Normalise serial ───────────────────────────────────────────────────────
+  function normalizeTag(raw) {
+    return (raw || '').replace(/:/g, '').toLowerCase().trim();
+  }
+
+  // ── Build menu details HTML ────────────────────────────────────────────────
+  function buildMenuDetalles(orden) {
+    const desc    = orden.menu_descripcion || orden.menu_slug || '';
+    const courses = orden.courses || {};
+    const entradas = courses.entradas || [];
+    const fondos   = courses.fondos   || [];
+    const postres  = courses.postres  || [];
+
+    let html = `<div class="menu-nombre">${desc}</div>`;
+    if (entradas.length) {
+      html += `<div class="curso-row"><span class="label">Entrada:</span> ${entradas.join(', ')}</div>`;
+    }
+    if (fondos.length) {
+      html += `<div class="curso-row"><span class="label">Fondo:</span> ${fondos.join(', ')}</div>`;
+    }
+    if (postres.length) {
+      html += `<div class="curso-row"><span class="label">Postre:</span> ${postres.join(', ')}</div>`;
+    }
+    return html;
+  }
+
+  // ── Process a scanned serial ───────────────────────────────────────────────
+  async function processTag(serial) {
+    showView('searching');
+    pendingEntregaUrl = null;
+    try {
+      const resp = await fetch(
+        `{{ url_for('pos.api_alumno_tag', serial='__S__') }}`.replace('__S__', encodeURIComponent(serial))
+      );
+      const data = await resp.json();
+
+      if (!data.encontrado || !data.orden) {
+        showView('error');
+        scheduleReset(RESET_DELAY_MS);
+        return;
+      }
+
+      if (data.ya_entregado) {
+        showView('error');
+        scheduleReset(RESET_DELAY_MS);
+        return;
+      }
+
+      pendingEntregaUrl = data.orden.entrega_url;
+      document.getElementById('menu-detalles-box').innerHTML = buildMenuDetalles(data.orden);
+      showView('confirm');
+    } catch (e) {
+      showView('error');
+      scheduleReset(RESET_DELAY_MS);
+    }
+  }
+
+  // ── Cancel button ──────────────────────────────────────────────────────────
+  document.getElementById('btn-cancelar').addEventListener('click', function () {
+    pendingEntregaUrl = null;
+    showView('idle');
+  });
+
+  // ── Confirmar Canje button ─────────────────────────────────────────────────
+  document.getElementById('btn-confirmar').addEventListener('click', async function () {
+    if (!pendingEntregaUrl) return;
+    const url = pendingEntregaUrl;
+    pendingEntregaUrl = null;
+    this.disabled = true;
+    try {
+      const resp = await fetch(url, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' },
+      });
+      const data = await resp.json();
+      if (data.ok) {
+        showView('success');
+        scheduleReset(RESET_DELAY_MS);
+      } else {
+        showView('error');
+        scheduleReset(RESET_DELAY_MS);
+      }
+    } catch (e) {
+      showView('error');
+      scheduleReset(RESET_DELAY_MS);
+    } finally {
+      this.disabled = false;
+    }
+  });
+
+  // ── QR scanner (html5-qrcode, fixed camera) ────────────────────────────────
+  async function startQR() {
+    if (qrScanner) return;
+    if (!window.isSecureContext) {
+      document.getElementById('no-camera-msg').style.display = '';
+      return;
+    }
+    // Clear any residual DOM from a previous scanner instance
+    document.getElementById('qr-reader').innerHTML = '';
+    const qr = new Html5Qrcode('qr-reader');
+    qrScanner = qr;
+    try {
+      await qr.start(
+        { facingMode: FACING_MODE },
+        { fps: 15, qrbox: { width: 250, height: 250 } },
+        (decoded) => {
+          // Guard: ignore if we left idle before the callback fired
+          if (screen.className !== 'state-idle') return;
+          const serial = normalizeTag(decoded);
+          qr.stop().catch(() => {}).finally(() => { qrScanner = null; });
+          processTag(serial);
+        }
+      );
+    } catch (e) {
+      console.error('[QR] could not start scanner:', e);
+      qrScanner = null;
+      document.getElementById('no-camera-msg').style.display = '';
+    }
+  }
+
+  // Start QR scanner on page load
+  startQR();
+</script>
+</body>
+</html>
