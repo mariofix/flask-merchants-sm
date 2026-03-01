@@ -192,6 +192,7 @@ def create_async_blueprint(ext: "FlaskMerchants"):
             return jsonify({"error": "malformed payload"}), 400
 
         ext.update_state(event.payment_id, event.state.value)
+        ext._dispatch_webhook_event(event)
 
         return jsonify(
             {
@@ -202,5 +203,47 @@ def create_async_blueprint(ext: "FlaskMerchants"):
                 "state": event.state.value,
             }
         )
+
+    webhook.csrf_exempt = True  # type: ignore[attr-defined]
+
+    @bp.route("/webhook/<provider>", methods=["POST"])
+    async def webhook_provider(provider: str):
+        """Receive and process webhook events for a specific *provider*.
+
+        The URL ``/merchants/webhook/<provider>`` is the standard webhook
+        endpoint for all registered payment providers.  Compute it at runtime
+        with::
+
+            url_for("merchants.webhook_provider", provider="khipu", _external=True)
+        """
+        try:
+            client = ext.get_client(provider)
+        except KeyError:
+            return jsonify({"error": f"Unknown provider: {provider!r}"}), 404
+
+        payload: bytes = await request.get_data()
+        headers: dict[str, str] = dict(request.headers)
+
+        try:
+            event = client._provider.parse_webhook(payload, headers)
+        except Exception:  # noqa: BLE001
+            return jsonify({"error": "malformed payload"}), 400
+
+        if event.payment_id:
+            ext.update_state(event.payment_id, event.state.value)
+
+        ext._dispatch_webhook_event(event)
+
+        return jsonify(
+            {
+                "received": True,
+                "event_id": event.event_id,
+                "event_type": event.event_type,
+                "payment_id": event.payment_id,
+                "state": event.state.value,
+            }
+        )
+
+    webhook_provider.csrf_exempt = True  # type: ignore[attr-defined]
 
     return bp

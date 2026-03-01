@@ -103,6 +103,63 @@ def create_app():
     # merchants
     flask_merchants.init_app(app=app, db=db, models=[Payment], admin=admin, providers=providers)
 
+    # Register Khipu abono approval webhook handler.
+    # When Khipu notifies /merchants/webhook/khipu that a payment succeeded,
+    # this handler finds the matching Payment record via khipu_payment_id stored
+    # in metadata_json, sets the state to "succeeded", and credits the
+    # apoderado's saldo_cuenta with the abono amount.
+    def _khipu_abono_webhook_handler(event) -> None:
+        from merchants.models import PaymentState
+        from flask_merchants import merchants_audit
+        from .model import Abono
+
+        if event.provider != "khipu" or event.state != PaymentState.SUCCEEDED:
+            return
+        if not event.payment_id:
+            return
+
+        # Load pending khipu payments and match in Python for database portability
+        # (JSON path queries differ between SQLite used in tests and PostgreSQL in prod).
+        pending_pagos = (
+            db.session.execute(
+                db.select(Payment).where(
+                    Payment.provider == "khipu",
+                    Payment.state == "pending",
+                )
+            )
+            .scalars()
+            .all()
+        )
+        pago = next(
+            (
+                p
+                for p in pending_pagos
+                if (p.metadata_json or {}).get("khipu_payment_id") == event.payment_id
+            ),
+            None,
+        )
+
+        # Re-check pago.state as an idempotency guard: a concurrent duplicate webhook
+        # could have already committed a state change after our SELECT above.
+        if pago and pago.state == "pending":
+            abono = db.session.execute(
+                db.select(Abono).filter_by(codigo=pago.session_id)
+            ).scalar_one_or_none()
+            if abono:
+                pago.state = "succeeded"
+                saldo_actual = abono.apoderado.saldo_cuenta or 0
+                abono.apoderado.saldo_cuenta = saldo_actual + int(abono.monto)
+                db.session.commit()
+                merchants_audit.info(
+                    "abono_aprobado_khipu_webhook: codigo=%s apoderado_id=%s monto=%s nuevo_saldo=%s",
+                    abono.codigo,
+                    abono.apoderado.id,
+                    int(abono.monto),
+                    abono.apoderado.saldo_cuenta,
+                )
+
+    flask_merchants.add_webhook_handler(_khipu_abono_webhook_handler)
+
     # Build the providers context once (providers don't change after init).
     _labels = app.config.get("MERCHANTS_PROVIDER_LABELS", {})
     _providers_ctx = []

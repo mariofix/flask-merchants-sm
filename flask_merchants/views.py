@@ -186,6 +186,7 @@ def create_blueprint(ext: "FlaskMerchants") -> Blueprint:
             return jsonify({"error": "malformed payload"}), 400
 
         ext.update_state(event.payment_id, event.state.value)
+        ext._dispatch_webhook_event(event)
 
         return jsonify(
             {
@@ -196,5 +197,53 @@ def create_blueprint(ext: "FlaskMerchants") -> Blueprint:
                 "state": event.state.value,
             }
         )
+
+    # Mark both webhook views as exempt from Flask-WTF CSRF protection so that
+    # payment providers (which don't send CSRF tokens) can POST to them.
+    webhook.csrf_exempt = True  # type: ignore[attr-defined]
+
+    @bp.route("/webhook/<provider>", methods=["POST"])
+    def webhook_provider(provider: str):
+        """Receive and process webhook events for a specific *provider*.
+
+        The URL ``/merchants/webhook/<provider>`` (e.g.
+        ``/merchants/webhook/khipu``) is the standard webhook endpoint for all
+        registered payment providers.  Pass this URL as ``notify_url`` when
+        creating a checkout session so that the provider knows where to send
+        payment notifications.
+
+        The URL can be computed at runtime with::
+
+            url_for("merchants.webhook_provider", provider="khipu", _external=True)
+        """
+        try:
+            client = ext.get_client(provider)
+        except KeyError:
+            return jsonify({"error": f"Unknown provider: {provider!r}"}), 404
+
+        payload: bytes = request.get_data()
+        headers: dict[str, str] = dict(request.headers)
+
+        try:
+            event = client._provider.parse_webhook(payload, headers)
+        except Exception:  # noqa: BLE001
+            return jsonify({"error": "malformed payload"}), 400
+
+        if event.payment_id:
+            ext.update_state(event.payment_id, event.state.value)
+
+        ext._dispatch_webhook_event(event)
+
+        return jsonify(
+            {
+                "received": True,
+                "event_id": event.event_id,
+                "event_type": event.event_type,
+                "payment_id": event.payment_id,
+                "state": event.state.value,
+            }
+        )
+
+    webhook_provider.csrf_exempt = True  # type: ignore[attr-defined]
 
     return bp
