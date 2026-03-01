@@ -1,8 +1,8 @@
-"""ApoderadoController — all CRUD and business logic for the apoderado module.
+"""ApoderadoController - all CRUD and business logic for the apoderado module.
 
 Routes in route.py are thin HTTP wrappers; they parse the request, delegate to
 this controller, then return a Flask response.  The controller uses only
-SQLAlchemy (via ``db``) and plain Python — no ``request``, ``current_user``, or
+SQLAlchemy (via ``db``) and plain Python - no ``request``, ``current_user``, or
 ``url_for`` calls.  This makes every method independently testable.
 """
 
@@ -428,10 +428,10 @@ class ApoderadoController:
             for alumno in item.get("alumnos", []):
                 if hasattr(alumno, "curso"):
                     curso_str = alumno.curso
-                    nombre = alumno.nombre if hasattr(alumno, "nombre") else "—"
+                    nombre = alumno.nombre if hasattr(alumno, "nombre") else "-"
                 elif isinstance(alumno, dict):
                     curso_str = alumno.get("curso")
-                    nombre = alumno.get("nombre", "—")
+                    nombre = alumno.get("nombre", "-")
                 else:
                     continue
 

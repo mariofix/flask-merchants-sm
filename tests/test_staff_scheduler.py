@@ -60,7 +60,7 @@ class TestCheckInformeMensual:
         with app.app_context():
             app.config["STAFF_INFORME_MENSUAL_DIA"] = 1
             app.config["STAFF_INFORME_MENSUAL_HORA"] = 8
-            # Simulate a request on the 15th — wrong day
+            # Simulate a request on the 15th - wrong day
             now = _make_now(2026, 3, 15, 9)
             with patch("app.staff.scheduler.datetime") as mock_dt, \
                  patch("app.tasks.send_informe_mensual_staff") as mock_task:

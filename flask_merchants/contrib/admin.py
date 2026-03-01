@@ -4,7 +4,7 @@ Install the optional dependency before using this module::
 
     pip install "flask-merchants[admin]"
 
-Example – manual registration::
+Example - manual registration::
 
     from flask import Flask
     from flask_admin import Admin
@@ -18,7 +18,7 @@ Example – manual registration::
     admin.add_view(PaymentView(ext, name="Payments", endpoint="payments"))
     admin.add_view(ProvidersView(ext, name="Providers", endpoint="providers"))
 
-Example – automatic registration (pass ``admin=`` to FlaskMerchants)::
+Example - automatic registration (pass ``admin=`` to FlaskMerchants)::
 
     from flask import Flask
     from flask_admin import Admin
@@ -73,16 +73,16 @@ def _get_auth_info(auth) -> dict[str, str]:
     When *auth* is ``None`` an empty/unauthenticated descriptor is returned.
     """
     if auth is None:
-        return {"type": "None", "header": "—", "masked_value": "—"}
+        return {"type": "None", "header": "-", "masked_value": "-"}
 
     auth_type = type(auth).__name__
     # ApiKeyAuth stores the key in _api_key; TokenAuth in _token
     raw = getattr(auth, "_api_key", None) or getattr(auth, "_token", None) or ""
-    header = getattr(auth, "_header", "—")
+    header = getattr(auth, "_header", "-")
     return {
         "type": auth_type,
         "header": str(header),
-        "masked_value": _mask_secret(raw) if raw else "—",
+        "masked_value": _mask_secret(raw) if raw else "-",
     }
 
 
@@ -284,7 +284,7 @@ class PaymentView(BaseModelView):
         return "No payments recorded yet."
 
     # ------------------------------------------------------------------
-    # Bulk actions – shown in the "With selected" dropdown
+    # Bulk actions - shown in the "With selected" dropdown
     # ------------------------------------------------------------------
 
     @action(
@@ -375,7 +375,7 @@ class ProvidersView(BaseModelView):
         "payment_count": "Number of payment sessions recorded for this provider.",
     }
 
-    # Custom list template – extends admin/model/list.html for consistent UI.
+    # Custom list template - extends admin/model/list.html for consistent UI.
     list_template = "flask_merchants/admin/providers_list.html"
 
     def __init__(

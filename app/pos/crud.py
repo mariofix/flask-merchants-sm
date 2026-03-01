@@ -1,9 +1,9 @@
-"""PosController — CRUD and business logic for the POS module.
+"""PosController - CRUD and business logic for the POS module.
 
 Route functions in routes.py are thin HTTP wrappers that parse the request,
 delegate to this controller, and return a Flask response.  The controller
-uses only SQLAlchemy (via ``db``) and plain Python — no ``request``,
-``current_user``, or ``url_for`` calls — making every method independently
+uses only SQLAlchemy (via ``db``) and plain Python - no ``request``,
+``current_user``, or ``url_for`` calls - making every method independently
 testable.
 """
 

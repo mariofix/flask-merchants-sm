@@ -1,4 +1,4 @@
-"""flask_merchants – Flask/Quart extension for the merchants hosted-checkout SDK."""
+"""flask_merchants - Flask/Quart extension for the merchants hosted-checkout SDK."""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ from flask_merchants.version import __version__
 __all__ = ["FlaskMerchants", "merchants_audit"]
 
 # ---------------------------------------------------------------------------
-# Audit logger – writes one rotating file per day, keeps 14 days of history.
+# Audit logger - writes one rotating file per day, keeps 14 days of history.
 # File name format: logs/merchants_audit.YYYY-MM-DD.log
 # ---------------------------------------------------------------------------
 
@@ -89,7 +89,7 @@ def _is_quart_app(app) -> bool:
 class FlaskMerchants:
     """Flask/Quart extension that wires the *merchants* SDK into an application.
 
-    Usage – application factory pattern (all config passed to ``init_app``)::
+    Usage - application factory pattern (all config passed to ``init_app``)::
 
         from flask import Flask
         from flask_merchants import FlaskMerchants
@@ -102,7 +102,7 @@ class FlaskMerchants:
             merchants_ext.init_app(app, db=db, models=[Pagos], provider=MyProvider())
             return app
 
-    Usage – application factory pattern (config split between constructor and ``init_app``)::
+    Usage - application factory pattern (config split between constructor and ``init_app``)::
 
         merchants_ext = FlaskMerchants(db=db, models=[Pagos])   # extensions.py
 
@@ -111,7 +111,7 @@ class FlaskMerchants:
             merchants_ext.init_app(app)
             return app
 
-    Usage – direct initialisation::
+    Usage - direct initialisation::
 
         from flask import Flask
         from flask_merchants import FlaskMerchants
@@ -119,7 +119,7 @@ class FlaskMerchants:
         app = Flask(__name__)
         ext = FlaskMerchants(app)
 
-    Usage – with SQLAlchemy (Flask-SQLAlchemy 3.x)::
+    Usage - with SQLAlchemy (Flask-SQLAlchemy 3.x)::
 
         from flask import Flask
         from flask_sqlalchemy import SQLAlchemy
@@ -132,7 +132,7 @@ class FlaskMerchants:
         ext = FlaskMerchants(app, db=db)
         db.init_app(app)
 
-    Usage – with a single custom SQLAlchemy model::
+    Usage - with a single custom SQLAlchemy model::
 
         from flask import Flask
         from flask_sqlalchemy import SQLAlchemy
@@ -153,7 +153,7 @@ class FlaskMerchants:
         app = Flask(__name__)
         ext = FlaskMerchants(app, db=db, models=[Pagos])
 
-    Usage – with multiple custom SQLAlchemy models in the same app::
+    Usage - with multiple custom SQLAlchemy models in the same app::
 
         class Pagos(PaymentMixin, db.Model):
             __tablename__ = "pagos"
@@ -174,7 +174,7 @@ class FlaskMerchants:
         # all_sessions() returns records from all models combined.
         # all_sessions(model_class=Pagos) returns only Pagos records.
 
-    Usage – with Quart (async)::
+    Usage - with Quart (async)::
 
         from quart import Quart
         from flask_merchants import FlaskMerchants
@@ -182,7 +182,7 @@ class FlaskMerchants:
         app = Quart(__name__)
         ext = FlaskMerchants(app)   # async blueprint selected automatically
 
-    Usage – with multiple payment providers::
+    Usage - with multiple payment providers::
 
         import merchants
         from merchants.providers.dummy import DummyProvider
@@ -568,7 +568,7 @@ class FlaskMerchants:
                     if payment_id in self._store:
                         self._store[payment_id]["state"] = state
                     return True
-            # Not found in any model – fall back to in-memory
+            # Not found in any model - fall back to in-memory
             if payment_id not in self._store:
                 return False
             self._store[payment_id]["state"] = state

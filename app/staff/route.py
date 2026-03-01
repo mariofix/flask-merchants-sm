@@ -1,4 +1,4 @@
-"""Staff blueprint — thin HTTP layer.
+"""Staff blueprint - thin HTTP layer.
 
 All database queries and business logic live in SchoolStaffController.
 Route functions only parse the request, call the controller, and return

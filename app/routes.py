@@ -143,10 +143,10 @@ def consulta(dia):
 
     if fecha == today:
         if ahora >= hora_rezagados:
-            # After 14:00 — today is closed, order for next day instead
+            # After 14:00 - today is closed, order for next day instead
             abort(404)
         elif ahora >= hora_limite:
-            # Between 10:00–14:00 — only the configured virtual menu is available
+            # Between 10:00-14:00 - only the configured virtual menu is available
             menu_rezagados = SimpleNamespace(
                 slug=menu_rezagados_cfg["slug"],
                 descripcion=menu_rezagados_cfg["descripcion"],

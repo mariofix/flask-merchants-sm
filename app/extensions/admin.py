@@ -347,7 +347,7 @@ class AlumnoAdminView(SecureModelView):
 def _abono_payment_state_formatter(view, context, model, name):
     if model.payment:
         return model.payment.state
-    return "—"
+    return "-"
 
 
 class AbonoAdminView(SecureModelView):
@@ -492,7 +492,7 @@ class ResumenDiaAdminView(BaseView):
 
         def _iniciales(nombre: str | None) -> str:
             if not nombre:
-                return "—"
+                return "-"
             return "".join(p[0].upper() + "." for p in nombre.strip().split() if p)
 
         menus: dict = {}
@@ -522,7 +522,7 @@ class ResumenDiaAdminView(BaseView):
             detalles.append({
                 "orden_id": orden.id,
                 "iniciales": _iniciales(alumno.nombre if alumno else None),
-                "curso": alumno.curso if alumno else "—",
+                "curso": alumno.curso if alumno else "-",
                 "menu": orden.menu_descripcion or orden.menu_slug,
                 "precio": int(orden.menu_precio) if orden.menu_precio else 0,
                 "estado": orden.estado.value,
@@ -545,8 +545,8 @@ class GestorMenuView(BaseView):
     """Simplified menu and dish management view accessible to 'admin' or 'pos' roles.
 
     Provides two workflow options:
-    1. Crear Menú del Día  – create a new MenuDiario and assign existing Platos by course.
-    2. Copiar Menú         – clone an existing MenuDiario to one or more new dates.
+    1. Crear Menú del Día  - create a new MenuDiario and assign existing Platos by course.
+    2. Copiar Menú         - clone an existing MenuDiario to one or more new dates.
     """
 
     def is_accessible(self):
@@ -588,7 +588,7 @@ class GestorMenuView(BaseView):
 
     @expose("/", methods=["GET"])
     def index(self):
-        """Landing page – shows the 3 workflow cards."""
+        """Landing page - shows the 3 workflow cards."""
         return self.render(
             "admin/gestor_menu.html",
             platos=self._get_platos_activos(),
@@ -782,6 +782,7 @@ admin.add_view(MenuDiarioAdminView(MenuDiario, db.session, category="Casino"))
 admin.add_view(SecureModelView(OpcionMenuDia, db.session, category="Casino", name="Items MenuDiario"))
 admin.add_menu_item(MenuDivider(), target_category="Casino")
 admin.add_view(SecureModelView(Pedido, db.session, category="Casino", name="Pedidos"))
+admin.add_view(SecureModelView(Payment, db.session, category="Casino", name="Pagos"))
 admin.add_view(AbonoAdminView(Abono, db.session, category="Casino", name="Abonos"))
 admin.add_view(SecureModelView(OrdenCasino, db.session, category="Casino", name="Ordenes"))
 admin.add_view(ResumenDiaAdminView(name="Resumen del Día", endpoint="resumen_dia", category="Casino"))

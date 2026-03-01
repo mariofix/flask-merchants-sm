@@ -18,7 +18,7 @@ def create_blueprint(ext: "FlaskMerchants") -> Blueprint:
     bp = Blueprint("merchants", __name__, template_folder="templates")
 
     # ------------------------------------------------------------------
-    # Checkout – initiate a payment
+    # Checkout - initiate a payment
     # ------------------------------------------------------------------
 
     @bp.route("/checkout", methods=["GET", "POST"])
@@ -27,10 +27,10 @@ def create_blueprint(ext: "FlaskMerchants") -> Blueprint:
 
         Accepts JSON body **or** form fields:
 
-        * ``amount`` – decimal string (e.g. ``"19.99"``)
-        * ``currency`` – ISO-4217 code (e.g. ``"USD"``)
-        * ``metadata`` – optional JSON object / form JSON string
-        * ``provider`` – optional provider key string (e.g. ``"dummy"``).
+        * ``amount`` - decimal string (e.g. ``"19.99"``)
+        * ``currency`` - ISO-4217 code (e.g. ``"USD"``)
+        * ``metadata`` - optional JSON object / form JSON string
+        * ``provider`` - optional provider key string (e.g. ``"dummy"``).
           Defaults to the first registered provider.
         """
         data = request.get_json(silent=True) or request.form
@@ -90,7 +90,7 @@ def create_blueprint(ext: "FlaskMerchants") -> Blueprint:
         return redirect(session.redirect_url)
 
     # ------------------------------------------------------------------
-    # Providers – list available payment providers
+    # Providers - list available payment providers
     # ------------------------------------------------------------------
 
     @bp.route("/providers", methods=["GET"])

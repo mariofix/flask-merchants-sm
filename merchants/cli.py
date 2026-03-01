@@ -1,4 +1,4 @@
-"""merchants CLI – a Typer/Click example for the merchants SDK.
+"""merchants CLI - a Typer/Click example for the merchants SDK.
 
 Install the CLI extra to use this app::
 
@@ -29,7 +29,7 @@ from merchants.version import __version__
 
 app = typer.Typer(
     name="merchants",
-    help="merchants – framework-agnostic hosted-checkout payment SDK.",
+    help="merchants - framework-agnostic hosted-checkout payment SDK.",
     no_args_is_help=True,
 )
 

@@ -126,7 +126,7 @@ def send_notificacion_admin_abono(self, abono_info: dict):
 
         display_code = _get_display_code(pago)
         abono_url = url_for("apoderado_cliente.abono_detalle", codigo=abono_info["codigo"], _external=True)
-        subject = f"[admin] Abono aprobado – {abono_info['apoderado_nombre']} ${abono_info['monto']:,}"
+        subject = f"[admin] Abono aprobado - {abono_info['apoderado_nombre']} ${abono_info['monto']:,}"
         body = (
             f"Se aprobó un abono en la cafetería.\n\n"
             f"Apoderado: {abono_info['apoderado_nombre']} ({abono_info['apoderado_email']})\n"
@@ -256,7 +256,7 @@ def send_notificacion_abono_creado(self, abono_info: dict):
 
         # --- Email al apoderado y copias (sólo si comprobantes_transferencia es True) ---
         if abono_info.get("comprobantes_transferencia"):
-            subject_apoderado = f"Solicitud de abono recibida – ${abono_info['monto']:,}"
+            subject_apoderado = f"Solicitud de abono recibida - ${abono_info['monto']:,}"
             body_apoderado = (
                 f"Hola {abono_info['apoderado_nombre']},\n\n"
                 f"Tu solicitud de abono de ${abono_info['monto']:,} ha sido recibida.\n\n"
@@ -310,7 +310,7 @@ def send_notificacion_abono_creado(self, abono_info: dict):
             if u.email
         })
         if staff_emails:
-            subject_admin = f"[aviso] Nuevo abono pendiente – {abono_info['apoderado_nombre']} ${abono_info['monto']:,}"
+            subject_admin = f"[aviso] Nuevo abono pendiente - {abono_info['apoderado_nombre']} ${abono_info['monto']:,}"
             body_admin = (
                 f"Se ha generado un código de abono en la cafetería. Este pago aún NO ha sido procesado.\n\n"
                 f"Apoderado: {abono_info['apoderado_nombre']} ({abono_info['apoderado_email']})\n"
@@ -407,7 +407,7 @@ def send_notificacion_pedido_pendiente(self, pedido_info: dict):
             if not email:
                 continue
 
-            subject = f"Pedido recibido #{pedido_codigo_short} – ${int(total):,}"
+            subject = f"Pedido recibido #{pedido_codigo_short} - ${int(total):,}"
             body = (
                 f"Hola {apoderado.nombre},\n\n"
                 f"Hemos recibido tu pedido de menús por un total de ${int(total):,}.\n\n"
@@ -548,7 +548,7 @@ def send_notificacion_admin_nuevo_apoderado(self, apoderado_info: dict):
         if not admin_emails:
             return
 
-        subject = f"[admin] Nuevo apoderado registrado – {apoderado_info['nombre_apoderado']}"
+        subject = f"[admin] Nuevo apoderado registrado - {apoderado_info['nombre_apoderado']}"
         body = (
             f"Se ha registrado un nuevo apoderado en la plataforma.\n\n"
             f"Nombre: {apoderado_info['nombre_apoderado']}\n"
@@ -678,7 +678,7 @@ def send_informe_mensual_staff(self):
             if deuda <= 0:
                 continue
 
-            subject = f"Estado de cuenta mensual – ${int(deuda):,} a pagar"
+            subject = f"Estado de cuenta mensual - ${int(deuda):,} a pagar"
             body = (
                 f"Hola {staff.nombre},\n\n"
                 f"El saldo pendiente de tu cuenta del casino correspondiente al mes de "
@@ -744,7 +744,7 @@ def send_informe_semanal_staff(self):
                 )
             ).scalar() or Decimal(0)
 
-            subject = f"Resumen semanal de cuenta – saldo pendiente ${int(deuda):,}"
+            subject = f"Resumen semanal de cuenta - saldo pendiente ${int(deuda):,}"
             body = (
                 f"Hola {staff.nombre},\n\n"
                 f"Tu saldo pendiente en la cafetería del colegio es de ${int(deuda):,}.\n\n"

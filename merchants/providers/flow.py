@@ -1,4 +1,4 @@
-"""Flow.cl provider – wraps the ``pyflowcl`` package."""
+"""Flow.cl provider - wraps the ``pyflowcl`` package."""
 from __future__ import annotations
 
 import json

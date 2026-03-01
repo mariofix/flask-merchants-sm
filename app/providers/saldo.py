@@ -1,4 +1,4 @@
-"""SaldoProvider – pago automático con saldo de cuenta del apoderado."""
+"""SaldoProvider - pago automático con saldo de cuenta del apoderado."""
 from __future__ import annotations
 
 import json
@@ -53,7 +53,7 @@ class SaldoProvider(Provider):
 
         return CheckoutSession(
             session_id=session_id,
-            # Redirect immediately to success — no external gateway needed
+            # Redirect immediately to success - no external gateway needed
             redirect_url=success_url,
             provider=self.key,
             amount=amount,
@@ -68,7 +68,7 @@ class SaldoProvider(Provider):
                 "transaction_code": transaction_code,
                 "saldo_antes": saldo_antes,
                 "saldo_despues": saldo_despues,
-                # Which model property was debited — informational for audit trail
+                # Which model property was debited - informational for audit trail
                 "model_property": meta.get("model_property", "saldo_cuenta"),
                 "apoderado_id": meta.get("apoderado_id"),
             },

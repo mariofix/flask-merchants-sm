@@ -1,4 +1,4 @@
-"""Cafetería provider – pago presencial en efectivo o tarjeta en la cafetería."""
+"""Cafetería provider - pago presencial en efectivo o tarjeta en la cafetería."""
 from __future__ import annotations
 
 import json

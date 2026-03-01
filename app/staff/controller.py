@@ -1,8 +1,8 @@
-"""SchoolStaffController — all CRUD and business logic for the staff module.
+"""SchoolStaffController - all CRUD and business logic for the staff module.
 
 Routes in route.py are thin HTTP wrappers; they parse the request, delegate to
 this controller, then return a Flask response.  The controller uses only
-SQLAlchemy (via ``db``) and plain Python — no ``request``, ``current_user``, or
+SQLAlchemy (via ``db``) and plain Python - no ``request``, ``current_user``, or
 ``url_for`` calls.  This makes every method independently testable.
 """
 

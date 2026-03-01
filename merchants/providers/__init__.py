@@ -23,7 +23,7 @@ class ProviderInfo(BaseModel):
     """Structured metadata for a payment provider.
 
     Downstream applications can use this model to introspect the provider
-    registry — e.g. serialise to JSON, render in a UI, or drive routing logic.
+    registry - e.g. serialise to JSON, render in a UI, or drive routing logic.
 
     Attributes:
         key: Short machine-readable identifier (e.g. ``"stripe"``).

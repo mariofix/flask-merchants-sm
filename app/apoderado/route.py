@@ -1,4 +1,4 @@
-"""Apoderado blueprint — thin HTTP layer.
+"""Apoderado blueprint - thin HTTP layer.
 
 All database queries and business logic live in ApoderadoController.
 Route functions only parse the request, call the controller, and return
@@ -470,7 +470,7 @@ def delete_restriccion(id):
 
 
 # ---------------------------------------------------------------------------
-# Web ordering (parent-facing — moved from pos blueprint)
+# Web ordering (parent-facing - moved from pos blueprint)
 # ---------------------------------------------------------------------------
 
 
@@ -541,7 +541,7 @@ def pago_orden(orden):
                 )
             alumnos_item = [
                 alumnos_by_id.get(
-                    int(a["id"]), {"nombre": a.get("nombre", "—"), "curso": None}
+                    int(a["id"]), {"nombre": a.get("nombre", "-"), "curso": None}
                 )
                 for a in item.get("alumnos", [])
             ]

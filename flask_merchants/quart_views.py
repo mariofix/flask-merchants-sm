@@ -33,7 +33,7 @@ def create_async_blueprint(ext: "FlaskMerchants"):
     bp = Blueprint("merchants", __name__, template_folder="templates")
 
     # ------------------------------------------------------------------
-    # Checkout – initiate a payment
+    # Checkout - initiate a payment
     # ------------------------------------------------------------------
 
     @bp.route("/checkout", methods=["GET", "POST"])
@@ -100,7 +100,7 @@ def create_async_blueprint(ext: "FlaskMerchants"):
         return redirect(session.redirect_url)
 
     # ------------------------------------------------------------------
-    # Providers – list available payment providers
+    # Providers - list available payment providers
     # ------------------------------------------------------------------
 
     @bp.route("/providers", methods=["GET"])
