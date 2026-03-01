@@ -251,6 +251,47 @@ def abono():
             }
         )
 
+    elif forma_pago == "khipu":
+        from ..extensions import flask_merchants
+
+        session = flask_merchants.get_client("khipu").payments.create_checkout(
+            amount=nuevo_abono.monto,
+            currency="CLP",
+            success_url=url_for(
+                "apoderado_cliente.abono_detalle",
+                codigo=nuevo_abono.codigo,
+                _external=True,
+            ),
+            cancel_url=url_for("apoderado_cliente.index", _external=True),
+            metadata={
+                "abono_codigo": nuevo_abono.codigo,
+                "apoderado_id": str(nuevo_abono.apoderado.id),
+            },
+        )
+        pago = Payment(
+            session_id=nuevo_abono.codigo,
+            redirect_url=session.redirect_url,
+            provider="khipu",
+            amount=nuevo_abono.monto,
+            currency="CLP",
+            state="pending",
+            metadata_json={
+                "khipu_payment_id": session.session_id,
+                "abono_codigo": nuevo_abono.codigo,
+                "apoderado_id": str(nuevo_abono.apoderado.id),
+            },
+            request_payload={
+                "abono_codigo": nuevo_abono.codigo,
+                "monto": str(nuevo_abono.monto),
+                "currency": "CLP",
+                "apoderado_id": str(nuevo_abono.apoderado.id),
+                "forma_pago": forma_pago,
+            },
+            response_payload=dict(session.raw),
+        )
+        db.session.add(pago)
+        db.session.commit()
+
     return redirect(
         url_for("apoderado_cliente.abono_detalle", codigo=nuevo_abono.codigo)
     )
