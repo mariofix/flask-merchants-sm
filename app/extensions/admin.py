@@ -19,6 +19,7 @@ from ..database import db
 from ..model import (
     Alumno,
     Apoderado,
+    EstadoPedido,
     MenuDiario,
     OpcionMenuDia,
     Payment,
@@ -30,6 +31,7 @@ from ..model import (
     User,
     Abono,
     OrdenCasino,
+    SchoolStaffPedido,
 )
 from wtforms import SelectMultipleField
 from flask_admin.form import Select2Widget
@@ -762,11 +764,222 @@ class GestorMenuView(BaseView):
 
         db.session.commit()
 
+
         if creados:
             flash(f"Se copiaron {creados} menú(s) exitosamente.", "success")
         if omitidos:
             flash(f"Se omitieron {len(omitidos)} fecha(s): {', '.join(omitidos)}.", "warning")
         return redirect(url_for("gestor_menu.index"))
+
+
+class PaymentAdminView(SecureModelView):
+    """Extended Flask-Admin view for Payment with app-specific post-payment actions.
+
+    Extends the base SecureModelView with:
+    - Overridden 'Sync from Provider' action that also triggers post-payment business
+      logic (OrdenCasino creation, saldo credit, email notifications) when a payment
+      transitions to 'succeeded'.
+    - New 'Confirmar Pago' action for manually marking payments as succeeded and
+      recording the admin action in ``response_payload``.
+    """
+
+    column_list = ["session_id", "provider", "amount", "currency", "state", "created_at", "updated_at"]
+    column_searchable_list = ["session_id", "provider"]
+    column_filters = ["state", "provider", "currency"]
+    column_default_sort = ("created_at", True)
+
+    def __init__(self, model, session, *, ext=None, **kwargs):
+        self._ext = ext
+        super().__init__(model, session, **kwargs)
+
+    def _post_payment_processing(self, pago: Payment, admin_user: str | None = None, action_name: str | None = None) -> None:
+        """Run post-payment business logic after a payment is marked as succeeded.
+
+        Handles Abono (credit apoderado saldo), Pedido (create OrdenCasino records),
+        and SchoolStaffPedido (mark staff pedido paid) cases.
+
+        When *admin_user* and *action_name* are provided (manual admin action), a note
+        is appended to ``response_payload`` in the form::
+
+            {"payment_manual_action": "Paid by <user>, from Action [<name>], on <datetime>"}
+        """
+        from datetime import datetime as _datetime
+        from flask_merchants import merchants_audit
+
+        # Append manual action audit note when triggered by an admin
+        if admin_user is not None and action_name is not None:
+            note = {
+                "payment_manual_action": (
+                    f"Paid by {admin_user}, from Action [{action_name}], "
+                    f"on {_datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+                )
+            }
+            current_payload = pago.response_payload
+            if isinstance(current_payload, list):
+                updated_payload = list(current_payload) + [note]
+            elif isinstance(current_payload, dict) and current_payload:
+                updated_payload = [current_payload, note]
+            else:
+                updated_payload = [note]
+            pago.response_payload = updated_payload
+            db.session.commit()
+
+        # --- Abono: credit the apoderado's account balance ---
+        abono = db.session.execute(
+            db.select(Abono).filter_by(codigo=pago.session_id)
+        ).scalar_one_or_none()
+        if abono:
+            from ..tasks import send_comprobante_abono, send_notificacion_admin_abono, send_copia_notificaciones_abono
+
+            saldo_actual = abono.apoderado.saldo_cuenta or 0
+            nuevo_saldo = saldo_actual + int(abono.monto)
+            abono.apoderado.saldo_cuenta = nuevo_saldo
+            db.session.commit()
+            merchants_audit.info(
+                "abono_aprobado: codigo=%s apoderado_id=%s email=%r monto=%s nuevo_saldo=%s",
+                abono.codigo,
+                abono.apoderado.id,
+                abono.apoderado.usuario.email,
+                int(abono.monto),
+                nuevo_saldo,
+            )
+            abono_info = {
+                "id": abono.id,
+                "codigo": abono.codigo,
+                "monto": int(abono.monto),
+                "forma_pago": abono.forma_pago,
+                "descripcion": abono.descripcion,
+                "apoderado_nombre": abono.apoderado.nombre,
+                "apoderado_email": abono.apoderado.usuario.email,
+                "saldo_anterior": saldo_actual,
+                "saldo_cuenta": nuevo_saldo,
+                "copia_notificaciones": abono.apoderado.copia_notificaciones,
+            }
+            if abono.forma_pago != "cafeteria":
+                send_notificacion_admin_abono.delay(abono_info=abono_info)
+            if abono.apoderado.comprobantes_transferencia:
+                send_comprobante_abono.delay(abono_info=abono_info)
+                if abono.apoderado.copia_notificaciones:
+                    send_copia_notificaciones_abono.delay(abono_info=abono_info)
+            return
+
+        # --- Pedido (Apoderado): create OrdenCasino records and notify ---
+        pedido = db.session.execute(
+            db.select(Pedido).filter_by(codigo_merchants=pago.session_id)
+        ).scalar_one_or_none()
+        if pedido:
+            from ..apoderado.controller import ApoderadoController
+
+            pedido.pagado = True
+            pedido.estado = EstadoPedido.PAGADO
+            pedido.fecha_pago = _datetime.now()
+            db.session.commit()
+            merchants_audit.info(
+                "pedido_aprobado: codigo=%s monto=%s",
+                pedido.codigo,
+                int(pedido.precio_total),
+            )
+            ApoderadoController().process_payment_completion(pedido)
+            return
+
+        # --- SchoolStaffPedido: mark staff pedido paid and notify ---
+        staff_pedido = db.session.execute(
+            db.select(SchoolStaffPedido).filter_by(codigo_merchants=pago.session_id)
+        ).scalar_one_or_none()
+        if staff_pedido:
+            from ..staff.controller import SchoolStaffController
+
+            merchants_audit.info(
+                "staff_pedido_aprobado: codigo=%s monto=%s",
+                staff_pedido.codigo,
+                int(staff_pedido.precio_total),
+            )
+            SchoolStaffController().process_payment_completion(staff_pedido)
+
+    @action("sync", "Sync from Provider", "¿Sincronizar los pagos seleccionados con el proveedor?")
+    def action_sync(self, ids: list) -> None:
+        """Fetch live payment status from the provider.
+
+        When a payment transitions to 'succeeded', post-payment business logic is
+        triggered automatically (OrdenCasino creation, saldo credit, emails).
+        """
+        if self._ext is None:
+            flash("Extensión FlaskMerchants no configurada; no se puede sincronizar.", "danger")
+            return
+
+        try:
+            synced = 0
+            failed = 0
+            processed = 0
+            for pk in ids:
+                record = self.get_one(pk)
+                if record is None:
+                    continue
+                old_state = record.state
+                try:
+                    status = self._ext.client.payments.get(record.session_id)
+                    new_state = status.state.value
+                    record.state = new_state
+                    self.session.commit()
+                    synced += 1
+                    # Trigger post-payment logic when payment just completed
+                    if new_state == "succeeded" and old_state in ("pending", "processing"):
+                        self._post_payment_processing(record)
+                        processed += 1
+                except Exception as exc:  # noqa: BLE001
+                    from flask_merchants import merchants_audit
+                    merchants_audit.warning(
+                        "sync_action_error: session_id=%r error=%s",
+                        getattr(record, "session_id", pk),
+                        exc,
+                    )
+                    failed += 1
+            msg = f"{synced} pago(s) sincronizado(s) con el proveedor."
+            if processed:
+                msg += f" {processed} pago(s) procesado(s) como completados."
+            if failed:
+                msg += f" {failed} pago(s) no pudieron sincronizarse (ver log de auditoría)."
+            flash(msg, "success" if not failed else "warning")
+        except Exception as exc:  # noqa: BLE001
+            self.session.rollback()
+            flash(f"Error al sincronizar pagos: {exc}", "danger")
+
+    @action(
+        "confirmar_pago",
+        "Confirmar Pago",
+        "¿Confirmar manualmente los pagos seleccionados? Se ejecutará el proceso post-pago.",
+    )
+    def action_confirmar_pago(self, ids: list) -> None:
+        """Manually confirm selected payments and run post-payment business logic.
+
+        Only payments in ``'pending'`` or ``'processing'`` state are processed.
+        A note is appended to each payment's ``response_payload`` recording the
+        admin user, action name, and timestamp.
+        """
+        confirmed = 0
+        skipped = 0
+        admin_username = str(current_user)
+
+        for pk in ids:
+            record = self.get_one(pk)
+            if record is None:
+                continue
+            if record.state not in ("pending", "processing"):
+                flash(
+                    f"Pago {record.session_id[:8].upper()} no está en estado pendiente "
+                    f"o procesando (estado actual: {record.state}).",
+                    "warning",
+                )
+                skipped += 1
+                continue
+            record.state = "succeeded"
+            self.session.commit()
+            self._post_payment_processing(record, admin_user=admin_username, action_name="Confirmar Pago")
+            confirmed += 1
+
+        if confirmed:
+            flash(f"{confirmed} pago(s) confirmado(s) exitosamente.", "success")
+
 
 
 admin.add_view(PlatoAdminView(Plato, db.session, category="Casino"))
