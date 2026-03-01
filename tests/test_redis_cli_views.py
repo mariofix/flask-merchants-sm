@@ -5,6 +5,7 @@ CELERY config contains ``redis://`` URLs for the broker and result backend.
 """
 
 import pytest
+import redis
 from flask import Flask
 from unittest.mock import MagicMock, patch
 
@@ -23,8 +24,9 @@ def test_redis_cli_views_registered_for_redis_urls():
 
     from app.extensions.admin import SecureRedisCli
 
-    # Patch redis.from_url so no real connection is attempted
-    fake_redis = MagicMock()
+    # Use spec=redis.Redis so Flask-Admin's _inspect_commands can find the
+    # 'delete' command and successfully remap 'del' -> 'delete'.
+    fake_redis = MagicMock(spec=redis.Redis)
     with patch("redis.from_url", return_value=fake_redis):
         celery_cfg = app.config.get("CELERY", {})
         broker_url = celery_cfg.get("broker_url", "")

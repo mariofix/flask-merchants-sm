@@ -201,9 +201,6 @@ class FlaskMerchants:
 
     Configuration keys (set on ``app.config``):
 
-    ``MERCHANTS_WEBHOOK_SECRET``
-        HMAC-SHA256 secret used to verify incoming webhook signatures.
-        When ``None`` (default) signature verification is skipped.
     ``MERCHANTS_URL_PREFIX``
         URL prefix for the blueprint (default: ``"/merchants"``).
     """
@@ -316,7 +313,6 @@ class FlaskMerchants:
         default_key = all_providers[0].key if all_providers else merchants.list_providers()[0]
         self._client = self._make_client(default_key)
 
-        app.config.setdefault("MERCHANTS_WEBHOOK_SECRET", None)
         app.config.setdefault("MERCHANTS_URL_PREFIX", "/merchants")
         app.config.setdefault("MERCHANTS_PAYMENT_VIEW_NAME", "Payments")
         app.config.setdefault("MERCHANTS_PROVIDER_VIEW_NAME", "Providers")
@@ -330,6 +326,19 @@ class FlaskMerchants:
 
         url_prefix = app.config["MERCHANTS_URL_PREFIX"]
         app.register_blueprint(blueprint, url_prefix=url_prefix)
+
+        # Properly exempt webhook endpoints from Flask-WTF CSRF protection.
+        # Payment providers POST to these URLs without CSRF tokens.
+        # Flask-WTF 1.x does not honour a `csrf_exempt` attribute on view
+        # functions; exemption must be registered via the CSRFProtect object.
+        if "csrf" in app.extensions:
+            csrf_ext = app.extensions["csrf"]
+            bp_name = blueprint.name
+            for view_name in ("webhook", "webhook_provider"):
+                endpoint = f"{bp_name}.{view_name}"
+                view_fn = app.view_functions.get(endpoint)
+                if view_fn is not None:
+                    csrf_ext.exempt(view_fn)
 
         app.extensions["merchants"] = self
 

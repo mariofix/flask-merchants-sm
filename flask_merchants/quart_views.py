@@ -169,22 +169,8 @@ def create_async_blueprint(ext: "FlaskMerchants"):
     @bp.route("/webhook", methods=["POST"])
     async def webhook():
         """Receive and process incoming provider webhook events."""
-        from quart import current_app
-
-        secret: str | None = current_app.config.get("MERCHANTS_WEBHOOK_SECRET")
         payload: bytes = await request.get_data()
         headers: dict[str, str] = dict(request.headers)
-
-        if secret:
-            signature = headers.get("X-Merchants-Signature", "")
-            try:
-                merchants.verify_signature(
-                    payload=payload,
-                    secret=secret,
-                    signature=signature,
-                )
-            except merchants.WebhookVerificationError:
-                return jsonify({"error": "invalid signature"}), 400
 
         try:
             event = ext.client._provider.parse_webhook(payload, headers)
@@ -204,7 +190,9 @@ def create_async_blueprint(ext: "FlaskMerchants"):
             }
         )
 
-    webhook.csrf_exempt = True  # type: ignore[attr-defined]
+    # CSRF exemption for both webhook views is handled externally (e.g. via
+    # FlaskMerchants.init_app for Flask-WTF). A bare attribute would have no
+    # effect on most CSRF implementations.
 
     @bp.route("/webhook/<provider>", methods=["POST"])
     async def webhook_provider(provider: str):
@@ -243,7 +231,5 @@ def create_async_blueprint(ext: "FlaskMerchants"):
                 "state": event.state.value,
             }
         )
-
-    webhook_provider.csrf_exempt = True  # type: ignore[attr-defined]
 
     return bp
