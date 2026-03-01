@@ -30,8 +30,8 @@ Example - automatic registration (pass ``admin=`` to FlaskMerchants)::
     db = SQLAlchemy(model_class=Base)
     admin = Admin(app, name="My Shop")
     ext = FlaskMerchants(app, db=db, models=[Payment], admin=admin)
-    # A plain ModelView for Payment (can_view_details=True) and a ProvidersView
-    # are automatically added under category="Merchants".
+    # A PaymentModelView for Payment (SQLAlchemy-backed, with full column config)
+    # and a ProvidersView are automatically added under category="Merchants".
 """
 
 from __future__ import annotations
@@ -39,7 +39,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from flask import flash
-from markupsafe import Markup
+
+from flask_merchants.contrib.base import PaymentViewMixin, _STATE_CHOICES
 
 try:
     from flask_admin.actions import action
@@ -90,30 +91,11 @@ def _get_auth_info(auth) -> dict[str, str]:
     }
 
 
-_STATE_CHOICES = [
-    ("pending", "Pending"),
-    ("processing", "Processing"),
-    ("succeeded", "Succeeded"),
-    ("failed", "Failed"),
-    ("cancelled", "Cancelled"),
-    ("refunded", "Refunded"),
-    ("unknown", "Unknown"),
-]
-
-_STATE_BADGE_CLASSES = {
-    "succeeded": "success",
-    "failed": "danger",
-    "cancelled": "dark",
-    "refunded": "warning",
-    "processing": "info",
-}
-
-
 class _PaymentRecord:
     """Placeholder model class used as the ``model`` argument for :class:`PaymentView`."""
 
 
-class PaymentView(BaseModelView):
+class PaymentView(PaymentViewMixin, BaseModelView):
     """Flask-Admin view that lists all stored payments and allows managing them.
 
     Extends :class:`~flask_admin.model.BaseModelView` so the list page gains
@@ -139,38 +121,10 @@ class PaymentView(BaseModelView):
     can_view_details = True
     edit_modal = False
 
-    # Column configuration
-    column_list = ["session_id", "provider", "amount", "currency", "state"]
+    # Column configuration (core columns + details/search/sort for in-memory backend)
     column_details_list = ["session_id", "provider", "amount", "currency", "state"]
     column_searchable_list = ["session_id", "provider", "state"]
     column_sortable_list = ["provider", "amount", "currency", "state"]
-    column_labels = {
-        "session_id": "Payment ID",
-        "provider": "Provider",
-        "amount": "Amount",
-        "currency": "Currency",
-        "state": "State",
-    }
-    column_descriptions = {
-        "session_id": "Unique identifier assigned by the payment provider.",
-        "provider": "The payment gateway that processed this transaction.",
-        "amount": "Payment amount in the smallest currency unit (e.g. cents).",
-        "currency": "ISO-4217 currency code (e.g. USD, EUR, CLP).",
-        "state": "Current processing state of the payment session.",
-    }
-
-    column_formatters = {
-        "state": lambda v, c, m, n: Markup(
-            '<span class="badge badge-{cls}">{val}</span>'.format(
-                cls=_STATE_BADGE_CLASSES.get((val := v._get_field_value(m, n) or ""), "secondary"),
-                val=val,
-            )
-        ),
-        "session_id": lambda v, c, m, n: Markup("<small>{}</small>".format(v._get_field_value(m, n) or "")),
-    }
-
-    # State choices exposed to templates via ``admin_view.state_choices``.
-    state_choices = _STATE_CHOICES
 
     def __init__(
         self,
@@ -523,10 +477,12 @@ def register_admin_views(
 ) -> None:
     """Register the standard Merchants admin views into *admin*.
 
-    When a SQLAlchemy *db* was supplied to the extension a plain
-    :class:`~flask_admin.contrib.sqla.ModelView` with ``can_view_details=True``
-    is registered for each payment model class.  When no *db* is configured
-    the in-memory :class:`PaymentView` is used as a fallback.
+    When a SQLAlchemy *db* was supplied to the extension a
+    :class:`~flask_merchants.contrib.sqla.PaymentModelView` is registered for
+    each payment model class — inheriting the full column configuration from
+    :class:`~flask_merchants.contrib.base.PaymentViewMixin` (formatters,
+    descriptions, labels, state choices).  When no *db* is configured the
+    in-memory :class:`PaymentView` is used as a fallback.
 
     :class:`ProvidersView` is always registered under ``category="Merchants"``.
 
@@ -535,7 +491,7 @@ def register_admin_views(
 
         admin = Admin(app, name="My Shop")
         ext = FlaskMerchants(app, db=db, models=[Payment], admin=admin)
-        # A ModelView for Payment and a ProvidersView are added automatically.
+        # A PaymentModelView for Payment and a ProvidersView are added automatically.
 
     You can also call it manually if you need finer control::
 
@@ -553,17 +509,15 @@ def register_admin_views(
         provider_name: Display name for the Providers menu item.
     """
     if ext._db is not None:
-        from flask_admin.contrib.sqla import ModelView as SqlaModelView
-
-        class _PaymentSqlaView(SqlaModelView):
-            can_view_details = True
+        from flask_merchants.contrib.sqla import PaymentModelView
 
         for model_cls in ext._get_model_classes():
             endpoint = f"merchants_{model_cls.__tablename__}"
             admin.add_view(
-                _PaymentSqlaView(
+                PaymentModelView(
                     model_cls,
                     ext._db.session,
+                    ext=ext,
                     name=payment_name,
                     endpoint=endpoint,
                     category="Merchants",

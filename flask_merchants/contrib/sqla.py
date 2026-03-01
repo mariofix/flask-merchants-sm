@@ -33,6 +33,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from flask_merchants.contrib.base import PaymentViewMixin
+
 try:
     from flask_admin.actions import action
     from flask_admin.contrib.sqla import ModelView
@@ -47,18 +49,7 @@ if TYPE_CHECKING:
     from flask_merchants import FlaskMerchants
 
 
-_STATE_CHOICES = [
-    ("pending", "Pending"),
-    ("processing", "Processing"),
-    ("succeeded", "Succeeded"),
-    ("failed", "Failed"),
-    ("cancelled", "Cancelled"),
-    ("refunded", "Refunded"),
-    ("unknown", "Unknown"),
-]
-
-
-class PaymentModelView(ModelView):
+class PaymentModelView(PaymentViewMixin, ModelView):
     """Flask-Admin view for the :class:`~flask_merchants.models.Payment` model.
 
     Provides:
@@ -82,6 +73,7 @@ class PaymentModelView(ModelView):
     # ------------------------------------------------------------------
     # Column configuration
     # ------------------------------------------------------------------
+    # Extend the base 5 columns from PaymentViewMixin with timestamp columns.
     column_list = [
         "session_id",
         "provider",
@@ -91,9 +83,20 @@ class PaymentModelView(ModelView):
         "created_at",
         "updated_at",
     ]
+    column_labels = {
+        **PaymentViewMixin.column_labels,
+        "created_at": "Created",
+        "updated_at": "Updated",
+    }
+    column_descriptions = {
+        **PaymentViewMixin.column_descriptions,
+        "created_at": "Timestamp when this payment record was first created.",
+        "updated_at": "Timestamp of the most recent update to this payment record.",
+    }
     column_searchable_list = ["session_id", "provider"]
     column_filters = ["state", "provider", "currency"]
     column_default_sort = ("created_at", True)
+    can_view_details = True
 
     # Allow creating new payment records from the admin UI.
     can_create = True
@@ -118,8 +121,6 @@ class PaymentModelView(ModelView):
         "state",
         "metadata_json",
     ]
-
-    form_choices = {"state": _STATE_CHOICES}
 
     # ------------------------------------------------------------------
     # Init
