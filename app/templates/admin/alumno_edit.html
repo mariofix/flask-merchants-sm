@@ -116,13 +116,22 @@
             }
 
             function generateYoutubeId() {
-                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-';
-                let result = '';
+                const alnum = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+                const all = alnum + '_-';
                 const array = new Uint8Array(8);
                 crypto.getRandomValues(array);
-                for (let i = 0; i < 8; i++) {
-                    result += chars[array[i] % chars.length];
+
+                // First and last chars are always alphanumeric.
+                // Middle chars allow _ and - but never two in a row.
+                let result = alnum[array[0] % alnum.length];
+                let prevIsSpecial = false;
+                for (let i = 1; i < 7; i++) {
+                    const charset = prevIsSpecial ? alnum : all;
+                    const ch = charset[array[i] % charset.length];
+                    result += ch;
+                    prevIsSpecial = ch === '_' || ch === '-';
                 }
+                result += alnum[array[7] % alnum.length];
                 return result;
             }
 
