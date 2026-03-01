@@ -22,9 +22,8 @@ from flask import (
 from flask_security import current_user, login_required, roles_accepted  # type: ignore
 
 from ..database import db
-from ..extensions import csrf, limiter
+from ..extensions import limiter
 from ..model import (
-    Abono,
     Apoderado,
     MenuDiario,
     Payment,
@@ -272,7 +271,7 @@ def abono():
                 "abono_codigo": nuevo_abono.codigo,
                 "apoderado_id": str(nuevo_abono.apoderado.id),
                 "notify_url": url_for(
-                    "apoderado_cliente.webhook_khipu", _external=True
+                    "merchants.webhook_provider", provider="khipu", _external=True
                 ),
             },
         )
@@ -315,78 +314,6 @@ def abono_detalle(codigo):
         pago=pago,
         display_code=display_code,
     )
-
-
-@apoderado_bp.route("/webhook/khipu", methods=["POST"])
-@csrf.exempt
-def webhook_khipu():
-    """Receive and process Khipu payment notifications for abonos.
-
-    Khipu sends a POST to this endpoint when a payment status changes.
-    When the payment is confirmed (state ``succeeded``) the corresponding
-    abono is approved and the apoderado's balance is credited.
-    """
-    from ..extensions import flask_merchants
-    from flask_merchants import merchants_audit
-
-    payload: bytes = request.get_data()
-    headers: dict = dict(request.headers)
-
-    try:
-        client = flask_merchants.get_client("khipu")
-        event = client._provider.parse_webhook(payload, headers)
-    except Exception:
-        merchants_audit.warning("webhook_khipu_parse_error: payload=%r", payload[:200])
-        return jsonify({"error": "malformed payload"}), 400
-
-    if not event.payment_id:
-        return jsonify({"received": True}), 200
-
-    # Find the Payment record that holds this Khipu payment_id in its metadata
-    pending_khipu_pagos = (
-        db.session.execute(
-            db.select(Payment).where(
-                Payment.provider == "khipu",
-                Payment.state == "pending",
-            )
-        )
-        .scalars()
-        .all()
-    )
-    pago = next(
-        (
-            p
-            for p in pending_khipu_pagos
-            if (p.metadata_json or {}).get("khipu_payment_id") == event.payment_id
-        ),
-        None,
-    )
-
-    if pago and event.state.value == "succeeded" and pago.state == "pending":
-        abono = db.session.execute(
-            db.select(Abono).filter_by(codigo=pago.session_id)
-        ).scalar_one_or_none()
-        if abono:
-            pago.state = "succeeded"
-            saldo_actual = abono.apoderado.saldo_cuenta or 0
-            abono.apoderado.saldo_cuenta = saldo_actual + int(abono.monto)
-            db.session.commit()
-            merchants_audit.info(
-                "abono_aprobado_khipu_webhook: codigo=%s apoderado_id=%s monto=%s nuevo_saldo=%s",
-                abono.codigo,
-                abono.apoderado.id,
-                int(abono.monto),
-                abono.apoderado.saldo_cuenta,
-            )
-
-    return jsonify(
-        {
-            "received": True,
-            "event_type": event.event_type,
-            "payment_id": event.payment_id,
-            "state": event.state.value,
-        }
-    ), 200
 
 
 @apoderado_bp.route("/abonos", methods=["GET"])

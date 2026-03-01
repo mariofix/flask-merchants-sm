@@ -223,6 +223,8 @@ class FlaskMerchants:
         # Simple in-memory payment store: {payment_id: dict}
         # Used when no SQLAlchemy db is provided.
         self._store: dict[str, dict[str, Any]] = {}
+        # Registered webhook event handlers; called after each /webhook/<provider> request.
+        self._webhook_handlers: list = []
 
         if app is not None:
             self.init_app(app)
@@ -396,6 +398,43 @@ class FlaskMerchants:
                     f"Available: {merchants.list_providers()}"
                 )
         return self._clients[provider_key]
+
+    def add_webhook_handler(self, handler) -> None:
+        """Register a callable invoked after each ``/webhook/<provider>`` request.
+
+        The callable receives a single :class:`~merchants.models.WebhookEvent`
+        argument.  Multiple handlers can be registered; they are called in
+        registration order.  Any exception raised by a handler is silently
+        swallowed so that a failing handler never prevents Khipu (or any other
+        provider) from receiving a ``200`` response.
+
+        Example::
+
+            @flask_merchants.add_webhook_handler
+            def on_payment(event):
+                if event.state.value == "succeeded":
+                    ...
+
+        """
+        self._webhook_handlers.append(handler)
+        return handler  # allow use as a decorator
+
+    def _dispatch_webhook_event(self, event) -> None:
+        """Invoke all registered webhook handlers for *event*.
+
+        Errors are caught individually so one failing handler does not stop
+        the others from running.
+        """
+        for handler in self._webhook_handlers:
+            try:
+                handler(event)
+            except Exception:  # noqa: BLE001
+                merchants_audit.exception(
+                    "webhook_handler_error: handler=%r event_type=%r payment_id=%r",
+                    handler,
+                    event.event_type,
+                    event.payment_id,
+                )
 
     # ------------------------------------------------------------------
     # Internal helpers
