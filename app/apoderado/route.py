@@ -65,6 +65,9 @@ def index():
 @apoderado_bp.route("/wizard/1", methods=["GET", "POST"])
 @login_required
 def wizp1():
+    existing_apoderado = ctrl.get_apoderado(current_user)
+    if existing_apoderado:
+        return redirect(url_for("apoderado_cliente.wizp2"))
     if request.method == "POST":
         apoderado = ctrl.create_apoderado(
             nombre=request.form["apoderado_nombre"],
@@ -84,6 +87,8 @@ def wizp2():
     apoderado = ctrl.get_apoderado(current_user)
     if not apoderado:
         return redirect(".wizp1")
+    if apoderado.alumnos:
+        return redirect(url_for("apoderado_cliente.wizp3"))
     cursos = db.session.execute(
         db.select(Settings).filter_by(slug="cursos")
     ).scalar_one()
@@ -119,6 +124,7 @@ def wizp3():
     if not apoderado:
         return redirect(".wizp1")
     if request.method == "POST":
+        is_first_time = apoderado.saldo_cuenta is None
         ctrl.update_preferences(
             apoderado,
             {
@@ -134,24 +140,25 @@ def wizp3():
                 "limite_notificaciones": request.form.get("monto_semanal", 1500),
             },
         )
-        from ..tasks import send_notificacion_admin_nuevo_apoderado
-        from flask_merchants import merchants_audit
+        if is_first_time:
+            from ..tasks import send_notificacion_admin_nuevo_apoderado
+            from flask_merchants import merchants_audit
 
-        payload = {
-            "nombre_apoderado": apoderado.nombre,
-            "email_apoderado": apoderado.usuario.email,
-            "alumnos": [
-                {"nombre": a.nombre, "curso": a.curso} for a in apoderado.alumnos
-            ],
-        }
-        send_notificacion_admin_nuevo_apoderado.delay(payload)
-        merchants_audit.info(
-            "nuevo_apoderado_creado: id=%s nombre=%r email=%r alumnos=%d",
-            apoderado.id,
-            apoderado.nombre,
-            apoderado.usuario.email,
-            len(apoderado.alumnos),
-        )
+            payload = {
+                "nombre_apoderado": apoderado.nombre,
+                "email_apoderado": apoderado.usuario.email,
+                "alumnos": [
+                    {"nombre": a.nombre, "curso": a.curso} for a in apoderado.alumnos
+                ],
+            }
+            send_notificacion_admin_nuevo_apoderado.delay(payload)
+            merchants_audit.info(
+                "nuevo_apoderado_creado: id=%s nombre=%r email=%r alumnos=%d",
+                apoderado.id,
+                apoderado.nombre,
+                apoderado.usuario.email,
+                len(apoderado.alumnos),
+            )
         return redirect(url_for("apoderado_cliente.wizp4"))
     return render_template("apoderado/wizard-paso3.html")
 

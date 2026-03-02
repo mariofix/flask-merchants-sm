@@ -141,7 +141,7 @@ class Apoderado(db.Model, Timestamp):
     id: Mapped[int] = mapped_column(primary_key=True)
     nombre: Mapped[str | None] = mapped_column(String(255), nullable=False)
     alumnos_registro: Mapped[int] = mapped_column(default=0, nullable=True)
-    usuario_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
+    usuario_id: Mapped[int] = mapped_column(ForeignKey("user.id"), unique=True)
     usuario: Mapped["User"] = relationship(back_populates="apoderado")
 
     comprobantes_transferencia: Mapped[bool] = mapped_column(default=False)
