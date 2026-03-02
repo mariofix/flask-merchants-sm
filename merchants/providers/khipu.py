@@ -58,6 +58,7 @@ class KhipuProvider(Provider):
     ) -> None:
         super().__init__(key=key, name=name, description=description)
         self._api_key = api_key
+        khipu_tools.api_key = api_key
         self._subject = subject
         self._notify_url = notify_url
 
@@ -84,7 +85,7 @@ class KhipuProvider(Provider):
             params["transaction_id"] = str(metadata["order_id"])
 
         try:
-            result = khipu_tools.Payments.create(api_key=self._api_key, **params)
+            result = khipu_tools.Payments.create(**params)
         except Exception as exc:
             raise UserError(str(exc)) from exc
 
@@ -102,7 +103,7 @@ class KhipuProvider(Provider):
 
     def get_payment(self, payment_id: str) -> PaymentStatus:
         try:
-            result = khipu_tools.Payments.get(api_key=self._api_key, payment_id=payment_id)
+            result = khipu_tools.Payments.get(payment_id=payment_id)
         except Exception as exc:
             raise UserError(str(exc)) from exc
 
