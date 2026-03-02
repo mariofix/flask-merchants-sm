@@ -105,11 +105,94 @@ MERCHANTS_PROVIDER_LABELS = {
 
 CELERY = {
     "broker_url": "redis://10.100.254.2/10",
-    "result_backend": "redis://10.100.254.2/11",
+    "result_backend": "redis://10.100.254.2/10",
     "task_ignore_result": False,
     "worker_concurrency": 1,
     "worker_max_tasks_per_child": 1,
 }
+
+# ------------------------------------------------------------------
+# Logging configuration
+# ------------------------------------------------------------------
+# Three facilities write rotating files to the logs/ directory:
+#   sm.app    – logins, password changes, settings updates, app warnings
+#   sm.celery – task lifecycle, connection errors
+#   sm.audit  – payments, orders, pedidos, new users (audit trail)
+#
+# To override completely, set LOGGING to a full logging.config.dictConfig
+# dict.  Individual file paths, levels, and retention can also be tuned via
+# the scalar keys below without replacing the full dict.
+#
+# Scalar overrides (used only when LOGGING is not set):
+APP_LOG_FILE = f"{BASE_DIR}/logs/app.log"
+APP_LOG_LEVEL = LOG_LEVEL
+APP_LOG_BACKUP_COUNT = 14
+
+CELERY_LOG_FILE = f"{BASE_DIR}/logs/celery.log"
+CELERY_LOG_LEVEL = LOG_LEVEL
+CELERY_LOG_BACKUP_COUNT = 14
+
+AUDIT_LOG_FILE = f"{BASE_DIR}/logs/audit.log"
+AUDIT_LOG_LEVEL = "INFO"
+AUDIT_LOG_BACKUP_COUNT = 30
+
+# Full dictConfig example — uncomment and customise to take full control:
+# LOGGING = {
+#     "version": 1,
+#     "disable_existing_loggers": False,
+#     "formatters": {
+#         "standard": {
+#             "format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+#             "datefmt": "%Y-%m-%d %H:%M:%S",
+#         },
+#     },
+#     "handlers": {
+#         "app_file": {
+#             "class": "logging.handlers.TimedRotatingFileHandler",
+#             "filename": f"{BASE_DIR}/logs/app.log",
+#             "when": "midnight",
+#             "backupCount": 14,
+#             "encoding": "utf-8",
+#             "formatter": "standard",
+#         },
+#         "celery_file": {
+#             "class": "logging.handlers.TimedRotatingFileHandler",
+#             "filename": f"{BASE_DIR}/logs/celery.log",
+#             "when": "midnight",
+#             "backupCount": 14,
+#             "encoding": "utf-8",
+#             "formatter": "standard",
+#         },
+#         "audit_file": {
+#             "class": "logging.handlers.TimedRotatingFileHandler",
+#             "filename": f"{BASE_DIR}/logs/audit.log",
+#             "when": "midnight",
+#             "backupCount": 30,
+#             "encoding": "utf-8",
+#             "formatter": "standard",
+#         },
+#     },
+#     "loggers": {
+#         "sm.app": {
+#             "handlers": ["app_file"],
+#             "level": "INFO",
+#             "propagate": False,
+#         },
+#         "sm.celery": {
+#             "handlers": ["celery_file"],
+#             "level": "INFO",
+#             "propagate": False,
+#         },
+#         "sm.audit": {
+#             "handlers": ["audit_file"],
+#             "level": "INFO",
+#             "propagate": False,
+#         },
+#     },
+# }
+
+# Path shown in the admin dashboard audit panel (must match audit_file above)
+AUDIT_LOG_PATH = f"{BASE_DIR}/logs/audit.log"
 
 # ------------------------------------------------------------------
 # School staff periodic email scheduler
