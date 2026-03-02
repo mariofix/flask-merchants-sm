@@ -17,16 +17,16 @@ depends_on = None
 
 
 def upgrade():
-    op.create_unique_constraint(
-        "uq_casino_apoderado_usuario_id",
-        "casino_apoderado",
-        ["usuario_id"],
-    )
+    with op.batch_alter_table("casino_apoderado") as batch_op:
+        batch_op.create_unique_constraint(
+            "uq_casino_apoderado_usuario_id",
+            ["usuario_id"],
+        )
 
 
 def downgrade():
-    op.drop_constraint(
-        "uq_casino_apoderado_usuario_id",
-        "casino_apoderado",
-        type_="unique",
-    )
+    with op.batch_alter_table("casino_apoderado") as batch_op:
+        batch_op.drop_constraint(
+            "uq_casino_apoderado_usuario_id",
+            type_="unique",
+        )
