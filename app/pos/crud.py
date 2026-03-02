@@ -386,6 +386,68 @@ class PosController:
         db.session.commit()
         return True
 
+    def crear_orden_admin(
+        self,
+        nombre_alumno: str,
+        curso_alumno: str,
+        fecha: date,
+        menu_slug: str,
+        nota: Optional[str] = None,
+    ) -> OrdenCasino:
+        """Create a direct admin order without payment or saldo checks.
+
+        Finds or creates the Apoderado record for user_id=1 (using default
+        values when it does not exist yet).  Creates a new Alumno linked to
+        that Apoderado, then creates an OrdenCasino with
+        ``pedido_codigo='pedido-admin'`` so the record can later be
+        re-assigned to the correct apoderado once they register.
+        """
+        import uuid as _uuid
+        from slugify import slugify
+        from ..model import Apoderado, Alumno, User
+
+        user1 = db.session.get(User, 1)
+        if not user1:
+            raise ValueError("Usuario 1 no encontrado en el sistema")
+
+        apoderado = db.session.execute(
+            db.select(Apoderado).filter_by(usuario_id=1)
+        ).scalar_one_or_none()
+
+        if not apoderado:
+            apoderado = Apoderado()
+            apoderado.nombre = "Apoderado Administrativo"
+            apoderado.alumnos_registro = 0
+            apoderado.usuario_id = 1
+            db.session.add(apoderado)
+            db.session.flush()
+
+        alumno = Alumno()
+        alumno.slug = slugify(f"admin-{nombre_alumno}-{curso_alumno}-{_uuid.uuid4().hex[:6]}")
+        alumno.nombre = nombre_alumno
+        alumno.curso = curso_alumno
+        alumno.apoderado = apoderado
+        alumno.activo = True
+        db.session.add(alumno)
+        db.session.flush()
+
+        menu = db.session.execute(
+            db.select(MenuDiario).filter_by(slug=menu_slug)
+        ).scalar_one_or_none()
+
+        orden = OrdenCasino()
+        orden.pedido_codigo = "pedido-admin"
+        orden.alumno_id = alumno.id
+        orden.menu_slug = menu_slug
+        orden.menu_descripcion = menu.descripcion if menu else menu_slug
+        orden.menu_precio = menu.precio if menu else None
+        orden.fecha = fecha
+        orden.nota = nota
+        orden.estado = EstadoAlmuerzo.PENDIENTE
+        db.session.add(orden)
+        db.session.commit()
+        return orden
+
     def approve_pedido(self, pedido: Pedido, pago: Payment) -> bool:
         """Mark *pago* as succeeded and set *pedido* to paid.
 
