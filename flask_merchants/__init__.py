@@ -2,12 +2,8 @@
 
 from __future__ import annotations
 
-import datetime
 import logging
-import os
-from logging.handlers import TimedRotatingFileHandler
 from typing import Any
-from zoneinfo import ZoneInfo
 
 import merchants
 from merchants.providers.dummy import DummyProvider
@@ -18,62 +14,16 @@ from flask_merchants.version import __version__
 __all__ = ["FlaskMerchants", "merchants_audit"]
 
 # ---------------------------------------------------------------------------
-# Audit logger - writes one rotating file per day, keeps 14 days of history.
-# File name format: logs/merchants_audit.YYYY-MM-DD.log
+# Audit logger
+# ---------------------------------------------------------------------------
+# ``merchants_audit`` is kept for backwards compatibility; it is an alias for
+# the ``sm.audit`` logger configured by ``app.logging_config.configure_logging``
+# at application startup.  A NullHandler is added so that messages logged
+# before the app starts (e.g. during tests) are silently discarded.
 # ---------------------------------------------------------------------------
 
-_AUDIT_TZ = ZoneInfo("America/Santiago")
-
-
-class _SantiagoFormatter(logging.Formatter):
-    """Formatter that displays timestamps in America/Santiago timezone."""
-
-    def converter(self, timestamp):
-        """Convert a UTC timestamp to a Santiago-timezone timetuple for asctime rendering."""
-        return datetime.datetime.fromtimestamp(timestamp, tz=_AUDIT_TZ).timetuple()
-
-
-def _setup_audit_logger(log_dir: str = "logs") -> logging.Logger:
-    """Return the ``merchants_audit`` logger, configuring it on first call."""
-    logger = logging.getLogger("merchants_audit")
-    if logger.handlers:
-        return logger
-
-    logger.setLevel(logging.INFO)
-    os.makedirs(log_dir, exist_ok=True)
-
-    base_path = os.path.join(log_dir, "merchants_audit.log")
-    # Rotate at Santiago midnight by passing atTime set to UTC offset for 00:00 Santiago.
-    # Using utc=True so the handler computes rotation in UTC; atTime expresses the
-    # equivalent UTC wall-clock hour for Santiago midnight (UTC-3 in summer = 03:00 UTC).
-    # Because DST shifts the offset by 1 h, we use the stdlib zoneinfo to compute the
-    # exact UTC time that corresponds to the next Santiago midnight at handler creation.
-    now_santiago = datetime.datetime.now(tz=_AUDIT_TZ)
-    next_midnight_santiago = (now_santiago + datetime.timedelta(days=1)).replace(
-        hour=0, minute=0, second=0, microsecond=0
-    )
-    rotation_time_utc = next_midnight_santiago.astimezone(datetime.timezone.utc).time()
-
-    handler = TimedRotatingFileHandler(
-        base_path,
-        when="midnight",
-        interval=1,
-        backupCount=14,
-        encoding="utf-8",
-        utc=True,
-        atTime=rotation_time_utc,
-    )
-    # Append the date to the rotated files: merchants_audit.log.YYYY-MM-DD
-    handler.suffix = "%Y-%m-%d"
-    handler.setFormatter(
-        _SantiagoFormatter("%(asctime)s [%(levelname)s] %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
-    )
-    logger.addHandler(handler)
-    logger.propagate = False
-    return logger
-
-
-merchants_audit: logging.Logger = _setup_audit_logger()
+logging.getLogger("sm.audit").addHandler(logging.NullHandler())
+merchants_audit: logging.Logger = logging.getLogger("sm.audit")
 
 
 def _is_quart_app(app) -> bool:

@@ -17,8 +17,8 @@ ExecStart=/home/zvn/apps/sabormirandiano.cl/.venv/bin/gunicorn \
     wsgi:app
 Restart=always
 RestartSec=5
-StandardOutput=journal
-StandardError=journal
+StandardOutput=null
+StandardError=null
 
 [Install]
 WantedBy=multi-user.target

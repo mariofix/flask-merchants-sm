@@ -42,14 +42,14 @@ from wtforms.validators import Optional
 
 
 def _read_recent_audit_entries(n: int = 20) -> list[str]:
-    """Return the last *n* lines from the merchants_audit log file.
+    """Return the last *n* lines from the audit log file.
 
     The log path is read from ``current_app.config['AUDIT_LOG_PATH']`` when
-    available, falling back to ``logs/merchants_audit.log``.
+    available, falling back to ``logs/audit.log``.
     """
     from flask import current_app
 
-    log_path = current_app.config.get("AUDIT_LOG_PATH", os.path.join("logs", "merchants_audit.log"))
+    log_path = current_app.config.get("AUDIT_LOG_PATH", os.path.join("logs", "audit.log"))
     try:
         with open(log_path, encoding="utf-8") as f:
             lines = f.readlines()

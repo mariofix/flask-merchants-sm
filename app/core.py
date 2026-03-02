@@ -16,6 +16,7 @@ from .docs import docs_bp
 from .database import db, migrations
 from .extensions import babel, csrf, flask_merchants, mail, limiter
 from .extensions.admin import admin, SecureRedisCli
+from .logging_config import configure_logging
 from .model import *  # noqa: F403
 from .pos.routes import pos_bp
 from .providers.cafeteria import CafeteriaProvider
@@ -42,6 +43,9 @@ def create_app():
     if settings_file:
         app.config.from_object(settings_file)
     app.config.from_prefixed_env()
+
+    # Logging — set up sm.app / sm.celery / sm.audit before anything else logs
+    configure_logging(app)
 
     # Extensions
     babel.init_app(app)
@@ -87,6 +91,9 @@ def create_app():
     app.extensions["user_datastore"] = user_datastore
     # Flask-Mailman
     mail.init_app(app)
+
+    # Wire Flask-Login / Flask-Security signals to sm.app and sm.audit loggers
+    _register_auth_signals(app)
 
     @security.context_processor
     def security_context_processor():
@@ -235,3 +242,63 @@ def create_app():
         toolbar.init_app(app)
 
     return app
+
+
+# ---------------------------------------------------------------------------
+# Auth signal handlers
+# ---------------------------------------------------------------------------
+
+def _register_auth_signals(app) -> None:  # noqa: ANN001
+    """Connect Flask-Login / Flask-Security signals to the app and audit loggers."""
+    import logging
+    from flask_login.signals import user_logged_in, user_logged_out
+    from flask_security.signals import (
+        user_registered,
+        password_changed,
+        password_reset,
+    )
+
+    app_log = logging.getLogger("sm.app")
+    audit_log = logging.getLogger("sm.audit")
+
+    @user_logged_in.connect_via(app)
+    def on_login(sender: object, user: object, **kwargs: object) -> None:
+        app_log.info(
+            "login: user_id=%s username=%r email=%r",
+            getattr(user, "id", None),
+            getattr(user, "username", None),
+            getattr(user, "email", None),
+        )
+
+    @user_logged_out.connect_via(app)
+    def on_logout(sender: object, user: object, **kwargs: object) -> None:
+        app_log.info(
+            "logout: user_id=%s username=%r",
+            getattr(user, "id", None),
+            getattr(user, "username", None),
+        )
+
+    @user_registered.connect_via(app)
+    def on_registered(sender: object, user: object, **kwargs: object) -> None:
+        audit_log.info(
+            "nuevo_usuario_registrado: user_id=%s username=%r email=%r",
+            getattr(user, "id", None),
+            getattr(user, "username", None),
+            getattr(user, "email", None),
+        )
+
+    @password_changed.connect_via(app)
+    def on_password_changed(sender: object, user: object, **kwargs: object) -> None:
+        app_log.info(
+            "password_changed: user_id=%s username=%r",
+            getattr(user, "id", None),
+            getattr(user, "username", None),
+        )
+
+    @password_reset.connect_via(app)
+    def on_password_reset(sender: object, user: object, **kwargs: object) -> None:
+        app_log.info(
+            "password_reset: user_id=%s username=%r",
+            getattr(user, "id", None),
+            getattr(user, "username", None),
+        )
