@@ -55,6 +55,49 @@ class TestCreateApoderado:
         apoderado = make_ctrl().create_apoderado("Ana", alumnos_count="3", user=sample_user)
         assert apoderado.alumnos_registro == 3
 
+    def test_unique_constraint_prevents_duplicate_apoderado(self, db_session, sample_user):
+        """A second Apoderado for the same user must raise an IntegrityError.
+
+        After the failure only the original record should exist.
+        """
+        from app.database import db
+        from app.model import Apoderado
+        from sqlalchemy.exc import IntegrityError
+
+        first = make_ctrl().create_apoderado("First", alumnos_count=1, user=sample_user)
+        assert first.id is not None
+
+        with pytest.raises(IntegrityError):
+            make_ctrl().create_apoderado("Duplicate", alumnos_count=1, user=sample_user)
+            db_session.flush()
+
+        db_session.rollback()
+        count = db_session.execute(
+            db.select(db.func.count()).select_from(Apoderado).filter_by(usuario_id=sample_user.id)
+        ).scalar()
+        assert count == 1
+
+
+# ---------------------------------------------------------------------------
+# is_first_time wizard step 3
+# ---------------------------------------------------------------------------
+
+class TestWizardFirstTimeGate:
+    """Verify the saldo_cuenta sentinel used by wizp3 to detect first-time setup."""
+
+    def test_new_apoderado_has_null_saldo_cuenta(self, db_session, sample_user):
+        """Freshly-created Apoderado has saldo_cuenta=None (wizard not yet completed)."""
+        apoderado = make_ctrl().create_apoderado("Test", alumnos_count=1, user=sample_user)
+        assert apoderado.saldo_cuenta is None
+
+    def test_update_preferences_sets_saldo_cuenta_to_zero(self, db_session, sample_user):
+        """After update_preferences, saldo_cuenta becomes 0 (wizard completed)."""
+        apoderado = make_ctrl().create_apoderado("Test", alumnos_count=1, user=sample_user)
+        assert apoderado.saldo_cuenta is None  # first time gate is True
+        make_ctrl().update_preferences(apoderado, {})
+        db_session.refresh(apoderado)
+        assert apoderado.saldo_cuenta == 0  # first time gate is now False
+
 
 # ---------------------------------------------------------------------------
 # create_alumnos
