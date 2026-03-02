@@ -101,8 +101,9 @@ def create_app():
     providers.append(CafeteriaProvider())
     providers.append(SaldoProvider())
 
-    # merchants
-    flask_merchants.init_app(app=app, db=db, models=[Payment], admin=admin, providers=providers)
+    # merchants - do not pass admin here; we register a custom PaymentAdminView
+    # separately after webhook configuration (see below)
+    flask_merchants.init_app(app=app, db=db, models=[Payment], providers=providers)
 
     # Register Khipu abono approval webhook handler.
     # When Khipu notifies /merchants/webhook/khipu that a payment succeeded,
@@ -160,6 +161,32 @@ def create_app():
                 )
 
     flask_merchants.add_webhook_handler(_khipu_abono_webhook_handler)
+
+    # Register custom payment admin views (using PaymentAdminView with app-specific actions).
+    # Replaces the default PaymentModelView that would have been auto-registered via admin=admin.
+    from .extensions.admin import PaymentAdminView
+    from flask_merchants.contrib.admin import ProvidersView
+
+    payment_view_name = app.config.get("MERCHANTS_PAYMENT_VIEW_NAME", "Payments")
+    provider_view_name = app.config.get("MERCHANTS_PROVIDER_VIEW_NAME", "Providers")
+    admin.add_view(
+        PaymentAdminView(
+            Payment,
+            db.session,
+            ext=flask_merchants,
+            name=payment_view_name,
+            endpoint="merchants_merchants_payment",
+            category="Merchants",
+        )
+    )
+    admin.add_view(
+        ProvidersView(
+            flask_merchants,
+            name=provider_view_name,
+            endpoint="merchants_providers",
+            category="Merchants",
+        )
+    )
 
     # Build the providers context once (providers don't change after init).
     _labels = app.config.get("MERCHANTS_PROVIDER_LABELS", {})
