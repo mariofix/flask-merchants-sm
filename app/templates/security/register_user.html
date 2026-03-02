@@ -20,7 +20,7 @@
 
         <div class="mb-3">
           <label class="form-label">Telefono Celular</label>
-          <input type="tel" class="form-control" placeholder="56987654321" minlength="11" maxlength="11" name="username" required />
+          <input type="tel" class="form-control" placeholder="56987654321" minlength="11" maxlength="11" pattern="56[0-9]{9}" title="11 dígitos sin signo +, comenzando con 56 (ejemplo: 56912345678)" name="username" required />
           {{ render_field_errors(register_user_form.username) }}
         </div>
         <div class="mb-3">

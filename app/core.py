@@ -75,8 +75,15 @@ def create_app():
         )
 
     # Setup Flask-Security
+    from .forms import ChileanPhoneUsernameUtil
+
     user_datastore = SQLAlchemyUserDatastore(db, User, Role)
-    security = Security(app, user_datastore, mail_util_cls=MyMailUtil)
+    security = Security(
+        app,
+        user_datastore,
+        mail_util_cls=MyMailUtil,
+        username_util_cls=ChileanPhoneUsernameUtil,
+    )
     app.extensions["user_datastore"] = user_datastore
     # Flask-Mailman
     mail.init_app(app)

@@ -256,15 +256,30 @@ class TestUpdateAjustes:
 
     def test_updates_user_phone(self, db_session, sample_apoderado):
         user = sample_apoderado.usuario
-        make_ctrl().update_ajustes(sample_apoderado, user, {"phone": "+56912345678"})
+        make_ctrl().update_ajustes(sample_apoderado, user, {"phone": "56912345678"})
         db_session.refresh(user)
-        assert user.username == "+56912345678"
+        assert user.username == "56912345678"
 
     def test_none_apoderado_does_not_raise(self, db_session, sample_user):
         # Should update only the user without crashing
-        make_ctrl().update_ajustes(None, sample_user, {"phone": "+56999999999"})
+        make_ctrl().update_ajustes(None, sample_user, {"phone": "56999999999"})
         db_session.refresh(sample_user)
-        assert sample_user.username == "+56999999999"
+        assert sample_user.username == "56999999999"
+
+    def test_rejects_phone_with_plus_sign(self, db_session, sample_apoderado):
+        user = sample_apoderado.usuario
+        with pytest.raises(ValueError, match=r"11 dígitos"):
+            make_ctrl().update_ajustes(sample_apoderado, user, {"phone": "+56912345678"})
+
+    def test_rejects_phone_too_short(self, db_session, sample_apoderado):
+        user = sample_apoderado.usuario
+        with pytest.raises(ValueError):
+            make_ctrl().update_ajustes(sample_apoderado, user, {"phone": "5691234567"})
+
+    def test_rejects_phone_wrong_country_code(self, db_session, sample_apoderado):
+        user = sample_apoderado.usuario
+        with pytest.raises(ValueError):
+            make_ctrl().update_ajustes(sample_apoderado, user, {"phone": "12345678901"})
 
 
 # ---------------------------------------------------------------------------
