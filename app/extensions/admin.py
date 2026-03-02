@@ -16,6 +16,7 @@ from flask_security import current_user  # type: ignore
 from . import csrf
 from .. import settings
 from ..database import db
+from ..extensions import limiter
 from ..model import (
     Alumno,
     Apoderado,
@@ -31,6 +32,7 @@ from ..model import (
     User,
     Abono,
     OrdenCasino,
+    SchoolStaff,
     SchoolStaffPedido,
 )
 from wtforms import SelectMultipleField
@@ -981,6 +983,117 @@ class PaymentAdminView(SecureModelView):
             flash(f"{confirmed} pago(s) confirmado(s) exitosamente.", "success")
 
 
+class SchoolStaffAdminView(SecureModelView):
+    """Flask-Admin view for SchoolStaff (personal del colegio)."""
+
+    column_list = ["nombre", "usuario", "limite_cuenta", "informe_semanal", "created"]
+    column_labels = {
+        "nombre": "Nombre",
+        "usuario": "Usuario",
+        "limite_cuenta": "Límite de Cuenta",
+        "informe_semanal": "Informe Semanal",
+        "created": "Creado",
+    }
+
+
+class SchoolStaffPedidoAdminView(SecureModelView):
+    """Flask-Admin view for SchoolStaffPedido (pedidos del personal)."""
+
+    column_list = ["codigo", "staff", "estado", "precio_total", "tipo_pago", "pagado", "fecha_pedido"]
+    column_labels = {
+        "codigo": "Código",
+        "staff": "Personal",
+        "estado": "Estado",
+        "precio_total": "Precio Total",
+        "tipo_pago": "Tipo de Pago",
+        "pagado": "Pagado",
+        "fecha_pedido": "Fecha Pedido",
+    }
+    column_filters = ["estado", "pagado", "tipo_pago"]
+    column_default_sort = ("fecha_pedido", True)
+
+
+class OrdenAdminView(BaseView):
+    """Flask-Admin view that replaces the former /pos/orden-admin route.
+
+    Provides a form to create a direct (no-payment) lunch order for a student,
+    equivalent to the removed POS blueprint endpoints.
+    """
+
+    def is_accessible(self):
+        return (
+            current_user.is_active
+            and current_user.is_authenticated
+            and (current_user.has_role("admin") or current_user.has_role("pos"))
+        )
+
+    def _handle_view(self, name, **kwargs):
+        if not self.is_accessible():
+            if current_user.is_authenticated:
+                abort(403)
+            else:
+                return redirect(url_for("security.login", next=request.url))
+
+    @expose("/", methods=["GET"])
+    def index(self):
+        """Render the direct admin order form."""
+        from datetime import date as _date
+
+        cursos_setting = db.session.execute(
+            db.select(Settings).filter_by(slug="cursos")
+        ).scalar_one_or_none()
+        cursos = cursos_setting.value if cursos_setting and cursos_setting.value else []
+        today_date = _date.today().isoformat()
+        return self.render("admin/orden_admin.html", cursos=cursos, today_date=today_date)
+
+    @expose("/create", methods=["POST"])
+    @limiter.limit("60 per minute")
+    def create(self):
+        """Process the direct admin order form submission."""
+        from datetime import date as _date
+        from ..pos.crud import PosController
+
+        ctrl = PosController()
+
+        nombre = request.form.get("nombre_alumno", "").strip()
+        curso = request.form.get("curso_alumno", "").strip()
+        fecha_str = request.form.get("fecha", "").strip()
+        menu_slug = request.form.get("menu_slug", "").strip()
+        correo = request.form.get("correo", "").strip()
+        phone = request.form.get("phone", "").strip()
+
+        if not nombre or not curso or not fecha_str or not menu_slug:
+            flash("Nombre, curso, fecha y menú son obligatorios.", "danger")
+            return redirect(url_for("orden_admin.index"))
+
+        try:
+            fecha = _date.fromisoformat(fecha_str)
+        except ValueError:
+            flash("Fecha inválida.", "danger")
+            return redirect(url_for("orden_admin.index"))
+
+        nota_parts = []
+        if correo:
+            nota_parts.append(f"correo: {correo}")
+        if phone:
+            nota_parts.append(f"tel: {phone}")
+        nota = ", ".join(nota_parts)[:255] if nota_parts else None
+
+        try:
+            orden = ctrl.crear_orden_admin(
+                nombre_alumno=nombre,
+                curso_alumno=curso,
+                fecha=fecha,
+                menu_slug=menu_slug,
+                nota=nota,
+            )
+            flash(
+                f"Orden creada para {orden.alumno.nombre} — {orden.menu_descripcion} ({fecha_str}).",
+                "success",
+            )
+        except ValueError as exc:
+            flash(str(exc), "danger")
+        return redirect(url_for("orden_admin.index"))
 
 admin.add_view(PlatoAdminView(Plato, db.session, category="Casino"))
 admin.add_view(
@@ -997,6 +1110,8 @@ admin.add_menu_item(MenuDivider(), target_category="Casino")
 admin.add_view(SecureModelView(Pedido, db.session, category="Casino", name="Pedidos"))
 admin.add_view(AbonoAdminView(Abono, db.session, category="Casino", name="Abonos"))
 admin.add_view(SecureModelView(OrdenCasino, db.session, category="Casino", name="Ordenes"))
+admin.add_view(SchoolStaffPedidoAdminView(SchoolStaffPedido, db.session, category="Casino", name="Pedidos Personal"))
+admin.add_view(OrdenAdminView(name="Orden Directa", endpoint="orden_admin", category="Casino"))
 admin.add_view(ResumenDiaAdminView(name="Resumen del Día", endpoint="resumen_dia", category="Casino"))
 admin.add_view(GestorMenuView(name="Gestor de Menús", endpoint="gestor_menu", category="Casino"))
 
@@ -1006,6 +1121,7 @@ admin.add_view(SecureModelView(Role, db.session, category="Usuarios y Roles", na
 admin.add_menu_item(MenuDivider(), target_category="Usuarios y Roles")
 admin.add_view(ApoderadoAdminView(Apoderado, db.session, category="Usuarios y Roles"))
 admin.add_view(AlumnoAdminView(Alumno, db.session, category="Usuarios y Roles"))
+admin.add_view(SchoolStaffAdminView(SchoolStaff, db.session, category="Usuarios y Roles", name="Personal del Colegio"))
 
 
 admin.add_view(SecureModelView(Settings, db.session, name="Configuracion"))

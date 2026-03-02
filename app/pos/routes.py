@@ -360,68 +360,6 @@ def completa_pedido(codigo):
     return redirect(url_for("apoderado_cliente.pago_orden", orden=codigo))
 
 
-@pos_bp.route("/orden-admin", methods=["GET"])
-@roles_accepted("admin", "pos")
-def orden_admin_form():
-    """Admin direct-order form: create a lunch order without payment."""
-    from datetime import date as _date
-    cursos_setting = db.session.execute(
-        db.select(Settings).filter_by(slug="cursos")
-    ).scalar_one_or_none()
-    cursos = cursos_setting.value if cursos_setting and cursos_setting.value else []
-    today_date = _date.today().isoformat()
-    return render_template("pos/orden-admin.html", cursos=cursos, today_date=today_date)
-
-
-@pos_bp.route("/orden-admin", methods=["POST"])
-@roles_accepted("admin", "pos")
-@limiter.limit("60 per minute")
-def orden_admin():
-    """Process a direct admin lunch order."""
-    from datetime import date as _date
-    from flask import flash
-
-    nombre = request.form.get("nombre_alumno", "").strip()
-    curso = request.form.get("curso_alumno", "").strip()
-    fecha_str = request.form.get("fecha", "").strip()
-    menu_slug = request.form.get("menu_slug", "").strip()
-    correo = request.form.get("correo", "").strip()
-    phone = request.form.get("phone", "").strip()
-
-    if not nombre or not curso or not fecha_str or not menu_slug:
-        flash("Nombre, curso, fecha y menú son obligatorios.", "danger")
-        return redirect(url_for("pos.orden_admin_form"))
-
-    try:
-        fecha = _date.fromisoformat(fecha_str)
-    except ValueError:
-        flash("Fecha inválida.", "danger")
-        return redirect(url_for("pos.orden_admin_form"))
-
-    nota_parts = []
-    if correo:
-        nota_parts.append(f"correo: {correo}")
-    if phone:
-        nota_parts.append(f"tel: {phone}")
-    nota = ", ".join(nota_parts)[:255] if nota_parts else None
-
-    try:
-        orden = ctrl.crear_orden_admin(
-            nombre_alumno=nombre,
-            curso_alumno=curso,
-            fecha=fecha,
-            menu_slug=menu_slug,
-            nota=nota,
-        )
-        flash(
-            f"Orden creada para {orden.alumno.nombre} — {orden.menu_descripcion} ({fecha_str}).",
-            "success",
-        )
-    except ValueError as exc:
-        flash(str(exc), "danger")
-    return redirect(url_for("pos.orden_admin_form"))
-
-
 @pos_bp.route("/consulta-admin/<dia>", methods=["GET"])
 @roles_accepted("admin", "pos")
 def consulta_admin(dia: str):
