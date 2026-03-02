@@ -359,11 +359,13 @@ def send_notificacion_pedido_pendiente(self, pedido_info: dict):
 
     Si la forma de pago es cafetería se incluyen instrucciones y el código QR.
     Si el proveedor genera una URL de redirección (p. ej. Khipu) se incluye un
-    botón para completar el pago.  No se envían copias a administradores.
+    botón para completar el pago.  Siempre envía copia [ADMIN] a todos los
+    usuarios con rol admin.  Si el apoderado tiene copia_notificaciones
+    configurado, también envía a esas direcciones (cuando notificacion_compra=True).
     """
     with current_app.app_context():
         from .database import db
-        from .model import Alumno, Apoderado, Payment
+        from .model import Alumno, Apoderado, Payment, Role
 
         # Resolve apoderados from alumno IDs stored in the pedido items
         alumno_ids = [
@@ -399,13 +401,17 @@ def send_notificacion_pedido_pendiente(self, pedido_info: dict):
         pedido_url = pedido_info.get("pedido_url", "")
 
         from_email = _get_from_email()
+        admin_role = db.session.execute(
+            db.select(Role).filter_by(name="admin")
+        ).scalar_one_or_none()
+        admin_emails = [u.email for u in admin_role.users if u.email] if admin_role else []
+
+        last_subject = None
+        last_body = None
+        last_html = None
 
         for apoderado in apoderados.values():
-            if not apoderado.notificacion_compra:
-                continue
             email = apoderado.usuario.email if apoderado.usuario else None
-            if not email:
-                continue
 
             subject = f"Pedido recibido #{pedido_codigo_short} - ${int(total):,}"
             body = (
@@ -433,21 +439,64 @@ def send_notificacion_pedido_pendiente(self, pedido_info: dict):
                 redirect_url=redirect_url,
                 pedido_url=pedido_url,
             )
+
+            last_subject = subject
+            last_body = body
+            last_html = html
+
+            if apoderado.notificacion_compra and email:
+                with mail.get_connection() as connection:
+                    msg = EmailMultiAlternatives(
+                        subject=subject,
+                        body=body,
+                        from_email=from_email,
+                        to=[email],
+                        connection=connection,
+                    )
+                    msg.attach_alternative(html, "text/html")
+                    msg.send()
+                    merchants_audit.info(
+                        "email_sent: from=%r to=%r subject=%r",
+                        from_email,
+                        [email],
+                        subject,
+                    )
+                copia_emails = _parse_copia_emails(apoderado.copia_notificaciones or "")
+                for copia_email in copia_emails:
+                    with mail.get_connection() as connection:
+                        msg = EmailMultiAlternatives(
+                            subject=subject,
+                            body=body,
+                            from_email=from_email,
+                            to=[copia_email],
+                            connection=connection,
+                        )
+                        msg.attach_alternative(html, "text/html")
+                        msg.send()
+                        merchants_audit.info(
+                            "email_sent: from=%r to=%r subject=%r",
+                            from_email,
+                            [copia_email],
+                            subject,
+                        )
+
+        if admin_emails and last_subject:
+            admin_subject = f"[ADMIN] {last_subject}"
             with mail.get_connection() as connection:
                 msg = EmailMultiAlternatives(
-                    subject=subject,
-                    body=body,
+                    subject=admin_subject,
+                    body=last_body,
                     from_email=from_email,
-                    to=[email],
+                    to=admin_emails,
                     connection=connection,
                 )
-                msg.attach_alternative(html, "text/html")
+                msg.attach_alternative(last_html, "text/html")
                 msg.send()
                 merchants_audit.info(
                     "email_sent: from=%r to=%r subject=%r",
                     from_email,
-                    [email],
-                    subject,
+                    admin_emails,
+                    admin_subject,
                 )
 
 
@@ -459,25 +508,22 @@ _MESES_ES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct
 def send_confirmacion_orden_pagado(self, pedido_info: dict):
     """Notifica al apoderado la confirmación de sus almuerzos tras pagar el pedido.
 
-    Only sends when the Apoderado has notificacion_compra=True.  Does NOT
-    notify admins.
+    Sends to the Apoderado when notificacion_compra=True, to
+    copia_notificaciones when set, and always sends an [ADMIN] copy to all
+    users with the admin role.
     """
     with current_app.app_context():
         from datetime import date as _date
 
         from .database import db
-        from .model import Apoderado
+        from .model import Apoderado, Role
 
         apoderado_id = pedido_info.get("apoderado_id")
         if not apoderado_id:
             return
 
         apoderado = db.session.get(Apoderado, int(apoderado_id))
-        if not apoderado or not apoderado.notificacion_compra:
-            return
-
-        email = apoderado.usuario.email if apoderado.usuario else None
-        if not email:
+        if not apoderado:
             return
 
         pedido_codigo = pedido_info.get("pedido_codigo", "")
@@ -516,22 +562,67 @@ def send_confirmacion_orden_pagado(self, pedido_info: dict):
             pedido_url=pedido_url,
         )
         from_email = _get_from_email()
-        with mail.get_connection() as connection:
-            msg = EmailMultiAlternatives(
-                subject=subject,
-                body=body,
-                from_email=from_email,
-                to=[email],
-                connection=connection,
-            )
-            msg.attach_alternative(html, "text/html")
-            msg.send()
-            merchants_audit.info(
-                "email_sent: from=%r to=%r subject=%r",
-                from_email,
-                [email],
-                subject,
-            )
+
+        if apoderado.notificacion_compra:
+            email = apoderado.usuario.email if apoderado.usuario else None
+            if email:
+                with mail.get_connection() as connection:
+                    msg = EmailMultiAlternatives(
+                        subject=subject,
+                        body=body,
+                        from_email=from_email,
+                        to=[email],
+                        connection=connection,
+                    )
+                    msg.attach_alternative(html, "text/html")
+                    msg.send()
+                    merchants_audit.info(
+                        "email_sent: from=%r to=%r subject=%r",
+                        from_email,
+                        [email],
+                        subject,
+                    )
+            copia_emails = _parse_copia_emails(apoderado.copia_notificaciones or "")
+            for copia_email in copia_emails:
+                with mail.get_connection() as connection:
+                    msg = EmailMultiAlternatives(
+                        subject=subject,
+                        body=body,
+                        from_email=from_email,
+                        to=[copia_email],
+                        connection=connection,
+                    )
+                    msg.attach_alternative(html, "text/html")
+                    msg.send()
+                    merchants_audit.info(
+                        "email_sent: from=%r to=%r subject=%r",
+                        from_email,
+                        [copia_email],
+                        subject,
+                    )
+
+        admin_role = db.session.execute(
+            db.select(Role).filter_by(name="admin")
+        ).scalar_one_or_none()
+        admin_emails = [u.email for u in admin_role.users if u.email] if admin_role else []
+        if admin_emails:
+            admin_subject = f"[ADMIN] {subject}"
+            with mail.get_connection() as connection:
+                msg = EmailMultiAlternatives(
+                    subject=admin_subject,
+                    body=body,
+                    from_email=from_email,
+                    to=admin_emails,
+                    connection=connection,
+                )
+                msg.attach_alternative(html, "text/html")
+                msg.send()
+                merchants_audit.info(
+                    "email_sent: from=%r to=%r subject=%r",
+                    from_email,
+                    admin_emails,
+                    admin_subject,
+                )
 
 
 @shared_task(bind=True, ignore_result=False)
