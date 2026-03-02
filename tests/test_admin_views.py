@@ -81,3 +81,105 @@ class TestProvidersViewColumnDescriptions:
             assert isinstance(desc, str) and desc, (
                 f"description for column '{col}' must be a non-empty string"
             )
+
+
+class TestKhipuProviderAttributes:
+    """Verify KhipuProvider exposes _base_url and _auth for ProvidersView display."""
+
+    def test_base_url_is_set(self):
+        import khipu_tools
+        from merchants.providers.khipu import KhipuProvider
+
+        provider = KhipuProvider(api_key="test-key-123")
+        assert provider._base_url == khipu_tools.DEFAULT_API_BASE
+
+    def test_base_url_is_non_empty_string(self):
+        from merchants.providers.khipu import KhipuProvider
+
+        provider = KhipuProvider(api_key="test-key-123")
+        assert isinstance(provider._base_url, str)
+        assert provider._base_url
+
+    def test_auth_is_api_key_auth(self):
+        from merchants.auth import ApiKeyAuth
+        from merchants.providers.khipu import KhipuProvider
+
+        provider = KhipuProvider(api_key="test-key-123")
+        assert isinstance(provider._auth, ApiKeyAuth)
+
+    def test_auth_header_is_x_api_key(self):
+        from merchants.providers.khipu import KhipuProvider
+
+        provider = KhipuProvider(api_key="test-key-123")
+        assert provider._auth._header == "x-api-key"
+
+    def test_auth_key_matches(self):
+        from merchants.providers.khipu import KhipuProvider
+
+        provider = KhipuProvider(api_key="my-secret-key")
+        assert provider._auth._api_key == "my-secret-key"
+
+
+class TestProvidersViewBuildList:
+    """Verify _build_providers_list returns correct base_url and auth_type for KhipuProvider."""
+
+    def _make_view_with_khipu(self, api_key="test-key"):
+        """Return a ProvidersView instance backed by a stub extension with KhipuProvider.
+
+        Temporarily registers the KhipuProvider in the merchants global registry
+        and restores any previous state when done (used as a context manager).
+        """
+        import contextlib
+        import merchants
+        from merchants.providers import _REGISTRY
+        from merchants.providers.khipu import KhipuProvider
+        from flask_merchants.contrib.admin import ProvidersView
+
+        provider = KhipuProvider(api_key=api_key)
+        previous = _REGISTRY.pop("khipu", None)
+        _REGISTRY["khipu"] = provider
+
+        class _StubExt:
+            def get_client(self, key):
+                return merchants.Client(provider=key)
+
+            def all_sessions(self):
+                return []
+
+        view = object.__new__(ProvidersView)
+        view._ext = _StubExt()
+
+        @contextlib.contextmanager
+        def _ctx():
+            try:
+                yield view
+            finally:
+                _REGISTRY.pop("khipu", None)
+                if previous is not None:
+                    _REGISTRY["khipu"] = previous
+
+        return _ctx()
+
+    def test_khipu_base_url_not_na(self):
+        import khipu_tools
+        with self._make_view_with_khipu() as view:
+            rows = view._build_providers_list()
+            khipu_row = next((r for r in rows if r["key"] == "khipu"), None)
+            assert khipu_row is not None
+            assert khipu_row["base_url"] != "N/A"
+            assert khipu_row["base_url"] == khipu_tools.DEFAULT_API_BASE
+
+    def test_khipu_auth_type_not_none(self):
+        with self._make_view_with_khipu() as view:
+            rows = view._build_providers_list()
+            khipu_row = next((r for r in rows if r["key"] == "khipu"), None)
+            assert khipu_row is not None
+            assert khipu_row["auth_type"] != "None"
+            assert khipu_row["auth_type"] == "ApiKeyAuth"
+
+    def test_khipu_auth_header_is_x_api_key(self):
+        with self._make_view_with_khipu() as view:
+            rows = view._build_providers_list()
+            khipu_row = next((r for r in rows if r["key"] == "khipu"), None)
+            assert khipu_row is not None
+            assert khipu_row["auth_header"] == "x-api-key"

@@ -6,6 +6,7 @@ from decimal import Decimal
 from typing import Any
 
 from merchants.amount import to_decimal_string
+from merchants.auth import ApiKeyAuth
 from merchants.models import CheckoutSession, PaymentState, PaymentStatus, WebhookEvent
 from merchants.providers import Provider, UserError
 
@@ -58,7 +59,12 @@ class KhipuProvider(Provider):
     ) -> None:
         super().__init__(key=key, name=name, description=description)
         self._api_key = api_key
+        # khipu_tools uses a Stripe-style global api_key. This is safe for
+        # single-provider deployments; if multiple KhipuProvider instances with
+        # different keys are ever needed, use per-request KhipuClient instances.
         khipu_tools.api_key = api_key
+        self._base_url = khipu_tools.DEFAULT_API_BASE
+        self._auth = ApiKeyAuth(api_key, header="x-api-key")
         self._subject = subject
         self._notify_url = notify_url
 
