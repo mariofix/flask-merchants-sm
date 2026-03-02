@@ -15,6 +15,7 @@ from slugify import slugify
 from sqlalchemy import and_, func
 
 from ..database import db
+from ..forms import _CHILEAN_PHONE_ERROR, _CHILEAN_PHONE_RE
 from ..model import (
     Abono,
     Alumno,
@@ -286,7 +287,10 @@ class ApoderadoController:
             except ValueError:
                 pass
         if data.get("phone"):
-            user.username = data["phone"]
+            phone = data["phone"].strip()
+            if not _CHILEAN_PHONE_RE.match(phone):
+                raise ValueError(_CHILEAN_PHONE_ERROR)
+            user.username = phone
         db.session.commit()
 
     def add_restriccion_alumnos(self, alumnos: list, nombre: str, motivo: str) -> None:
