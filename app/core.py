@@ -51,7 +51,7 @@ def create_app():
     csrf.init_app(app)
     limiter.init_app(app)
 
-    # Redis CLI consoles (one per database: broker queue and result backend)
+    # Redis CLI console(s); a second view is only added when broker and result backend differ
     celery_cfg = app.config.get("CELERY", {})
     broker_url = celery_cfg.get("broker_url", "")
     result_backend = celery_cfg.get("result_backend", "")

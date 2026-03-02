@@ -105,7 +105,7 @@ MERCHANTS_PROVIDER_LABELS = {
 
 CELERY = {
     "broker_url": "redis://10.100.254.2/10",
-    "result_backend": "redis://10.100.254.2/11",
+    "result_backend": "redis://10.100.254.2/10",
     "task_ignore_result": False,
     "worker_concurrency": 1,
     "worker_max_tasks_per_child": 1,
