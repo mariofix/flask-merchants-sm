@@ -1,6 +1,7 @@
 """Init
-
-Revision ID: 0001
+in sqlite3
+update alembic_version version_num='a472a74ad0df';
+Revision ID: a472a74ad0df
 Revises:
 Create Date: 2026-03-02 22:00:00.000000
 
