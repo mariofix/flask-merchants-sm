@@ -495,3 +495,135 @@ class TestApprovePedido:
         pedido, pago = self._create_pedido_with_payment(db_session, sample_apoderado, state="succeeded")
         result = make_ctrl().approve_pedido(pedido, pago)
         assert result is False
+
+
+# ---------------------------------------------------------------------------
+# crear_orden_admin
+# ---------------------------------------------------------------------------
+
+def _create_user1(db_session):
+    """Create a User with id=1 for admin order tests."""
+    import uuid
+    from app.model import User
+    from app.database import db
+
+    # Check if id=1 already exists (other fixtures may have created it)
+    existing = db_session.get(User, 1)
+    if existing:
+        return existing
+    user = User()
+    user.email = "admin@test.cl"
+    user.username = "admin_user"
+    user.password = "password"
+    user.active = True
+    user.fs_uniquifier = str(uuid.uuid4())
+    db_session.add(user)
+    db_session.flush()
+    # Force id=1 by clearing and re-inserting if SQLite assigned a different id
+    return db_session.get(User, 1) or user
+
+
+class TestCrearOrdenAdmin:
+    def _make_user1(self, db_session):
+        import uuid
+        from app.model import User
+        user = User()
+        user.email = "admin1@test.cl"
+        user.username = "admin1_user"
+        user.password = "password"
+        user.active = True
+        user.fs_uniquifier = str(uuid.uuid4())
+        db_session.add(user)
+        db_session.commit()
+        return user
+
+    def _make_menu(self, db_session):
+        from datetime import date
+        from app.model import MenuDiario
+        menu = MenuDiario()
+        menu.dia = date(2026, 6, 1)
+        menu.slug = "menu-admin-test"
+        menu.descripcion = "Menú de Prueba Admin"
+        menu.precio = 3500
+        menu.activo = True
+        db_session.add(menu)
+        db_session.commit()
+        return menu
+
+    def test_creates_orden_with_pedido_admin_codigo(self, db_session):
+        from datetime import date
+        from app.model import EstadoAlmuerzo
+        user1 = self._make_user1(db_session)
+        menu = self._make_menu(db_session)
+        orden = make_ctrl().crear_orden_admin(
+            nombre_alumno="Pedro Pérez",
+            curso_alumno="3-A",
+            fecha=date(2026, 6, 1),
+            menu_slug=menu.slug,
+        )
+        assert orden is not None
+        assert orden.pedido_codigo == "pedido-admin"
+        assert orden.estado == EstadoAlmuerzo.PENDIENTE
+        assert orden.menu_slug == menu.slug
+
+    def test_creates_alumno_with_given_data(self, db_session):
+        from datetime import date
+        user1 = self._make_user1(db_session)
+        menu = self._make_menu(db_session)
+        orden = make_ctrl().crear_orden_admin(
+            nombre_alumno="Ana López",
+            curso_alumno="5-A",
+            fecha=date(2026, 6, 1),
+            menu_slug=menu.slug,
+        )
+        assert orden.alumno.nombre == "Ana López"
+        assert orden.alumno.curso == "5-A"
+
+    def test_stores_nota_from_contact_info(self, db_session):
+        from datetime import date
+        user1 = self._make_user1(db_session)
+        menu = self._make_menu(db_session)
+        orden = make_ctrl().crear_orden_admin(
+            nombre_alumno="Carlos Ruiz",
+            curso_alumno="2-B",
+            fecha=date(2026, 6, 1),
+            menu_slug=menu.slug,
+            nota="correo: c@test.cl, tel: +56912345678",
+        )
+        assert "correo" in (orden.nota or "")
+        assert "tel" in (orden.nota or "")
+
+    def test_creates_apoderado_for_user1_if_missing(self, db_session):
+        from datetime import date
+        from app.model import Apoderado
+        from app.database import db as _db
+        user1 = self._make_user1(db_session)
+        menu = self._make_menu(db_session)
+        # Ensure no apoderado exists for user1
+        existing = db_session.execute(
+            _db.select(Apoderado).filter_by(usuario_id=user1.id)
+        ).scalar_one_or_none()
+        assert existing is None
+        make_ctrl().crear_orden_admin(
+            nombre_alumno="Test Alumno",
+            curso_alumno="1-A",
+            fecha=date(2026, 6, 1),
+            menu_slug=menu.slug,
+        )
+        apoderado = db_session.execute(
+            _db.select(Apoderado).filter_by(usuario_id=user1.id)
+        ).scalar_one_or_none()
+        assert apoderado is not None
+
+    def test_raises_when_user1_missing(self, db_session):
+        from datetime import date
+        import pytest
+        menu = self._make_menu(db_session)
+        # No user1 in db for this test
+        with pytest.raises(ValueError, match="Usuario 1"):
+            make_ctrl().crear_orden_admin(
+                nombre_alumno="No User",
+                curso_alumno="1-A",
+                fecha=date(2026, 6, 1),
+                menu_slug=menu.slug,
+            )
