@@ -11,7 +11,7 @@ import sqlalchemy as sa
 import flask_security
 
 # revision identifiers, used by Alembic.
-revision = "0001"
+revision = "a472a74ad0df"
 down_revision = None
 branch_labels = None
 depends_on = None
