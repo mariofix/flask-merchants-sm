@@ -6,10 +6,13 @@ SQLAlchemy (via ``db``) and plain Python - no ``request``, ``current_user``, or
 ``url_for`` calls.  This makes every method independently testable.
 """
 
+import logging
 import re
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 from slugify import slugify
 from sqlalchemy import and_, func
@@ -155,6 +158,7 @@ class ApoderadoController:
 
     def get_abonos_info(self, apoderado: Apoderado) -> list[dict]:
         """Return all abonos for *apoderado* paired with their Payment records."""
+        logger.debug("controller.py: ApoderadoController.get_abonos_info called with apoderado_id=%s", apoderado.id)
         abono_list = apoderado.abonos
         codigos = [a.codigo for a in abono_list]
         pagos_by_codigo = {}
@@ -171,6 +175,7 @@ class ApoderadoController:
 
     def get_abono(self, codigo: str) -> tuple:
         """Return ``(Abono, Payment, display_code)`` for *codigo*, or ``(None, None, '')``."""
+        logger.debug("controller.py: ApoderadoController.get_abono called with codigo=%s", codigo)
         abono = db.session.execute(
             db.select(Abono).filter_by(codigo=codigo)
         ).scalar_one_or_none()
@@ -249,6 +254,10 @@ class ApoderadoController:
         self, apoderado: Apoderado, monto: Decimal, forma_pago: str
     ) -> Abono:
         """Create and persist a new Abono record."""
+        logger.debug(
+            "controller.py: ApoderadoController.create_abono called with apoderado_id=%s monto=%s forma_pago=%r",
+            apoderado.id, monto, forma_pago,
+        )
         nuevo = Abono()
         nuevo.monto = monto
         nuevo.apoderado = apoderado

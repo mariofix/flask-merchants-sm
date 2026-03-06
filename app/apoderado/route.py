@@ -6,8 +6,11 @@ a Flask response (render_template / redirect / jsonify).
 """
 
 import json
+import logging
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
+
+logger = logging.getLogger(__name__)
 
 from flask import (
     Blueprint,
@@ -178,6 +181,7 @@ def wizp4():
 @apoderado_bp.route("/abono", methods=["GET"])
 @roles_accepted("apoderado", "admin")
 def abono_form():
+    logger.debug("route.py: abono_form called")
     return render_template("apoderado/abono.html")
 
 
@@ -185,8 +189,10 @@ def abono_form():
 @roles_accepted("apoderado", "admin")
 @limiter.limit("5 per minute;30 per hour")
 def abono():
+    logger.debug("route.py: abono called")
     monto_raw = request.form.get("monto", "").strip()
     forma_pago = request.form.get("forma-de-pago", "")
+    logger.debug("route.py: abono monto_raw=%r forma_pago=%r", monto_raw, forma_pago)
     try:
         monto_decimal = Decimal(monto_raw)
     except InvalidOperation:
@@ -214,6 +220,7 @@ def abono():
     )
 
     if forma_pago == "cafeteria":
+        logger.debug("route.py: abono processing cafeteria payment for abono codigo=%s", nuevo_abono.codigo)
         from ..extensions import flask_merchants
 
         session = flask_merchants.get_client("cafeteria").payments.create_checkout(
@@ -259,8 +266,13 @@ def abono():
         )
 
     elif forma_pago == "khipu":
+        logger.debug("route.py: abono processing khipu payment for abono codigo=%s", nuevo_abono.codigo)
         from ..extensions import flask_merchants
 
+        notify_url = url_for(
+            "merchants.webhook_provider", provider="khipu", _external=True
+        )
+        logger.debug("route.py: abono khipu notify_url=%r", notify_url)
         session = flask_merchants.get_client("khipu").payments.create_checkout(
             amount=nuevo_abono.monto,
             currency="CLP",
@@ -277,10 +289,12 @@ def abono():
             metadata={
                 "abono_codigo": nuevo_abono.codigo,
                 "apoderado_id": str(nuevo_abono.apoderado.id),
-                "notify_url": url_for(
-                    "merchants.webhook_provider", provider="khipu", _external=True
-                ),
+                "notify_url": notify_url,
             },
+        )
+        logger.debug(
+            "route.py: abono khipu session created session_id=%s redirect_url=%s",
+            session.session_id, session.redirect_url,
         )
         pago = Payment(
             session_id=nuevo_abono.codigo,
@@ -314,6 +328,7 @@ def abono():
 @apoderado_bp.route("/abono-detalle/<string:codigo>", methods=["GET"])
 @roles_accepted("apoderado", "admin")
 def abono_detalle(codigo):
+    logger.debug("route.py: abono_detalle called with codigo=%s", codigo)
     abono, pago, display_code = ctrl.get_abono(codigo)
     return render_template(
         "apoderado/detalle-abono.html",
@@ -326,6 +341,7 @@ def abono_detalle(codigo):
 @apoderado_bp.route("/abonos", methods=["GET"])
 @roles_accepted("apoderado", "admin")
 def abonos():
+    logger.debug("route.py: abonos called")
     apoderado = ctrl.get_apoderado(current_user)
     if not apoderado:
         return redirect(url_for("core.index"))

@@ -2,8 +2,11 @@
 from __future__ import annotations
 
 import json
+import logging
 from decimal import Decimal
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 from merchants.amount import to_decimal_string
 from merchants.auth import ApiKeyAuth
@@ -57,6 +60,7 @@ class KhipuProvider(Provider):
         subject: str = "Order",
         notify_url: str = "",
     ) -> None:
+        logger.debug("khipu.py: KhipuProvider.__init__ called")
         super().__init__(key=key, name=name, description=description)
         self._api_key = api_key
         # khipu_tools uses a Stripe-style global api_key. This is safe for
@@ -76,6 +80,10 @@ class KhipuProvider(Provider):
         cancel_url: str,
         metadata: dict[str, Any] | None = None,
     ) -> CheckoutSession:
+        logger.debug(
+            "khipu.py: KhipuProvider.create_checkout called with amount=%s currency=%s",
+            amount, currency,
+        )
         params: dict[str, Any] = {
             "amount": to_decimal_string(amount),
             "currency": currency.upper(),
@@ -90,11 +98,13 @@ class KhipuProvider(Provider):
         if metadata and metadata.get("order_id"):
             params["transaction_id"] = str(metadata["order_id"])
 
+        logger.debug("khipu.py: KhipuProvider.create_checkout params=%r", params)
         try:
             result = khipu_tools.Payments.create(**params)
         except Exception as exc:
             raise UserError(str(exc)) from exc
 
+        logger.debug("khipu.py: KhipuProvider.create_checkout result=%r", result)
         payment_url = result.get("payment_url", "")
         payment_id = result.get("payment_id", "")
         return CheckoutSession(
@@ -108,6 +118,7 @@ class KhipuProvider(Provider):
         )
 
     def get_payment(self, payment_id: str) -> PaymentStatus:
+        logger.debug("khipu.py: KhipuProvider.get_payment called with payment_id=%s", payment_id)
         try:
             result = khipu_tools.Payments.get(payment_id=payment_id)
         except Exception as exc:
@@ -127,6 +138,7 @@ class KhipuProvider(Provider):
         )
 
     def parse_webhook(self, payload: bytes, headers: dict[str, str]) -> WebhookEvent:
+        logger.debug("khipu.py: KhipuProvider.parse_webhook called")
         try:
             data: dict[str, Any] = json.loads(payload)
         except ValueError:

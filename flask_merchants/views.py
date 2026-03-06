@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 import json
+import logging
 from typing import TYPE_CHECKING
 
 import merchants
 from flask import Blueprint, jsonify, redirect, request, url_for
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from flask_merchants import FlaskMerchants
@@ -159,6 +162,7 @@ def create_blueprint(ext: "FlaskMerchants") -> Blueprint:
     @bp.route("/webhook", methods=["POST"])
     def webhook():
         """Receive and process incoming provider webhook events."""
+        logger.debug("views.py: webhook called")
         payload: bytes = request.get_data()
         headers: dict[str, str] = dict(request.headers)
 
@@ -198,6 +202,7 @@ def create_blueprint(ext: "FlaskMerchants") -> Blueprint:
 
             url_for("merchants.webhook_provider", provider="khipu", _external=True)
         """
+        logger.debug("views.py: webhook_provider called with provider=%r", provider)
         try:
             client = ext.get_client(provider)
         except KeyError:
