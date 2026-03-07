@@ -200,7 +200,9 @@ def create_blueprint(ext: "FlaskMerchants") -> Blueprint:
 
         The URL can be computed at runtime with::
 
-            url_for("merchants.webhook_provider", provider="khipu", _external=True)
+            flask_merchants.get_webhook_url("khipu")
+
+        This requires ``MERCHANTS_WEBHOOK_BASE_URL`` to be set in the app config.
         """
         logger.debug("views.py: webhook_provider called with provider=%r", provider)
         try:

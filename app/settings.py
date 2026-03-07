@@ -81,6 +81,11 @@ MAIL_USE_LOCALTIME = True
 # e.g. export FLASK_KHIPU_API_KEY=your-real-key
 KHIPU_API_KEY = ""
 
+# Public base URL (scheme + domain) used to build webhook URLs sent to
+# payment providers.  Must be reachable from the internet.
+# e.g. export FLASK_MERCHANTS_WEBHOOK_BASE_URL=https://pay.example.com
+MERCHANTS_WEBHOOK_BASE_URL = ""
+
 # UI display labels shown in the payment modal (modal-abono).
 # Keys must match the provider key registered in flask_merchants.
 # Falls back to provider.name / provider.description when a key is absent.

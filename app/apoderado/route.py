@@ -269,9 +269,7 @@ def abono():
         logger.debug("route.py: abono processing khipu payment for abono codigo=%s", nuevo_abono.codigo)
         from ..extensions import flask_merchants
 
-        notify_url = url_for(
-            "merchants.webhook_provider", provider="khipu", _external=True
-        )
+        notify_url = flask_merchants.get_webhook_url("khipu")
         logger.debug("route.py: abono khipu notify_url=%r", notify_url)
         session = flask_merchants.get_client("khipu").payments.create_checkout(
             amount=nuevo_abono.monto,
