@@ -453,7 +453,7 @@
               </div>
               <label class="form-label required">Forma de Pago</label>
               <div class="form-selectgroup-boxes row mb-3">
-                {% for provider in payment_providers %}
+                {% for provider in abono_payment_providers %}
                 <div class="col-lg-6">
                   <label class="form-selectgroup-item">
                     <input type="radio" name="forma-de-pago" value="{{ provider.key }}" class="form-selectgroup-input" {% if loop.first %}checked{% endif %} />

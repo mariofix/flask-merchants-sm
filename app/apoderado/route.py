@@ -251,7 +251,13 @@ def abono():
             ),
             email=nuevo_abono.apoderado.usuario.email,
             merchants_id=nuevo_abono.codigo,
-            extra_args={"codigo": nuevo_abono.codigo} if forma_pago == "cafeteria" else None,
+            extra_args=(
+                {"codigo": nuevo_abono.codigo}
+                if forma_pago == "cafeteria"
+                else {"body": f"Abono: {nuevo_abono.codigo}"}
+                if forma_pago == "khipu"
+                else None
+            ),
             request_context={
                 "abono_codigo": nuevo_abono.codigo,
                 "monto": str(nuevo_abono.monto),
@@ -676,6 +682,12 @@ def pago_orden(orden):
                 pedido.codigo = cafe_codigo
                 cafe_extra = {"codigo": cafe_codigo}
 
+            # For Khipu, include a human-readable body describing the order
+            khipu_extra = {}
+            if forma_pago == "khipu":
+                slugs = [item["menu"] for item in resumen if item.get("menu")]
+                khipu_extra = {"body": f"Pedido: {', '.join(slugs)}" if slugs else "Pedido"}
+
             payment = Payment.create(
                 amount=monto_a_pagar,
                 currency="CLP",
@@ -687,7 +699,7 @@ def pago_orden(orden):
                     "apoderado_cliente.pago_orden", orden=pedido.codigo, _external=True
                 ),
                 merchants_id=pedido.codigo if forma_pago == "cafeteria" else None,
-                extra_args=cafe_extra or None,
+                extra_args=cafe_extra if forma_pago == "cafeteria" else khipu_extra if forma_pago == "khipu" else None,
                 request_context={
                     "pedido_codigo": pedido.codigo,
                     "forma_pago": forma_pago,
