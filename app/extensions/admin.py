@@ -75,7 +75,7 @@ class SaborMirandianoIndexView(AdminIndexView):
         pending_abonos = (
             db.session.execute(
                 db.select(db.func.count(Abono.id))
-                .join(Payment, Payment.session_id == Abono.codigo)
+                .join(Payment, Payment.merchants_id == Abono.codigo)
                 .filter(Payment.state == "processing")
             ).scalar()
             or 0
@@ -374,7 +374,7 @@ class AbonoAdminView(SecureModelView):
             abono = db.session.get(Abono, int(abono_id))
             if not abono:
                 continue
-            pago = db.session.execute(db.select(Payment).filter_by(session_id=abono.codigo)).scalar_one_or_none()
+            pago = db.session.execute(db.select(Payment).filter_by(merchants_id=abono.codigo)).scalar_one_or_none()
             if not (pago and pago.state == "processing"):
                 flash(f"Abono {abono.codigo[:8].upper()} no está pendiente de aprobación.", "warning")
                 continue
@@ -785,8 +785,8 @@ class PaymentAdminView(SecureModelView):
       recording the admin action in ``response_payload``.
     """
 
-    column_list = ["session_id", "provider", "amount", "currency", "state", "created_at", "updated_at"]
-    column_searchable_list = ["session_id", "provider"]
+    column_list = ["merchants_id", "transaction_id", "provider", "amount", "currency", "state", "created_at", "updated_at"]
+    column_searchable_list = ["merchants_id", "transaction_id", "provider"]
     column_filters = ["state", "provider", "currency"]
     column_default_sort = ("created_at", True)
 
@@ -828,7 +828,7 @@ class PaymentAdminView(SecureModelView):
 
         # --- Abono: credit the apoderado's account balance ---
         abono = db.session.execute(
-            db.select(Abono).filter_by(codigo=pago.session_id)
+            db.select(Abono).filter_by(codigo=pago.merchants_id)
         ).scalar_one_or_none()
         if abono:
             from ..tasks import send_comprobante_abono, send_notificacion_admin_abono, send_copia_notificaciones_abono
@@ -867,7 +867,7 @@ class PaymentAdminView(SecureModelView):
 
         # --- Pedido (Apoderado): create OrdenCasino records and notify ---
         pedido = db.session.execute(
-            db.select(Pedido).filter_by(codigo_merchants=pago.session_id)
+            db.select(Pedido).filter_by(codigo_merchants=pago.merchants_id)
         ).scalar_one_or_none()
         if pedido:
             from ..apoderado.controller import ApoderadoController
@@ -886,7 +886,7 @@ class PaymentAdminView(SecureModelView):
 
         # --- SchoolStaffPedido: mark staff pedido paid and notify ---
         staff_pedido = db.session.execute(
-            db.select(SchoolStaffPedido).filter_by(codigo_merchants=pago.session_id)
+            db.select(SchoolStaffPedido).filter_by(codigo_merchants=pago.merchants_id)
         ).scalar_one_or_none()
         if staff_pedido:
             from ..staff.controller import SchoolStaffController
@@ -919,7 +919,7 @@ class PaymentAdminView(SecureModelView):
                     continue
                 old_state = record.state
                 try:
-                    status = self._ext.client.payments.get(record.session_id)
+                    status = self._ext.client.payments.get(record.transaction_id)
                     new_state = status.state.value
                     record.state = new_state
                     self.session.commit()
@@ -931,8 +931,8 @@ class PaymentAdminView(SecureModelView):
                 except Exception as exc:  # noqa: BLE001
                     from flask_merchants import merchants_audit
                     merchants_audit.warning(
-                        "sync_action_error: session_id=%r error=%s",
-                        getattr(record, "session_id", pk),
+                        "sync_action_error: merchants_id=%r error=%s",
+                        getattr(record, "merchants_id", pk),
                         exc,
                     )
                     failed += 1
@@ -968,7 +968,7 @@ class PaymentAdminView(SecureModelView):
                 continue
             if record.state not in ("pending", "processing"):
                 flash(
-                    f"Pago {record.session_id[:8].upper()} no está en estado pendiente "
+                    f"Pago {record.merchants_id[:8].upper()} no está en estado pendiente "
                     f"o procesando (estado actual: {record.state}).",
                     "warning",
                 )

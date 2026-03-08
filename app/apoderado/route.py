@@ -241,11 +241,7 @@ def abono():
                 )
             ),
             email=nuevo_abono.apoderado.usuario.email,
-            metadata={
-                "abono_codigo": nuevo_abono.codigo,
-                "apoderado_id": str(nuevo_abono.apoderado.id),
-            },
-            session_id_override=nuevo_abono.codigo if forma_pago == "khipu" else None,
+            merchants_id=nuevo_abono.codigo,
             request_context={
                 "abono_codigo": nuevo_abono.codigo,
                 "monto": str(nuevo_abono.monto),
@@ -606,11 +602,13 @@ def pago_orden(orden):
                         orden=pedido.codigo,
                         _external=True,
                     ),
-                    metadata={
-                        "pedido_codigo": pedido.codigo,
-                        "apoderado_id": str(apoderado.id),
-                        "saldo_antes": saldo_antes,
-                        "model_property": "saldo_cuenta",
+                    extra_args={
+                        "metadata": {
+                            "pedido_codigo": pedido.codigo,
+                            "apoderado_id": str(apoderado.id),
+                            "saldo_antes": saldo_antes,
+                            "model_property": "saldo_cuenta",
+                        },
                     },
                     request_context={
                         "pedido_codigo": pedido.codigo,
@@ -621,7 +619,7 @@ def pago_orden(orden):
                     },
                 )
 
-                pedido.codigo_merchants = payment.session_id
+                pedido.codigo_merchants = payment.merchants_id
                 pedido.precio_total = total
                 pedido.estado = EstadoPedido.PAGADO
                 pedido.pagado = True
@@ -629,7 +627,7 @@ def pago_orden(orden):
                 db.session.commit()
                 ctrl.process_payment_completion(pedido)
                 # Leave a note on each OrdenCasino record indicating payment via saldo
-                transaction_code = (payment.metadata_json or {}).get("transaction_code", "")
+                transaction_code = (payment.response_payload or {}).get("transaction_code", "")
                 total_fmt = f"{int(total):,}".replace(",", ".")
                 nota_saldo = f"Pagado con saldo de cuenta. Original: ${total_fmt}. Cod: {transaction_code}"
                 ordenes = (
@@ -665,7 +663,6 @@ def pago_orden(orden):
                 cancel_url=url_for(
                     "apoderado_cliente.pago_orden", orden=pedido.codigo, _external=True
                 ),
-                metadata={"pedido_codigo": pedido.codigo},
                 request_context={
                     "pedido_codigo": pedido.codigo,
                     "forma_pago": forma_pago,
@@ -673,21 +670,26 @@ def pago_orden(orden):
                 },
             )
 
-            pedido.codigo_merchants = payment.session_id
+            pedido.codigo_merchants = payment.merchants_id
             pedido.precio_total = total
             pedido.estado = EstadoPedido.PENDIENTE
             db.session.commit()
+
+            # Extract redirect_url from response_payload (provider response at creation)
+            redirect_url = (payment.response_payload or {}).get("redirect_url", "")
+            if not redirect_url:
+                redirect_url = (payment.request_payload or {}).get("success_url", "")
 
             from ..tasks import send_notificacion_pedido_pendiente
 
             send_notificacion_pedido_pendiente.delay(
                 {
                     "pedido_codigo": pedido.codigo,
-                    "session_id": payment.session_id,
+                    "merchants_id": payment.merchants_id,
                     "forma_pago": forma_pago,
                     "total": int(total),
                     "redirect_url": (
-                        payment.redirect_url if forma_pago != "cafeteria" else ""
+                        redirect_url if forma_pago != "cafeteria" else ""
                     ),
                     "pedido_url": url_for(
                         "apoderado_cliente.pago_orden",
@@ -725,18 +727,18 @@ def pago_orden(orden):
                     ],
                 }
             )
-            if forma_pago != "cafeteria" and payment.redirect_url:
-                return redirect(payment.redirect_url)
+            if forma_pago != "cafeteria" and redirect_url:
+                return redirect(redirect_url)
             return redirect(
                 url_for("apoderado_cliente.pago_orden", orden=pedido.codigo)
             )
 
         if pedido.codigo_merchants:
             pago = db.session.execute(
-                db.select(Payment).filter_by(session_id=pedido.codigo_merchants)
+                db.select(Payment).filter_by(merchants_id=pedido.codigo_merchants)
             ).scalar_one_or_none()
             display_code = (
-                (pago.metadata_json or {}).get("display_code", "") if pago else ""
+                ((pago.response_payload or {}).get("display_code") or (pago.metadata_json or {}).get("display_code", "")) if pago else ""
             )
 
     return render_template(

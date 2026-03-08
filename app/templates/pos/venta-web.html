@@ -137,9 +137,9 @@
                     </p>
 
                     {% if pago and pago.provider == 'saldo' %}
-                    {%- set tc = pago.metadata_json.get('transaction_code', '') %}
-                    {%- set s_antes = pago.metadata_json.get('saldo_antes', 0) %}
-                    {%- set s_despues = pago.metadata_json.get('saldo_despues', 0) %}
+                    {%- set tc = (pago.response_payload or {}).get('transaction_code', '') %}
+                    {%- set s_antes = (pago.response_payload or {}).get('saldo_antes', 0) %}
+                    {%- set s_despues = (pago.response_payload or {}).get('saldo_despues', 0) %}
                     <div class="alert alert-success py-2 mt-2">
                         <div class="small text-muted mb-1">Código de transacción saldo</div>
                         <strong class="fs-2 font-monospace">{{ tc }}</strong>

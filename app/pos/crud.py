@@ -188,22 +188,23 @@ class PosController:
 
         if not abono:
             pagos = db.session.execute(
-                db.select(Payment).where(Payment.metadata_json.isnot(None))
+                db.select(Payment).where(Payment.response_payload.isnot(None))
             ).scalars().all()
             for p in pagos:
-                if (p.metadata_json or {}).get("display_code", "").upper() == codigo.upper():
+                dc = (p.response_payload or {}).get("display_code") or (p.metadata_json or {}).get("display_code", "")
+                if dc.upper() == codigo.upper():
                     pago = p
                     abono = db.session.execute(
-                        db.select(Abono).filter_by(codigo=p.session_id)
+                        db.select(Abono).filter_by(codigo=p.merchants_id)
                     ).scalar_one_or_none()
                     break
 
         if abono and pago is None:
             pago = db.session.execute(
-                db.select(Payment).filter_by(session_id=abono.codigo)
+                db.select(Payment).filter_by(merchants_id=abono.codigo)
             ).scalar_one_or_none()
 
-        display_code = (pago.metadata_json or {}).get("display_code", "") if pago else ""
+        display_code = ((pago.response_payload or {}).get("display_code") or (pago.metadata_json or {}).get("display_code", "")) if pago else ""
         return abono, pago, display_code
 
     def get_pedido_with_payment(self, codigo: str) -> tuple:
@@ -220,7 +221,7 @@ class PosController:
             return None, None
         pago = (
             db.session.execute(
-                db.select(Payment).filter_by(session_id=pedido.codigo_merchants)
+                db.select(Payment).filter_by(merchants_id=pedido.codigo_merchants)
             ).scalar_one_or_none()
             if pedido.codigo_merchants
             else None

@@ -24,13 +24,13 @@ Example - automatic registration (pass ``admin=`` to FlaskMerchants)::
     from flask_sqlalchemy import SQLAlchemy
     from flask_admin import Admin
     from flask_merchants import FlaskMerchants
-    from flask_merchants.models import Base, Payment
+    from flask_merchants.models import PaymentMixin
 
     app = Flask(__name__)
     db = SQLAlchemy(model_class=Base)
     admin = Admin(app, name="My Shop")
-    ext = FlaskMerchants(app, db=db, models=[Payment], admin=admin)
-    # A PaymentModelView for Payment (SQLAlchemy-backed, with full column config)
+    ext = FlaskMerchants(app, db=db, models=[MyPayment], admin=admin)
+    # A PaymentModelView for MyPayment (SQLAlchemy-backed, with full column config)
     # and a ProvidersView are automatically added under category="Merchants".
 """
 
@@ -122,8 +122,8 @@ class PaymentView(PaymentViewMixin, BaseModelView):
     edit_modal = False
 
     # Column configuration (core columns + details/search/sort for in-memory backend)
-    column_details_list = ["session_id", "provider", "amount", "currency", "state"]
-    column_searchable_list = ["session_id", "provider", "state"]
+    column_details_list = ["merchants_id", "transaction_id", "provider", "amount", "currency", "state"]
+    column_searchable_list = ["merchants_id", "transaction_id", "provider", "state"]
     column_sortable_list = ["provider", "amount", "currency", "state"]
 
     def __init__(
@@ -148,7 +148,7 @@ class PaymentView(PaymentViewMixin, BaseModelView):
     # ------------------------------------------------------------------
 
     def scaffold_list_columns(self) -> list[str]:
-        return ["session_id", "provider", "amount", "currency", "state"]
+        return ["merchants_id", "transaction_id", "provider", "amount", "currency", "state"]
 
     def scaffold_sortable_columns(self) -> dict[str, str]:
         return {
@@ -187,8 +187,8 @@ class PaymentView(PaymentViewMixin, BaseModelView):
 
     def get_pk_value(self, model) -> str | None:
         if isinstance(model, dict):
-            return model.get("session_id")
-        return getattr(model, "session_id", None)
+            return model.get("merchants_id")
+        return getattr(model, "merchants_id", None)
 
     def get_list(self, page, sort_field, sort_desc, search, filters, page_size=None):
         payments = self._ext.all_sessions()
@@ -198,7 +198,8 @@ class PaymentView(PaymentViewMixin, BaseModelView):
             payments = [
                 p
                 for p in payments
-                if search_lower in str(p.get("session_id", "")).lower()
+                if search_lower in str(p.get("merchants_id", "")).lower()
+                or search_lower in str(p.get("transaction_id", "")).lower()
                 or search_lower in str(p.get("provider", "")).lower()
                 or search_lower in str(p.get("state", "")).lower()
             ]

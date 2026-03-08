@@ -10,7 +10,7 @@ Example::
     from flask_sqlalchemy import SQLAlchemy
     from flask_admin import Admin
     from flask_merchants import FlaskMerchants
-    from flask_merchants.models import Base, Payment
+    from flask_merchants.models import PaymentMixin
     from flask_merchants.contrib.sqla import PaymentModelView
 
     db = SQLAlchemy(model_class=Base)
@@ -19,11 +19,11 @@ Example::
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///payments.db"
     app.config["SECRET_KEY"] = "change-me"
 
-    ext = FlaskMerchants(app, db=db)
+    ext = FlaskMerchants(app, db=db, models=[MyPayment])
     db.init_app(app)
 
     admin = Admin(app, name="My Shop")
-    admin.add_view(PaymentModelView(Payment, db.session, ext=ext, name="Payments"))
+    admin.add_view(PaymentModelView(MyPayment, db.session, ext=ext, name="Payments"))
 
     with app.app_context():
         db.create_all()
@@ -75,7 +75,8 @@ class PaymentModelView(PaymentViewMixin, ModelView):
     # ------------------------------------------------------------------
     # Extend the base 5 columns from PaymentViewMixin with timestamp columns.
     column_list = [
-        "session_id",
+        "merchants_id",
+        "transaction_id",
         "provider",
         "amount",
         "currency",
@@ -93,7 +94,7 @@ class PaymentModelView(PaymentViewMixin, ModelView):
         "created_at": "Timestamp when this payment record was first created.",
         "updated_at": "Timestamp of the most recent update to this payment record.",
     }
-    column_searchable_list = ["session_id", "provider"]
+    column_searchable_list = ["merchants_id", "transaction_id", "provider"]
     column_filters = ["state", "provider", "currency"]
     column_default_sort = ("created_at", True)
     can_view_details = True
@@ -103,23 +104,20 @@ class PaymentModelView(PaymentViewMixin, ModelView):
 
     # Fields available when creating a new payment.
     form_create_columns = [
-        "session_id",
-        "redirect_url",
+        "merchants_id",
+        "transaction_id",
         "provider",
         "amount",
         "currency",
         "state",
-        "metadata_json",
     ]
 
     # Fields available when editing an existing payment.
     form_edit_columns = [
-        "redirect_url",
         "provider",
         "amount",
         "currency",
         "state",
-        "metadata_json",
     ]
 
     # ------------------------------------------------------------------
@@ -181,7 +179,7 @@ class PaymentModelView(PaymentViewMixin, ModelView):
         both storage backends stay consistent.
         """
         if self._ext is not None:
-            self._ext.update_state(model.session_id, model.state)
+            self._ext.update_state(model.merchants_id, model.state)
 
     # ------------------------------------------------------------------
     # Bulk actions
@@ -199,7 +197,7 @@ class PaymentModelView(PaymentViewMixin, ModelView):
                 if record is not None:
                     record.state = "refunded"
                     if self._ext is not None:
-                        self._ext.update_state(record.session_id, "refunded")
+                        self._ext.update_state(record.merchants_id, "refunded")
                     count += 1
             self.session.commit()
             flash(f"{count} payment(s) marked as refunded.", "success")
@@ -219,7 +217,7 @@ class PaymentModelView(PaymentViewMixin, ModelView):
                 if record is not None:
                     record.state = "cancelled"
                     if self._ext is not None:
-                        self._ext.update_state(record.session_id, "cancelled")
+                        self._ext.update_state(record.merchants_id, "cancelled")
                     count += 1
             self.session.commit()
             flash(f"{count} payment(s) cancelled.", "success")
@@ -243,7 +241,7 @@ class PaymentModelView(PaymentViewMixin, ModelView):
                 if record is None:
                     continue
                 try:
-                    status = self._ext.client.payments.get(record.session_id)
+                    status = self._ext.client.payments.get(record.transaction_id)
                     record.state = status.state.value
                     count += 1
                 except Exception:  # noqa: BLE001

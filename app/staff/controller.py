@@ -76,7 +76,7 @@ class SchoolStaffController:
             pago = None
             if pedido.codigo_merchants:
                 pago = db.session.execute(
-                    db.select(Payment).filter_by(session_id=pedido.codigo_merchants)
+                    db.select(Payment).filter_by(merchants_id=pedido.codigo_merchants)
                 ).scalar_one_or_none()
             result.append({"pedido": pedido, "pago": pago})
         return result

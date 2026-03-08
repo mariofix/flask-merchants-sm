@@ -6,7 +6,7 @@ from typing import Any, Optional
 from flask_security.models import fsqla_v3 as fsqla
 from sqlalchemy import JSON
 from sqlalchemy import Date as SaDate
-from sqlalchemy import Enum, ForeignKey, Numeric, String
+from sqlalchemy import Enum, ForeignKey, Numeric, String, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy_utils.models import Timestamp
 
@@ -58,10 +58,11 @@ class Payment(db.Model, PaymentMixin):
     __tablename__ = "merchants_payment"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    metadata_json: Mapped[dict] = mapped_column(JSON, default=dict, server_default=text("'{}'"))
 
     pedido: Mapped["Pedido | None"] = relationship(
         "Pedido",
-        primaryjoin="Payment.session_id == foreign(Pedido.codigo_merchants)",
+        primaryjoin="Payment.merchants_id == foreign(Pedido.codigo_merchants)",
         back_populates="payment",
         uselist=False,
         viewonly=True,
@@ -69,7 +70,7 @@ class Payment(db.Model, PaymentMixin):
 
     abono: Mapped["Abono | None"] = relationship(
         "Abono",
-        primaryjoin="Payment.session_id == foreign(Abono.codigo)",
+        primaryjoin="Payment.merchants_id == foreign(Abono.codigo)",
         back_populates="payment",
         uselist=False,
         viewonly=True,
@@ -94,7 +95,7 @@ class Abono(db.Model, Timestamp):
 
     payment: Mapped["Payment | None"] = relationship(
         "Payment",
-        primaryjoin="foreign(Abono.codigo) == Payment.session_id",
+        primaryjoin="foreign(Abono.codigo) == Payment.merchants_id",
         back_populates="abono",
         uselist=False,
         viewonly=True,
@@ -187,7 +188,7 @@ class SchoolStaffPedido(db.Model, Timestamp):
 
     payment: Mapped["Payment | None"] = relationship(
         "Payment",
-        primaryjoin="foreign(SchoolStaffPedido.codigo_merchants) == Payment.session_id",
+        primaryjoin="foreign(SchoolStaffPedido.codigo_merchants) == Payment.merchants_id",
         uselist=False,
         viewonly=True,
     )
@@ -349,7 +350,7 @@ class Pedido(db.Model, Timestamp):
 
     payment: Mapped["Payment | None"] = relationship(
         "Payment",
-        primaryjoin="foreign(Pedido.codigo_merchants) == Payment.session_id",
+        primaryjoin="foreign(Pedido.codigo_merchants) == Payment.merchants_id",
         back_populates="pedido",
         uselist=False,
         viewonly=True,

@@ -9,10 +9,17 @@ from .extensions import mail
 
 
 def _get_display_code(pago) -> str:
-    """Extrae el código de display del pago, si existe."""
+    """Extrae el código de display del pago, si existe.
+
+    Checks ``response_payload`` first (provider raw response), then falls
+    back to ``metadata_json`` for backward compatibility with older records.
+    """
     if pago is None:
         return ""
-    return (pago.metadata_json or {}).get("display_code", "")
+    code = (pago.response_payload or {}).get("display_code", "")
+    if not code:
+        code = (pago.metadata_json or {}).get("display_code", "")
+    return code
 
 
 def _parse_copia_emails(raw: str) -> list[str]:
@@ -65,7 +72,7 @@ def send_comprobante_abono(self, abono_info: dict):
         from .database import db
         from .model import Payment
 
-        pago = db.session.execute(db.select(Payment).filter_by(session_id=abono_info["codigo"])).scalar_one_or_none()
+        pago = db.session.execute(db.select(Payment).filter_by(merchants_id=abono_info["codigo"])).scalar_one_or_none()
         display_code = _get_display_code(pago)
         abono_url = url_for("apoderado_cliente.abono_detalle", codigo=abono_info["codigo"], _external=True)
         subject = f"Comprobante de abono #{abono_info['codigo'][:8].upper()}"
@@ -115,7 +122,7 @@ def send_notificacion_admin_abono(self, abono_info: dict):
         from .database import db
         from .model import Payment, Role
 
-        pago = db.session.execute(db.select(Payment).filter_by(session_id=abono_info["codigo"])).scalar_one_or_none()
+        pago = db.session.execute(db.select(Payment).filter_by(merchants_id=abono_info["codigo"])).scalar_one_or_none()
 
         admin_role = db.session.execute(db.select(Role).filter_by(name="admin")).scalar_one_or_none()
         if not admin_role:
@@ -141,7 +148,7 @@ def send_notificacion_admin_abono(self, abono_info: dict):
                 f"  Proveedor: {pago.provider}\n"
                 f"  Estado: {pago.state}\n"
                 f"  Código de pago: {display_code}\n"
-                f"  Session ID: {pago.session_id}\n"
+                f"  Session ID: {pago.merchants_id}\n"
             )
         body += f"\nSaldo actual del apoderado: ${abono_info['saldo_cuenta']:,}"
         html = render_template(
@@ -157,7 +164,7 @@ def send_notificacion_admin_abono(self, abono_info: dict):
             pago_proveedor=pago.provider if pago else None,
             pago_estado=pago.state if pago else None,
             display_code=display_code,
-            session_id=pago.session_id if pago else None,
+            session_id=pago.merchants_id if pago else None,
             abono_url=abono_url,
         )
         from_email = _get_from_email()
@@ -190,7 +197,7 @@ def send_copia_notificaciones_abono(self, abono_info: dict):
         from .database import db
         from .model import Payment
 
-        pago = db.session.execute(db.select(Payment).filter_by(session_id=abono_info["codigo"])).scalar_one_or_none()
+        pago = db.session.execute(db.select(Payment).filter_by(merchants_id=abono_info["codigo"])).scalar_one_or_none()
         display_code = _get_display_code(pago)
         abono_url = url_for("apoderado_cliente.abono_detalle", codigo=abono_info["codigo"], _external=True)
         subject = f"Comprobante de abono #{abono_info['codigo'][:8].upper()}"
@@ -243,7 +250,7 @@ def send_notificacion_abono_creado(self, abono_info: dict):
         from .database import db
         from .model import Abono as AbonoModel, Payment, Role
 
-        pago = db.session.execute(db.select(Payment).filter_by(session_id=abono_info["codigo"])).scalar_one_or_none()
+        pago = db.session.execute(db.select(Payment).filter_by(merchants_id=abono_info["codigo"])).scalar_one_or_none()
         abono_obj = db.session.execute(db.select(AbonoModel).filter_by(codigo=abono_info["codigo"])).scalar_one_or_none()
         display_code = _get_display_code(pago)
         abono_url = url_for("apoderado_cliente.abono_detalle", codigo=abono_info["codigo"], _external=True)
@@ -331,7 +338,7 @@ def send_notificacion_abono_creado(self, abono_info: dict):
                 descripcion=abono_info.get("descripcion"),
                 pago_proveedor=pago.provider if pago else None,
                 display_code=display_code,
-                session_id=pago.session_id if pago else None,
+                session_id=pago.merchants_id if pago else None,
                 abono_url=abono_url,
                 admin_abono_url=admin_abono_url,
             )
@@ -390,7 +397,7 @@ def send_notificacion_pedido_pendiente(self, pedido_info: dict):
 
         # Resolve payment for display_code
         pago = db.session.execute(
-            db.select(Payment).filter_by(session_id=pedido_info.get("session_id", ""))
+            db.select(Payment).filter_by(merchants_id=pedido_info.get("merchants_id", ""))
         ).scalar_one_or_none()
         display_code = _get_display_code(pago)
         redirect_url = pedido_info.get("redirect_url", "")

@@ -86,7 +86,7 @@ def create_blueprint(ext: "FlaskMerchants") -> Blueprint:
         if request.is_json:
             return jsonify(
                 {
-                    "session_id": session.session_id,
+                    "transaction_id": session.session_id,
                     "redirect_url": session.redirect_url,
                 }
             )
