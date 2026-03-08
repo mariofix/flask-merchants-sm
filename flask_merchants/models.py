@@ -104,6 +104,7 @@ class PaymentMixin:
     extra_args: Mapped[dict] = mapped_column(JSON, default=dict)
     request_payload: Mapped[dict] = mapped_column(JSON, default=dict)
     response_payload: Mapped[dict] = mapped_column(JSON, default=dict)
+    provider_payment_object: Mapped[dict] = mapped_column(JSON, default=dict)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -398,6 +399,7 @@ class PaymentMixin:
         status = client.payments.get(provider_id)
         self.state = status.state.value
         self.response_payload = status.raw if isinstance(status.raw, dict) else {}
+        self.provider_payment_object = status.model_dump(mode="json")
         ext._db.session.commit()
         logger.info(
             "Payment synced from provider: session_id=%s new_state=%s",
@@ -426,6 +428,7 @@ class PaymentMixin:
             "extra_args": self.extra_args or {},
             "request_payload": self.request_payload or {},
             "response_payload": self.response_payload or {},
+            "provider_payment_object": self.provider_payment_object or {},
         }
 
 
@@ -450,6 +453,8 @@ class Payment(PaymentMixin, Base):
         extra_args: Provider-specific kwargs unpacked into ``create_checkout()``.
         request_payload: Data sent to the provider.
         response_payload: Raw response received from the provider.
+        provider_payment_object: Full provider Payment object snapshot,
+            updated by ``sync_from_provider()``.
         created_at: Record creation timestamp (UTC).
         updated_at: Record last-update timestamp (UTC).
     """
