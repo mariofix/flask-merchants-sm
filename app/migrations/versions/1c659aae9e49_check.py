@@ -24,8 +24,9 @@ def upgrade():
 
     with op.batch_alter_table("merchants_payment", schema=None) as batch_op:
         batch_op.add_column(sa.Column("email", sa.String(length=255), nullable=True))
-        batch_op.add_column(sa.Column("extra_args", sa.JSON(), nullable=False))
-        batch_op.add_column(sa.Column("provider_payment_object", sa.JSON(), nullable=False))
+        batch_op.add_column(sa.Column("extra_args", sa.JSON(), nullable=False, server_default=sa.text("'{}'")))
+        batch_op.add_column(sa.Column("provider_payment_object", sa.JSON(), nullable=False, server_default=sa.text("'{}'")))
+
 
     # ### end Alembic commands ###
 
