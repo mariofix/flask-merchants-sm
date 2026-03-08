@@ -1,7 +1,7 @@
 """Init
 in sqlite3
-update alembic_version version_num='a472a74ad0df';
-Revision ID: a472a74ad0df
+update alembic_version version_num='e1f2a3b4c5d6';
+Revision ID: e1f2a3b4c5d6
 Revises:
 Create Date: 2026-03-02 22:00:00.000000
 
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 import flask_security
 
 # revision identifiers, used by Alembic.
-revision = "a472a74ad0df"
+revision = "e1f2a3b4c5d6"
 down_revision = None
 branch_labels = None
 depends_on = None
