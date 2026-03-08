@@ -79,7 +79,8 @@ class PaymentMixin:
 
     ``extra_args``
         Provider-specific kwargs unpacked into ``create_checkout()``.
-        Stored for audit purposes.
+        Keys are merged at the top level of ``request_payload`` and
+        stored here separately for audit purposes.
 
     ``request_payload``
         Everything sent to the provider — duplicate info is acceptable.
@@ -239,7 +240,9 @@ class PaymentMixin:
             email: Optional payer email address.
             extra_args: Provider-specific keyword arguments unpacked into
                 ``create_checkout()``.  E.g. ``{"expires_date": "...", "timeout": 30}``.
-                Stored in the ``extra_args`` column for audit purposes.
+                Keys are also merged at the top level of ``request_payload`` (alongside
+                ``amount``, ``email``, etc.) and stored separately in the ``extra_args``
+                column for audit purposes.
             merchants_id: When set, used as the ``merchants_id`` instead of
                 generating a new UUID4.  Useful for linking to existing
                 application entities (e.g. abono codes).
@@ -278,7 +281,7 @@ class PaymentMixin:
         if email:
             request_payload["email"] = email
         if provider_extra:
-            request_payload["extra_args"] = provider_extra
+            request_payload.update(provider_extra)
 
         local_merchants_id = merchants_id or str(uuid.uuid4())
 
