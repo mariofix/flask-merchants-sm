@@ -26,6 +26,7 @@ class PaymentsResource:
         success_url: str,
         cancel_url: str,
         metadata: dict[str, Any] | None = None,
+        **kwargs: Any,
     ) -> CheckoutSession:
         """Create a hosted-checkout session.
 
@@ -35,6 +36,7 @@ class PaymentsResource:
             success_url: URL to redirect to after successful payment.
             cancel_url: URL to redirect to when the user cancels.
             metadata: Optional key-value pairs passed to the provider.
+            **kwargs: Provider-specific keyword arguments (e.g. ``notify_url``).
 
         Returns:
             :class:`~merchants.models.CheckoutSession` - redirect the user to
@@ -49,6 +51,7 @@ class PaymentsResource:
             success_url,
             cancel_url,
             metadata,
+            **kwargs,
         )
 
     def get(self, payment_id: str) -> PaymentStatus:
