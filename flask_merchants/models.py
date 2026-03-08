@@ -57,7 +57,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import DateTime, Integer, JSON, Numeric, String, func, inspect
+from sqlalchemy import DateTime, Integer, JSON, Numeric, String, func, inspect, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, validates
 
 logger = logging.getLogger(__name__)
@@ -101,10 +101,10 @@ class PaymentMixin:
     state: Mapped[str] = mapped_column(String(32), default="pending")
     email: Mapped[str | None] = mapped_column(String(255), nullable=True)
     metadata_json: Mapped[dict] = mapped_column(JSON, default=dict)
-    extra_args: Mapped[dict] = mapped_column(JSON, default=dict)
+    extra_args: Mapped[dict] = mapped_column(JSON, default=dict, server_default=text("'{}'"))
     request_payload: Mapped[dict] = mapped_column(JSON, default=dict)
     response_payload: Mapped[dict] = mapped_column(JSON, default=dict)
-    provider_payment_object: Mapped[dict] = mapped_column(JSON, default=dict)
+    provider_payment_object: Mapped[dict] = mapped_column(JSON, default=dict, server_default=text("'{}'"))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
