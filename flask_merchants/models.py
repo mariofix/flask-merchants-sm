@@ -260,10 +260,11 @@ class PaymentMixin:
         provider_extra = dict(extra_args or {})
         req_context = dict(request_context or {})
 
-        # Auto-inject webhook notify_url if configured for this provider
+        # Auto-inject webhook notify_url if configured for this provider.
+        # This is a provider concern, so it goes into extra_args (not metadata).
         try:
             notify_url = ext.get_webhook_url(provider)
-            meta.setdefault("notify_url", notify_url)
+            provider_extra.setdefault("notify_url", notify_url)
         except RuntimeError:
             pass
 
