@@ -13,6 +13,8 @@ from flask_merchants.version import __version__
 
 __all__ = ["FlaskMerchants", "merchants_audit"]
 
+logger = logging.getLogger(__name__)
+
 # ---------------------------------------------------------------------------
 # Audit logger
 # ---------------------------------------------------------------------------
@@ -153,6 +155,11 @@ class FlaskMerchants:
 
     ``MERCHANTS_URL_PREFIX``
         URL prefix for the blueprint (default: ``"/merchants"``).
+    ``MERCHANTS_WEBHOOK_BASE_URL``
+        Public scheme + domain used to build webhook URLs sent to providers
+        (e.g. ``"https://example.com"``).  Required for
+        :meth:`get_webhook_url`.  When empty, that method raises
+        ``RuntimeError``.
     """
 
     def __init__(self, app=None, *, provider=None, providers=None, db=None, model=None, models=None, admin=None) -> None:
@@ -270,6 +277,10 @@ class FlaskMerchants:
         app.config.setdefault("MERCHANTS_URL_PREFIX", "/merchants")
         app.config.setdefault("MERCHANTS_PAYMENT_VIEW_NAME", "Payments")
         app.config.setdefault("MERCHANTS_PROVIDER_VIEW_NAME", "Providers")
+        app.config.setdefault("MERCHANTS_WEBHOOK_BASE_URL", "")
+
+        self._webhook_base_url = app.config["MERCHANTS_WEBHOOK_BASE_URL"].rstrip("/")
+        self._url_prefix = app.config["MERCHANTS_URL_PREFIX"]
 
         if _is_quart_app(app):
             from flask_merchants.quart_views import create_async_blueprint
@@ -350,6 +361,7 @@ class FlaskMerchants:
             client = ext.get_client("stripe")
             session = client.payments.create_checkout(...)
         """
+        logger.debug("__init__.py: FlaskMerchants.get_client called with provider_key=%r", provider_key)
         if provider_key is None:
             return self.client
         if provider_key not in self._clients:
@@ -361,6 +373,30 @@ class FlaskMerchants:
                     f"Available: {merchants.list_providers()}"
                 )
         return self._clients[provider_key]
+
+    def get_webhook_url(self, provider: str) -> str:
+        """Build the full webhook URL for *provider*.
+
+        Uses ``MERCHANTS_WEBHOOK_BASE_URL`` (scheme + domain) combined with
+        the blueprint prefix and ``/webhook/<provider>`` path.
+
+        Raises:
+            RuntimeError: If ``MERCHANTS_WEBHOOK_BASE_URL`` is not configured.
+
+        Example::
+
+            url = ext.get_webhook_url("khipu")
+            # -> "https://example.com/merchants/webhook/khipu"
+        """
+        logger.debug("__init__.py: FlaskMerchants.get_webhook_url called with provider=%r", provider)
+        if not self._webhook_base_url:
+            raise RuntimeError(
+                "MERCHANTS_WEBHOOK_BASE_URL is not configured. "
+                "Set it to the public scheme+domain, e.g. 'https://example.com'."
+            )
+        url = f"{self._webhook_base_url}{self._url_prefix}/webhook/{provider}"
+        logger.debug("__init__.py: FlaskMerchants.get_webhook_url result=%r", url)
+        return url
 
     def add_webhook_handler(self, handler) -> None:
         """Register a callable invoked after each ``/webhook/<provider>`` request.
@@ -388,6 +424,10 @@ class FlaskMerchants:
         Errors are caught individually so one failing handler does not stop
         the others from running.
         """
+        logger.debug(
+            "__init__.py: FlaskMerchants._dispatch_webhook_event called with event_type=%r payment_id=%r",
+            event.event_type, event.payment_id,
+        )
         for handler in self._webhook_handlers:
             try:
                 handler(event)
@@ -450,6 +490,10 @@ class FlaskMerchants:
                 When provided it is serialised as JSON and stored on the
                 record.  Defaults to an empty dict.
         """
+        logger.debug(
+            "__init__.py: FlaskMerchants.save_session called with session_id=%s provider=%s",
+            session.session_id, session.provider,
+        )
         # session.raw holds the provider's raw response; guard against non-dict types
         response_raw = session.raw if isinstance(session.raw, dict) else {}
         req_payload = request_payload or {}
@@ -509,6 +553,7 @@ class FlaskMerchants:
         When multiple models are registered, all of them are searched in
         registration order; the first match is updated.
         """
+        logger.debug("__init__.py: FlaskMerchants.update_state called with payment_id=%s state=%r", payment_id, state)
         if self._db is not None:
             for model_cls in self._get_model_classes():
                 record = (

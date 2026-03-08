@@ -2,11 +2,14 @@
 from __future__ import annotations
 
 import json
+import logging
 import random
 import string
 import uuid
 from decimal import Decimal
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 from merchants.models import CheckoutSession, PaymentState, PaymentStatus, WebhookEvent
 from merchants.providers import Provider
@@ -43,6 +46,7 @@ class SaldoProvider(Provider):
         cancel_url: str,
         metadata: dict[str, Any] | None = None,
     ) -> CheckoutSession:
+        logger.debug("saldo.py: SaldoProvider.create_checkout called with amount=%s currency=%s", amount, currency)
         meta = metadata or {}
         # Unique session identifier for this saldo transaction
         session_id = f"saldo_{_rand_code(12)}"
@@ -75,6 +79,7 @@ class SaldoProvider(Provider):
         )
 
     def get_payment(self, payment_id: str) -> PaymentStatus:
+        logger.debug("saldo.py: SaldoProvider.get_payment called with payment_id=%s", payment_id)
         # Saldo payments are approved immediately; state is always succeeded.
         return PaymentStatus(
             payment_id=payment_id,
@@ -84,6 +89,7 @@ class SaldoProvider(Provider):
         )
 
     def parse_webhook(self, payload: bytes, headers: dict[str, str]) -> WebhookEvent:
+        logger.debug("saldo.py: SaldoProvider.parse_webhook called")
         try:
             data: dict[str, Any] = json.loads(payload)
         except ValueError:

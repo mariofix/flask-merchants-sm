@@ -2,10 +2,13 @@
 from __future__ import annotations
 
 import json
+import logging
 import random
 import string
 from decimal import Decimal
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 from merchants.models import CheckoutSession, PaymentState, PaymentStatus, WebhookEvent
 from merchants.providers import Provider
@@ -39,6 +42,7 @@ class CafeteriaProvider(Provider):
         cancel_url: str,
         metadata: dict[str, Any] | None = None,
     ) -> CheckoutSession:
+        logger.debug("cafeteria.py: CafeteriaProvider.create_checkout called with amount=%s currency=%s", amount, currency)
         meta = metadata or {}
         # Usar abono_codigo como session_id para poder buscarlo luego por abono.codigo
         session_id = meta.get("abono_codigo") or f"cafe_{_rand_display_code(12)}"
@@ -55,6 +59,7 @@ class CafeteriaProvider(Provider):
         )
 
     def get_payment(self, payment_id: str) -> PaymentStatus:
+        logger.debug("cafeteria.py: CafeteriaProvider.get_payment called with payment_id=%s", payment_id)
         # El estado real se gestiona manualmente en la base de datos.
         return PaymentStatus(
             payment_id=payment_id,
@@ -64,6 +69,7 @@ class CafeteriaProvider(Provider):
         )
 
     def parse_webhook(self, payload: bytes, headers: dict[str, str]) -> WebhookEvent:
+        logger.debug("cafeteria.py: CafeteriaProvider.parse_webhook called")
         try:
             data: dict[str, Any] = json.loads(payload)
         except ValueError:

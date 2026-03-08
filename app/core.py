@@ -125,6 +125,12 @@ def create_app():
     # in metadata_json, sets the state to "succeeded", and credits the
     # apoderado's saldo_cuenta with the abono amount.
     def _khipu_abono_webhook_handler(event) -> None:
+        import logging as _logging
+        _wh_logger = _logging.getLogger(__name__)
+        _wh_logger.debug(
+            "core.py: _khipu_abono_webhook_handler called with provider=%r state=%r payment_id=%r",
+            event.provider, event.state, event.payment_id,
+        )
         from merchants.models import PaymentState
         from flask_merchants import merchants_audit
         from .model import Abono
