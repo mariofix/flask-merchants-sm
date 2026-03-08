@@ -84,10 +84,11 @@ class SchoolStaffController:
     def puede_comprar(self, staff: SchoolStaff, monto: Decimal) -> bool:
         """Return True if *staff* can add *monto* to their post-pay tab.
 
-        Always True when ``limite_cuenta`` is None (unlimited).
+        Returns ``False`` when ``limite_cuenta`` is ``None`` (not configured)
+        or ``0`` (no credit available).
         """
-        if staff.limite_cuenta is None:
-            return True
+        if not staff.limite_cuenta or staff.limite_cuenta <= 0:
+            return False
         deuda_actual = self.get_deuda_actual(staff)
         return (deuda_actual + monto) <= Decimal(staff.limite_cuenta)
 
