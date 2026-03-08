@@ -135,6 +135,11 @@ def pago_orden(orden):
         if request.method == "POST":
             forma_pago = request.form.get("forma-de-pago", "cafeteria")
 
+            # SaldoProvider is not available for staff
+            if forma_pago == "saldo":
+                flash("El pago con saldo de cuenta no está disponible para personal.", "danger")
+                return redirect(url_for("staff.pago_orden", orden=pedido.codigo))
+
             if forma_pago == "cuenta":
                 # Post-pay: charge to the staff member's running tab
                 if not ctrl.puede_comprar(staff, total):
@@ -149,12 +154,22 @@ def pago_orden(orden):
                 return redirect(url_for("staff.pago_orden", orden=pedido.codigo))
 
             # External payment providers (cafeteria, khipu, etc.)
+            # For cafeteria, generate cafe_ codigo so merchants_id == transaction_id
+            cafe_extra = {}
+            if forma_pago == "cafeteria":
+                import random as _rnd, string as _str
+                cafe_codigo = f"cafe_{''.join(_rnd.choices(_str.ascii_uppercase + _str.digits, k=8))}"
+                pedido.codigo = cafe_codigo
+                cafe_extra = {"codigo": cafe_codigo}
+
             payment = Payment.create(
                 amount=total,
                 currency="CLP",
                 provider=forma_pago,
                 success_url=url_for("staff.pago_orden", orden=pedido.codigo, _external=True),
                 cancel_url=url_for("staff.pago_orden", orden=pedido.codigo, _external=True),
+                merchants_id=pedido.codigo if forma_pago == "cafeteria" else None,
+                extra_args=cafe_extra or None,
                 request_context={
                     "pedido_codigo": pedido.codigo,
                     "forma_pago": forma_pago,

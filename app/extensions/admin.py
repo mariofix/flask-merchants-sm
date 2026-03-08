@@ -836,6 +836,13 @@ class PaymentAdminView(SecureModelView):
             saldo_actual = abono.apoderado.saldo_cuenta or 0
             nuevo_saldo = saldo_actual + int(abono.monto)
             abono.apoderado.saldo_cuenta = nuevo_saldo
+            # Populate payment_object with to_dict (avoiding recursive loop)
+            # plus saldo snapshot before/after credit
+            obj = pago.to_dict()
+            obj.pop("payment_object", None)
+            obj["saldo_antes"] = saldo_actual
+            obj["saldo_despues"] = nuevo_saldo
+            pago.payment_object = obj
             db.session.commit()
             merchants_audit.info(
                 "abono_aprobado: codigo=%s apoderado_id=%s email=%r monto=%s nuevo_saldo=%s",
@@ -875,6 +882,10 @@ class PaymentAdminView(SecureModelView):
             pedido.pagado = True
             pedido.estado = EstadoPedido.PAGADO
             pedido.fecha_pago = _datetime.now()
+            # Populate payment_object (avoiding recursive loop)
+            obj = pago.to_dict()
+            obj.pop("payment_object", None)
+            pago.payment_object = obj
             db.session.commit()
             merchants_audit.info(
                 "pedido_aprobado: codigo=%s monto=%s",

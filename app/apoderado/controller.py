@@ -251,14 +251,22 @@ class ApoderadoController:
         db.session.commit()
 
     def create_abono(
-        self, apoderado: Apoderado, monto: Decimal, forma_pago: str
+        self, apoderado: Apoderado, monto: Decimal, forma_pago: str,
+        *, codigo: str | None = None,
     ) -> Abono:
-        """Create and persist a new Abono record."""
+        """Create and persist a new Abono record.
+
+        Args:
+            codigo: When set, used as the abono's ``codigo`` instead of UUID4.
+                CafeteriaProvider payments use ``cafe_XXXXXXXX`` format.
+        """
         logger.debug(
             "controller.py: ApoderadoController.create_abono called with apoderado_id=%s monto=%s forma_pago=%r",
             apoderado.id, monto, forma_pago,
         )
         nuevo = Abono()
+        if codigo:
+            nuevo.codigo = codigo
         nuevo.monto = monto
         nuevo.apoderado = apoderado
         nuevo.descripcion = "Abono Web"

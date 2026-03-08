@@ -375,15 +375,26 @@ class PosController:
     def approve_abono(self, abono: Abono, pago: Payment) -> bool:
         """Mark *pago* as succeeded and credit *abono* amount to the apoderado.
 
+        For cafeteria payments, ``payment_object`` is populated with the
+        payment's ``to_dict()`` output plus saldo before/after the credit.
+
         Returns ``True`` when the operation was performed, ``False`` when
         *pago* is not in ``"processing"`` state (already approved or not
         pending).
         """
         if pago.state != "processing":
             return False
+        saldo_antes = abono.apoderado.saldo_cuenta or 0
+        nuevo_saldo = saldo_antes + int(abono.monto)
         pago.state = "succeeded"
-        saldo_actual = abono.apoderado.saldo_cuenta or 0
-        abono.apoderado.saldo_cuenta = saldo_actual + int(abono.monto)
+        abono.apoderado.saldo_cuenta = nuevo_saldo
+        # Populate payment_object — exclude payment_object itself to avoid
+        # recursive loop, then add saldo snapshot
+        obj = pago.to_dict()
+        obj.pop("payment_object", None)
+        obj["saldo_antes"] = saldo_antes
+        obj["saldo_despues"] = nuevo_saldo
+        pago.payment_object = obj
         db.session.commit()
         return True
 
@@ -452,6 +463,9 @@ class PosController:
     def approve_pedido(self, pedido: Pedido, pago: Payment) -> bool:
         """Mark *pago* as succeeded and set *pedido* to paid.
 
+        For cafeteria payments, ``payment_object`` is populated with the
+        payment's ``to_dict()`` output plus saldo before/after snapshot.
+
         Returns ``True`` when the operation was performed, ``False`` when
         *pago* is not in ``"processing"`` state.
         """
@@ -461,5 +475,10 @@ class PosController:
         pedido.pagado = True
         pedido.estado = EstadoPedido.PAGADO
         pedido.fecha_pago = datetime.now()
+        # Populate payment_object — exclude payment_object itself to avoid
+        # recursive loop
+        obj = pago.to_dict()
+        obj.pop("payment_object", None)
+        pago.payment_object = obj
         db.session.commit()
         return True
