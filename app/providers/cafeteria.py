@@ -58,6 +58,7 @@ class CafeteriaProvider(Provider):
         metadata: dict[str, Any] | None = None,
         *,
         codigo: str | None = None,
+        **kwargs: Any,
     ) -> CheckoutSession:
         logger.debug("cafeteria.py: CafeteriaProvider.create_checkout called with amount=%s currency=%s", amount, currency)
         # Use the caller-provided codigo (which matches merchants_id) so that
