@@ -49,6 +49,7 @@ class KhipuProvider(Provider):
     version = "1.0.0"
     description = "Khipu payment gateway for Chile, powered by khipu-tools."
     url = "https://khipu.com"
+    accepts_notify_url = True
 
     def __init__(
         self,
@@ -100,6 +101,9 @@ class KhipuProvider(Provider):
             params["notify_url"] = notify_url
         if metadata and metadata.get("order_id"):
             params["transaction_id"] = str(metadata["order_id"])
+        body = kwargs.get("body", "")
+        if body:
+            params["body"] = body
 
         logger.debug("khipu.py: KhipuProvider.create_checkout params=%r", params)
         try:

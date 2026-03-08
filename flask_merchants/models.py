@@ -43,6 +43,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Any
 
+import merchants as _merchants_registry
 from sqlalchemy import DateTime, JSON, Numeric, String, func, inspect, text
 from sqlalchemy.orm import Mapped, mapped_column, validates
 
@@ -262,11 +263,16 @@ class PaymentMixin:
         provider_extra = dict(extra_args or {})
         req_context = dict(request_context or {})
 
-        # Auto-inject webhook notify_url if configured for this provider.
+        # Auto-inject webhook notify_url only when the provider accepts it.
         try:
-            notify_url = ext.get_webhook_url(provider)
-            provider_extra.setdefault("notify_url", notify_url)
-        except RuntimeError:
+            provider_obj = _merchants_registry.get_provider(provider)
+            if getattr(provider_obj, "accepts_notify_url", False):
+                try:
+                    notify_url = ext.get_webhook_url(provider)
+                    provider_extra.setdefault("notify_url", notify_url)
+                except RuntimeError:
+                    pass
+        except (KeyError, RuntimeError):
             pass
 
         # Build the request payload for audit
@@ -292,6 +298,7 @@ class PaymentMixin:
                 currency=currency,
                 success_url=success_url,
                 cancel_url=cancel_url,
+                metadata={"order_id": local_merchants_id},
                 **provider_extra,
             )
 

@@ -111,7 +111,8 @@ def create_app():
     if khipu_api_key:
         # Only register Khipu when a real API key is configured.
         from merchants.providers.khipu import KhipuProvider
-        providers.append(KhipuProvider(api_key=khipu_api_key))
+        khipu_subject = app.config.get("KHIPU_SUBJECT", "Pago SaborMirandiano")
+        providers.append(KhipuProvider(api_key=khipu_api_key, subject=khipu_subject))
     providers.append(CafeteriaProvider())
     providers.append(SaldoProvider())
 
@@ -196,6 +197,9 @@ def create_app():
     )
 
     # Build the providers context once (providers don't change after init).
+    # `payment_providers` includes all providers (for pedido payment forms).
+    # `abono_payment_providers` excludes internal-only providers (saldo) that
+    # are not valid for abonos (deposit top-ups).
     _labels = app.config.get("MERCHANTS_PROVIDER_LABELS", {})
     _providers_ctx = []
     for p in _merchants.describe_providers():
@@ -205,12 +209,14 @@ def create_app():
             "title": label.get("title", p.name),
             "subtitle": label.get("subtitle", p.description),
         })
+    _abono_providers_ctx = [p for p in _providers_ctx if p["key"] != "saldo"]
 
     @app.context_processor
     def default_data():
         return {
             "app_version": __version__,
             "payment_providers": _providers_ctx,
+            "abono_payment_providers": _abono_providers_ctx,
         }
 
     app.register_blueprint(core_bp)
