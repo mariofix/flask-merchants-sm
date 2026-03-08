@@ -8,6 +8,7 @@ from typing import Any
 
 from merchants.models import PaymentState, WebhookEvent
 from merchants.providers import normalise_state
+from merchants.signals import webhook_event_parsed
 
 
 class WebhookVerificationError(Exception):
@@ -88,7 +89,7 @@ def parse_event(
     )
     state: PaymentState = normalise_state(str(raw_status))
 
-    return WebhookEvent(
+    event = WebhookEvent(
         event_id=event_id,
         event_type=event_type,
         payment_id=payment_id,
@@ -96,3 +97,5 @@ def parse_event(
         provider=provider,
         raw=data,
     )
+    webhook_event_parsed.send(parse_event, event=event)
+    return event

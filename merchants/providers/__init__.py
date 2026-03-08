@@ -131,7 +131,10 @@ _REGISTRY: dict[str, Provider] = {}
 
 def register_provider(provider: Provider) -> None:
     """Register a provider instance under its :attr:`~Provider.key`."""
+    from merchants.signals import provider_registered
+
     _REGISTRY[provider.key] = provider
+    provider_registered.send(register_provider, provider=provider)
 
 
 def get_provider(key_or_instance: str | Provider) -> Provider:

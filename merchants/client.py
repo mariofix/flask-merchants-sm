@@ -7,6 +7,7 @@ from typing import Any
 from merchants.auth import AuthStrategy
 from merchants.models import CheckoutSession, PaymentStatus
 from merchants.providers import Provider, get_provider
+from merchants.signals import checkout_created, payment_retrieved
 from merchants.transport import HttpResponse, RequestsTransport, Transport
 
 
@@ -43,13 +44,15 @@ class PaymentsResource:
         Raises:
             :class:`~merchants.providers.UserError`: If the provider rejects the request.
         """
-        return self._provider.create_checkout(
+        session = self._provider.create_checkout(
             Decimal(str(amount)),
             currency,
             success_url,
             cancel_url,
             metadata,
         )
+        checkout_created.send(self, session=session)
+        return session
 
     def get(self, payment_id: str) -> PaymentStatus:
         """Retrieve and normalise the status of a payment.
@@ -60,7 +63,9 @@ class PaymentsResource:
         Returns:
             :class:`~merchants.models.PaymentStatus`.
         """
-        return self._provider.get_payment(payment_id)
+        status = self._provider.get_payment(payment_id)
+        payment_retrieved.send(self, status=status)
+        return status
 
 
 class Client:

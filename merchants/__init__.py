@@ -27,6 +27,12 @@ from merchants.transport import (
     TransportError,
 )
 from merchants.version import __version__
+from merchants.signals import (
+    checkout_created,
+    payment_retrieved,
+    provider_registered,
+    webhook_event_parsed,
+)
 from merchants.webhooks import WebhookVerificationError, parse_event, verify_signature
 
 __all__ = [
@@ -60,6 +66,11 @@ __all__ = [
     "from_minor_units",
     "to_decimal_string",
     "to_minor_units",
+    # Signals
+    "checkout_created",
+    "payment_retrieved",
+    "provider_registered",
+    "webhook_event_parsed",
     # Webhooks
     "WebhookVerificationError",
     "parse_event",
