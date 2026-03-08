@@ -121,9 +121,8 @@ def create_app():
 
     # Register Khipu abono approval webhook handler.
     # When Khipu notifies /merchants/webhook/khipu that a payment succeeded,
-    # this handler finds the matching Payment record via provider_session_id
-    # (or legacy khipu_payment_id) stored in metadata_json, sets the state to
-    # "succeeded", and credits the apoderado's saldo_cuenta with the abono amount.
+    # this handler finds the matching Payment record via transaction_id,
+    # sets the state to "succeeded", and credits the apoderado's saldo_cuenta.
     def _khipu_abono_webhook_handler(event) -> None:
         import logging as _logging
         _wh_logger = _logging.getLogger(__name__)
@@ -140,39 +139,20 @@ def create_app():
         if not event.payment_id:
             return
 
-        # Load pending khipu payments and match in Python for database portability
-        # (JSON path queries differ between SQLite used in tests and PostgreSQL in prod).
-        pending_pagos = (
-            db.session.execute(
-                db.select(Payment).where(
-                    Payment.provider == "khipu",
-                    Payment.state == "pending",
-                )
+        # Look up the payment by transaction_id (the provider's payment ID)
+        pago = db.session.execute(
+            db.select(Payment).where(
+                Payment.provider == "khipu",
+                Payment.state == "pending",
+                Payment.transaction_id == event.payment_id,
             )
-            .scalars()
-            .all()
-        )
-
-        def _matches_provider_id(p, payment_id: str) -> bool:
-            meta = p.metadata_json or {}
-            # New key set by Payment.create() with session_id_override
-            if meta.get("provider_session_id") == payment_id:
-                return True
-            # Legacy key from manual Payment construction
-            if meta.get("khipu_payment_id") == payment_id:
-                return True
-            return False
-
-        pago = next(
-            (p for p in pending_pagos if _matches_provider_id(p, event.payment_id)),
-            None,
-        )
+        ).scalar_one_or_none()
 
         # Re-check pago.state as an idempotency guard: a concurrent duplicate webhook
         # could have already committed a state change after our SELECT above.
         if pago and pago.state == "pending":
             abono = db.session.execute(
-                db.select(Abono).filter_by(codigo=pago.session_id)
+                db.select(Abono).filter_by(codigo=pago.merchants_id)
             ).scalar_one_or_none()
             if abono:
                 pago.state = "succeeded"

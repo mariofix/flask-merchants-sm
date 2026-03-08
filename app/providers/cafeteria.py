@@ -1,4 +1,16 @@
-"""Cafetería provider - pago presencial en efectivo o tarjeta en la cafetería."""
+"""Cafetería provider - pago presencial en efectivo o tarjeta en la cafetería.
+
+CafeteriaProvider handles cash/card payments made in person at the school
+cafeteria.  The system creates a payment in ``processing`` state and does NOT
+redirect the user to an external provider.
+
+``merchants_id`` and ``transaction_id`` are always the same value — a code
+with the ``cafe_`` prefix followed by 8 random alphanumeric characters.
+
+Admin or POS staff authorize the payment via the data-manager Flask-Admin
+action.  On approval the ``payment_object`` column is populated with the
+payment's ``to_dict()`` output plus the saldo snapshot (before / after).
+"""
 from __future__ import annotations
 
 import json
@@ -14,8 +26,8 @@ from merchants.models import CheckoutSession, PaymentState, PaymentStatus, Webho
 from merchants.providers import Provider
 
 
-def _rand_display_code(length: int = 6) -> str:
-    """Genera un código corto alfanumérico en mayúsculas para mostrar al cliente."""
+def _rand_code(length: int = 8) -> str:
+    """Generate a random alphanumeric code in uppercase."""
     return "".join(random.choices(string.ascii_uppercase + string.digits, k=length))
 
 
@@ -24,7 +36,10 @@ class CafeteriaProvider(Provider):
 
     El apoderado recibe un código QR y un código corto que presenta en la
     cafetería para pagar en efectivo o tarjeta.  El personal (admin/pos)
-    aprueba el pago manualmente desde el panel de detalle del abono.
+    aprueba el pago manualmente desde el panel.
+
+    ``session_id`` (which becomes ``transaction_id`` in the mixin) always
+    equals ``merchants_id`` — both use the ``cafe_XXXXXXXX`` format.
     """
 
     key = "cafeteria"
@@ -41,20 +56,23 @@ class CafeteriaProvider(Provider):
         success_url: str,
         cancel_url: str,
         metadata: dict[str, Any] | None = None,
+        *,
+        codigo: str | None = None,
     ) -> CheckoutSession:
         logger.debug("cafeteria.py: CafeteriaProvider.create_checkout called with amount=%s currency=%s", amount, currency)
-        meta = metadata or {}
-        # Usar abono_codigo como session_id para poder buscarlo luego por abono.codigo
-        session_id = meta.get("abono_codigo") or f"cafe_{_rand_display_code(12)}"
-        # Código corto para mostrar en pantalla / QR
-        display_code = _rand_display_code()
+        # Use the caller-provided codigo (which matches merchants_id) so that
+        # merchants_id == transaction_id for this internal provider.
+        # Falls back to generating cafe_ + 8 random chars.
+        session_id = codigo or f"cafe_{_rand_code(8)}"
+        # Short display code for screen / QR
+        display_code = _rand_code(6)
         return CheckoutSession(
             session_id=session_id,
             redirect_url=success_url,
             provider=self.key,
             amount=amount,
             currency=currency,
-            metadata={**meta, "display_code": display_code},
+            metadata={"display_code": display_code},
             raw={"display_code": display_code},
             initial_state=PaymentState.PROCESSING,
         )

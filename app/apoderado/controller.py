@@ -144,7 +144,7 @@ class ApoderadoController:
             pago = None
             if pedido.codigo_merchants:
                 pago = db.session.execute(
-                    db.select(Payment).filter_by(session_id=pedido.codigo_merchants)
+                    db.select(Payment).filter_by(merchants_id=pedido.codigo_merchants)
                 ).scalar_one_or_none()
             ordenes = (
                 db.session.execute(
@@ -165,12 +165,12 @@ class ApoderadoController:
         if codigos:
             pagos = (
                 db.session.execute(
-                    db.select(Payment).where(Payment.session_id.in_(codigos))
+                    db.select(Payment).where(Payment.merchants_id.in_(codigos))
                 )
                 .scalars()
                 .all()
             )
-            pagos_by_codigo = {p.session_id: p for p in pagos}
+            pagos_by_codigo = {p.merchants_id: p for p in pagos}
         return [{"abono": a, "pago": pagos_by_codigo.get(a.codigo)} for a in abono_list]
 
     def get_abono(self, codigo: str) -> tuple:
@@ -180,10 +180,10 @@ class ApoderadoController:
             db.select(Abono).filter_by(codigo=codigo)
         ).scalar_one_or_none()
         pago = db.session.execute(
-            db.select(Payment).filter_by(session_id=codigo)
+            db.select(Payment).filter_by(merchants_id=codigo)
         ).scalar_one_or_none()
         display_code = (
-            (pago.metadata_json or {}).get("display_code", "") if pago else ""
+            ((pago.response_payload or {}).get("display_code") or (pago.metadata_json or {}).get("display_code", "")) if pago else ""
         )
         return abono, pago, display_code
 
@@ -251,14 +251,22 @@ class ApoderadoController:
         db.session.commit()
 
     def create_abono(
-        self, apoderado: Apoderado, monto: Decimal, forma_pago: str
+        self, apoderado: Apoderado, monto: Decimal, forma_pago: str,
+        *, codigo: str | None = None,
     ) -> Abono:
-        """Create and persist a new Abono record."""
+        """Create and persist a new Abono record.
+
+        Args:
+            codigo: When set, used as the abono's ``codigo`` instead of UUID4.
+                CafeteriaProvider payments use ``cafe_XXXXXXXX`` format.
+        """
         logger.debug(
             "controller.py: ApoderadoController.create_abono called with apoderado_id=%s monto=%s forma_pago=%r",
             apoderado.id, monto, forma_pago,
         )
         nuevo = Abono()
+        if codigo:
+            nuevo.codigo = codigo
         nuevo.monto = monto
         nuevo.apoderado = apoderado
         nuevo.descripcion = "Abono Web"

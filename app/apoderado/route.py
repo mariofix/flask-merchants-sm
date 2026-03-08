@@ -206,7 +206,16 @@ def abono():
         )
         return redirect(url_for("apoderado_cliente.abono_form"))
 
-    nuevo_abono = ctrl.create_abono(current_user.apoderado, monto_decimal, forma_pago)
+    # For cafeteria payments, generate cafe_XXXXXXXX code as the abono codigo
+    # so that merchants_id == transaction_id == abono.codigo
+    import random, string
+    abono_codigo = None
+    if forma_pago == "cafeteria":
+        abono_codigo = f"cafe_{''.join(random.choices(string.ascii_uppercase + string.digits, k=8))}"
+
+    nuevo_abono = ctrl.create_abono(
+        current_user.apoderado, monto_decimal, forma_pago, codigo=abono_codigo,
+    )
 
     from flask_merchants import merchants_audit
 
@@ -241,11 +250,8 @@ def abono():
                 )
             ),
             email=nuevo_abono.apoderado.usuario.email,
-            metadata={
-                "abono_codigo": nuevo_abono.codigo,
-                "apoderado_id": str(nuevo_abono.apoderado.id),
-            },
-            session_id_override=nuevo_abono.codigo if forma_pago == "khipu" else None,
+            merchants_id=nuevo_abono.codigo,
+            extra_args={"codigo": nuevo_abono.codigo} if forma_pago == "cafeteria" else None,
             request_context={
                 "abono_codigo": nuevo_abono.codigo,
                 "monto": str(nuevo_abono.monto),
@@ -578,8 +584,6 @@ def pago_orden(orden):
                     or not apoderado.saldo_cuenta
                     or apoderado.saldo_cuenta < saldo_necesario
                 ):
-                    from flask import flash
-
                     flash(
                         "Saldo insuficiente para completar el pago con saldo de cuenta.",
                         "danger",
@@ -589,8 +593,14 @@ def pago_orden(orden):
                     )
 
                 saldo_antes = apoderado.saldo_cuenta
+                nuevo_saldo = saldo_antes - saldo_necesario
                 # Deduct slider discount + saldo payment in one operation
-                apoderado.saldo_cuenta = saldo_antes - saldo_necesario
+                apoderado.saldo_cuenta = nuevo_saldo
+
+                # Generate saldo_ codigo for the pedido
+                import random as _rnd, string as _str
+                saldo_codigo = f"saldo_{''.join(_rnd.choices(_str.ascii_uppercase + _str.digits, k=6))}"
+                pedido.codigo = saldo_codigo
 
                 payment = Payment.create(
                     amount=monto_a_pagar,
@@ -606,22 +616,25 @@ def pago_orden(orden):
                         orden=pedido.codigo,
                         _external=True,
                     ),
-                    metadata={
-                        "pedido_codigo": pedido.codigo,
-                        "apoderado_id": str(apoderado.id),
-                        "saldo_antes": saldo_antes,
-                        "model_property": "saldo_cuenta",
+                    merchants_id=saldo_codigo,
+                    extra_args={
+                        "codigo": saldo_codigo,
+                        "metadata": {
+                            "pedido_codigo": pedido.codigo,
+                            "saldo_actual": saldo_antes,
+                        },
                     },
                     request_context={
+                        "user_id": str(current_user.id),
+                        "apoderado_id": str(apoderado.id),
+                        "saldo_actual": str(saldo_antes),
                         "pedido_codigo": pedido.codigo,
                         "forma_pago": "saldo",
                         "descuento_saldo": str(descuento_saldo),
-                        "saldo_antes": str(saldo_antes),
-                        "model_property": "saldo_cuenta",
                     },
                 )
 
-                pedido.codigo_merchants = payment.session_id
+                pedido.codigo_merchants = payment.merchants_id
                 pedido.precio_total = total
                 pedido.estado = EstadoPedido.PAGADO
                 pedido.pagado = True
@@ -629,7 +642,7 @@ def pago_orden(orden):
                 db.session.commit()
                 ctrl.process_payment_completion(pedido)
                 # Leave a note on each OrdenCasino record indicating payment via saldo
-                transaction_code = (payment.metadata_json or {}).get("transaction_code", "")
+                transaction_code = (payment.response_payload or {}).get("transaction_code", "")
                 total_fmt = f"{int(total):,}".replace(",", ".")
                 nota_saldo = f"Pagado con saldo de cuenta. Original: ${total_fmt}. Cod: {transaction_code}"
                 ordenes = (
@@ -655,6 +668,14 @@ def pago_orden(orden):
                     descuento_saldo
                 )
 
+            # For cafeteria pedidos, generate cafe_ codigo so merchants_id == transaction_id
+            cafe_extra = {}
+            if forma_pago == "cafeteria":
+                import random as _rnd, string as _str
+                cafe_codigo = f"cafe_{''.join(_rnd.choices(_str.ascii_uppercase + _str.digits, k=8))}"
+                pedido.codigo = cafe_codigo
+                cafe_extra = {"codigo": cafe_codigo}
+
             payment = Payment.create(
                 amount=monto_a_pagar,
                 currency="CLP",
@@ -665,7 +686,8 @@ def pago_orden(orden):
                 cancel_url=url_for(
                     "apoderado_cliente.pago_orden", orden=pedido.codigo, _external=True
                 ),
-                metadata={"pedido_codigo": pedido.codigo},
+                merchants_id=pedido.codigo if forma_pago == "cafeteria" else None,
+                extra_args=cafe_extra or None,
                 request_context={
                     "pedido_codigo": pedido.codigo,
                     "forma_pago": forma_pago,
@@ -673,21 +695,26 @@ def pago_orden(orden):
                 },
             )
 
-            pedido.codigo_merchants = payment.session_id
+            pedido.codigo_merchants = payment.merchants_id
             pedido.precio_total = total
             pedido.estado = EstadoPedido.PENDIENTE
             db.session.commit()
+
+            # Extract redirect_url from response_payload (provider response at creation)
+            redirect_url = (payment.response_payload or {}).get("redirect_url", "")
+            if not redirect_url:
+                redirect_url = (payment.request_payload or {}).get("success_url", "")
 
             from ..tasks import send_notificacion_pedido_pendiente
 
             send_notificacion_pedido_pendiente.delay(
                 {
                     "pedido_codigo": pedido.codigo,
-                    "session_id": payment.session_id,
+                    "merchants_id": payment.merchants_id,
                     "forma_pago": forma_pago,
                     "total": int(total),
                     "redirect_url": (
-                        payment.redirect_url if forma_pago != "cafeteria" else ""
+                        redirect_url if forma_pago != "cafeteria" else ""
                     ),
                     "pedido_url": url_for(
                         "apoderado_cliente.pago_orden",
@@ -725,18 +752,18 @@ def pago_orden(orden):
                     ],
                 }
             )
-            if forma_pago != "cafeteria" and payment.redirect_url:
-                return redirect(payment.redirect_url)
+            if forma_pago != "cafeteria" and redirect_url:
+                return redirect(redirect_url)
             return redirect(
                 url_for("apoderado_cliente.pago_orden", orden=pedido.codigo)
             )
 
         if pedido.codigo_merchants:
             pago = db.session.execute(
-                db.select(Payment).filter_by(session_id=pedido.codigo_merchants)
+                db.select(Payment).filter_by(merchants_id=pedido.codigo_merchants)
             ).scalar_one_or_none()
             display_code = (
-                (pago.metadata_json or {}).get("display_code", "") if pago else ""
+                ((pago.response_payload or {}).get("display_code") or (pago.metadata_json or {}).get("display_code", "")) if pago else ""
             )
 
     return render_template(

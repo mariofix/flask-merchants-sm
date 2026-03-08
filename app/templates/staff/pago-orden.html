@@ -76,6 +76,7 @@
           <form method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             {% for provider in payment_providers %}
+            {% if provider.key != 'saldo' %}
             <div class="form-check mb-2">
               <input class="form-check-input" type="radio" name="forma-de-pago"
                      id="pago_{{ provider.key }}" value="{{ provider.key }}" required>
@@ -84,13 +85,15 @@
                 {% if provider.subtitle %}<br><small class="text-muted">{{ provider.subtitle }}</small>{% endif %}
               </label>
             </div>
+            {% endif %}
             {% endfor %}
-            <div class="form-check mb-3">
+            {% set cuenta_disponible = staff and staff.limite_cuenta and staff.limite_cuenta > 0 %}
+            <div class="form-check mb-3{% if not cuenta_disponible %} text-muted{% endif %}">
               <input class="form-check-input" type="radio" name="forma-de-pago"
-                     id="pago_cuenta" value="cuenta" required>
+                     id="pago_cuenta" value="cuenta" required{% if not cuenta_disponible %} disabled{% endif %}>
               <label class="form-check-label" for="pago_cuenta">
                 <strong>Cargar a cuenta</strong>
-                <br><small class="text-muted">Se cargará a tu cuenta post-pago</small>
+                <br><small class="text-muted">{% if cuenta_disponible %}Se cargará a tu cuenta post-pago{% else %}No disponible — sin límite configurado{% endif %}</small>
               </label>
             </div>
             <button type="submit" class="btn btn-primary w-100">Confirmar pago ${{ total|int }}</button>

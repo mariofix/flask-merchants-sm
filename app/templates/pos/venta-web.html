@@ -137,9 +137,9 @@
                     </p>
 
                     {% if pago and pago.provider == 'saldo' %}
-                    {%- set tc = pago.metadata_json.get('transaction_code', '') %}
-                    {%- set s_antes = pago.metadata_json.get('saldo_antes', 0) %}
-                    {%- set s_despues = pago.metadata_json.get('saldo_despues', 0) %}
+                    {%- set tc = (pago.response_payload or {}).get('transaction_code', '') %}
+                    {%- set s_antes = (pago.response_payload or {}).get('saldo_antes', 0) %}
+                    {%- set s_despues = (pago.response_payload or {}).get('saldo_despues', 0) %}
                     <div class="alert alert-success py-2 mt-2">
                         <div class="small text-muted mb-1">Código de transacción saldo</div>
                         <strong class="fs-2 font-monospace">{{ tc }}</strong>
@@ -226,9 +226,10 @@
                         <label class="form-label fw-bold">Medio de pago</label>
                         <div class="form-selectgroup form-selectgroup-boxes d-flex flex-column">
                             {% for provider in payment_providers %}
-                            <label class="form-selectgroup-item flex-fill{% if provider.key == 'saldo' %} saldo-provider-option{% endif %}"
-                                   {% if provider.key == 'saldo' and not (apoderado and apoderado.saldo_cuenta and apoderado.saldo_cuenta >= total|int) %}style="display:none"{% endif %}>
-                                <input type="radio" name="forma-de-pago" value="{{ provider.key }}" class="form-selectgroup-input"{% if loop.last %} checked{% endif %} />
+                            {% set saldo_insuficiente = provider.key == 'saldo' and not (apoderado and apoderado.saldo_cuenta and apoderado.saldo_cuenta >= total|int) %}
+                            <label class="form-selectgroup-item flex-fill{% if provider.key == 'saldo' %} saldo-provider-option{% endif %}{% if saldo_insuficiente %} text-muted{% endif %}"
+                                   {% if saldo_insuficiente %}title="Saldo insuficiente"{% endif %}>
+                                <input type="radio" name="forma-de-pago" value="{{ provider.key }}" class="form-selectgroup-input"{% if loop.last %} checked{% endif %}{% if saldo_insuficiente %} disabled{% endif %} />
                                 <div class="form-selectgroup-label d-flex align-items-center p-3">
                                     <div class="me-3">
                                         <span class="form-selectgroup-check"></span>
@@ -298,14 +299,19 @@
             }
             if (providerSection) providerSection.style.display = '';
         }
-        // Show SaldoProvider option only when available saldo covers the full remaining cost
+        // Enable/disable SaldoProvider option based on available saldo
         var saldoOption = document.querySelector('.saldo-provider-option');
         if (saldoOption) {
+            var saldoInput = saldoOption.querySelector('input[value="saldo"]');
             var saldoNecesario = descuento + montoPagar;
             if (montoPagar > 0 && _saldo_disponible >= saldoNecesario) {
-                saldoOption.style.display = '';
-            } else {
-                saldoOption.style.display = 'none';
+                saldoOption.classList.remove('text-muted');
+                saldoOption.removeAttribute('title');
+                if (saldoInput) saldoInput.disabled = false;
+            } else if (montoPagar > 0) {
+                saldoOption.classList.add('text-muted');
+                saldoOption.setAttribute('title', 'Saldo insuficiente');
+                if (saldoInput) saldoInput.disabled = true;
                 // Deselect saldo if it is no longer viable
                 if (isSaldo) {
                     var others = document.querySelectorAll('input[name="forma-de-pago"]:not([value="saldo"])');

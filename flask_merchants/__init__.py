@@ -71,19 +71,6 @@ class FlaskMerchants:
         app = Flask(__name__)
         ext = FlaskMerchants(app)
 
-    Usage - with SQLAlchemy (Flask-SQLAlchemy 3.x)::
-
-        from flask import Flask
-        from flask_sqlalchemy import SQLAlchemy
-        from flask_merchants import FlaskMerchants
-        from flask_merchants.models import Base
-
-        db = SQLAlchemy(model_class=Base)
-        app = Flask(__name__)
-        app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///payments.db"
-        ext = FlaskMerchants(app, db=db)
-        db.init_app(app)
-
     Usage - with a single custom SQLAlchemy model::
 
         from flask import Flask
@@ -450,13 +437,14 @@ class FlaskMerchants:
     def _get_model_classes(self) -> list:
         """Return the list of all registered model classes.
 
-        Falls back to the built-in :class:`~flask_merchants.models.Payment`
-        when no custom models have been registered.
+        Raises ``RuntimeError`` when no models have been registered.
         """
         if self._models:
             return self._models
-        from flask_merchants.models import Payment
-        return [Payment]
+        raise RuntimeError(
+            "No payment model classes registered. Pass models=[YourPaymentModel] "
+            "to FlaskMerchants() or init_app()."
+        )
 
     @property
     def _payment_model(self):
@@ -476,9 +464,8 @@ class FlaskMerchants:
         success_url: str,
         cancel_url: str,
         email: str | None = None,
-        metadata: dict | None = None,
         extra_args: dict | None = None,
-        session_id_override: str | None = None,
+        merchants_id: str | None = None,
         request_context: dict | None = None,
         model_class=None,
     ):
@@ -505,9 +492,8 @@ class FlaskMerchants:
             success_url=success_url,
             cancel_url=cancel_url,
             email=email,
-            metadata=metadata,
             extra_args=extra_args,
-            session_id_override=session_id_override,
+            merchants_id=merchants_id,
             request_context=request_context,
         )
 
@@ -534,29 +520,32 @@ class FlaskMerchants:
         Args:
             session: The checkout session to persist.
             model_class: The model class to store the record in.
-                Defaults to the first registered model (or the built-in
-                :class:`~flask_merchants.models.Payment`).  Use this when
+                Defaults to the first registered model.  Use this when
                 you have multiple models registered and need to direct a
                 payment to a specific table.
             request_payload: The data dict that was sent to the provider.
                 When provided it is serialised as JSON and stored on the
                 record.  Defaults to an empty dict.
         """
+        import uuid as _uuid
+
         logger.debug(
             "__init__.py: FlaskMerchants.save_session called with session_id=%s provider=%s",
             session.session_id, session.provider,
         )
         # session.raw holds the provider's raw response; guard against non-dict types
         response_raw = session.raw if isinstance(session.raw, dict) else {}
+        if session.redirect_url:
+            response_raw.setdefault("redirect_url", session.redirect_url)
         req_payload = request_payload or {}
+        merchants_id = str(_uuid.uuid4())
 
         data = {
-            "session_id": session.session_id,
-            "redirect_url": session.redirect_url,
+            "merchants_id": merchants_id,
+            "transaction_id": session.session_id,
             "provider": session.provider,
             "amount": str(session.amount),
             "currency": session.currency,
-            "metadata": session.metadata,
             "state": "pending",
             "request_payload": req_payload,
             "response_payload": response_raw,
@@ -565,13 +554,12 @@ class FlaskMerchants:
         if self._db is not None:
             cls = model_class if model_class is not None else self._payment_model
             record = cls(
-                session_id=session.session_id,
-                redirect_url=session.redirect_url,
+                merchants_id=merchants_id,
+                transaction_id=session.session_id,
                 provider=session.provider,
                 amount=session.amount,
                 currency=session.currency,
                 state="pending",
-                metadata_json=session.metadata or {},
                 request_payload=req_payload,
                 response_payload=response_raw,
             )
@@ -579,11 +567,12 @@ class FlaskMerchants:
             self._db.session.commit()
 
         # Always keep in-memory copy for fast look-up
-        self._store[session.session_id] = data
+        self._store[merchants_id] = data
 
     def get_session(self, payment_id: str) -> dict[str, Any] | None:
         """Return stored data for *payment_id*, or ``None``.
 
+        Searches by ``merchants_id`` first, then by ``transaction_id``.
         When multiple models are registered, all of them are searched in
         registration order and the first match is returned.
         """
@@ -591,7 +580,16 @@ class FlaskMerchants:
             for model_cls in self._get_model_classes():
                 record = (
                     self._db.session.query(model_cls)
-                    .filter_by(session_id=payment_id)
+                    .filter_by(merchants_id=payment_id)
+                    .first()
+                )
+                if record is not None:
+                    return record.to_dict()
+            # Fallback: search by transaction_id
+            for model_cls in self._get_model_classes():
+                record = (
+                    self._db.session.query(model_cls)
+                    .filter_by(transaction_id=payment_id)
                     .first()
                 )
                 if record is not None:
@@ -602,6 +600,8 @@ class FlaskMerchants:
     def update_state(self, payment_id: str, state: str) -> bool:
         """Update the stored state for *payment_id*. Returns ``True`` on success.
 
+        Searches by ``merchants_id`` first, then by ``transaction_id``.
+
         .. deprecated::
             Prefer ``payment.state = "..."`` with a direct commit, or
             ``payment.refund()`` / ``payment.cancel()`` for common transitions.
@@ -611,18 +611,32 @@ class FlaskMerchants:
         """
         logger.debug("__init__.py: FlaskMerchants.update_state called with payment_id=%s state=%r", payment_id, state)
         if self._db is not None:
+            record = None
             for model_cls in self._get_model_classes():
                 record = (
                     self._db.session.query(model_cls)
-                    .filter_by(session_id=payment_id)
+                    .filter_by(merchants_id=payment_id)
                     .first()
                 )
                 if record is not None:
-                    record.state = state
-                    self._db.session.commit()
-                    if payment_id in self._store:
-                        self._store[payment_id]["state"] = state
-                    return True
+                    break
+            # Fallback: search by transaction_id
+            if record is None:
+                for model_cls in self._get_model_classes():
+                    record = (
+                        self._db.session.query(model_cls)
+                        .filter_by(transaction_id=payment_id)
+                        .first()
+                    )
+                    if record is not None:
+                        break
+            if record is not None:
+                record.state = state
+                self._db.session.commit()
+                mid = record.merchants_id
+                if mid in self._store:
+                    self._store[mid]["state"] = state
+                return True
             # Not found in any model - fall back to in-memory
             if payment_id not in self._store:
                 return False

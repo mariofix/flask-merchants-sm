@@ -43,8 +43,8 @@ def _fmt_state(v, c, m, n):
     )
 
 
-def _fmt_session_id(v, c, m, n):
-    """Render a session ID in a ``<small>`` tag."""
+def _fmt_merchants_id(v, c, m, n):
+    """Render a merchants ID in a ``<small>`` tag."""
     val = v._get_field_value(m, n)
     return Markup("<small>{}</small>".format(val if val is not None else ""))
 
@@ -64,17 +64,18 @@ class PaymentViewMixin:
             ...
 
     Subclasses are free to override any attribute; this mixin only provides
-    the sensible defaults for the five core payment columns.  SQLAlchemy-backed
+    the sensible defaults for the core payment columns.  SQLAlchemy-backed
     views typically extend :attr:`column_list` and :attr:`column_labels` with
     timestamp columns, for example.
     """
 
     #: Core columns displayed in the list view.
-    column_list = ["session_id", "provider", "amount", "currency", "state"]
+    column_list = ["merchants_id", "transaction_id", "provider", "amount", "currency", "state"]
 
     #: Human-readable column header labels.
     column_labels = {
-        "session_id": "Payment ID",
+        "merchants_id": "Merchants ID",
+        "transaction_id": "Transaction ID",
         "provider": "Provider",
         "amount": "Amount",
         "currency": "Currency",
@@ -83,17 +84,18 @@ class PaymentViewMixin:
 
     #: Tooltip help text shown next to each column header.
     column_descriptions = {
-        "session_id": "Unique identifier assigned by the payment provider.",
+        "merchants_id": "Internal payment identifier (UUID4).",
+        "transaction_id": "Identifier assigned by the payment provider.",
         "provider": "The payment gateway that processed this transaction.",
         "amount": "Payment amount in the smallest currency unit (e.g. cents).",
         "currency": "ISO-4217 currency code (e.g. USD, EUR, CLP).",
-        "state": "Current processing state of the payment session.",
+        "state": "Current processing state of the payment.",
     }
 
-    #: Custom cell renderers: state as a Bootstrap badge, session_id in ``<small>``.
+    #: Custom cell renderers: state as a Bootstrap badge, merchants_id in ``<small>``.
     column_formatters = {
         "state": _fmt_state,
-        "session_id": _fmt_session_id,
+        "merchants_id": _fmt_merchants_id,
     }
 
     #: Choices list exposed to templates / ``scaffold_form`` implementations.

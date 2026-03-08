@@ -93,7 +93,7 @@ def create_async_blueprint(ext: "FlaskMerchants"):
         if json_data is not None:
             return jsonify(
                 {
-                    "session_id": session.session_id,
+                    "transaction_id": session.session_id,
                     "redirect_url": session.redirect_url,
                 }
             )
