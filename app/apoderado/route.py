@@ -219,104 +219,57 @@ def abono():
         nuevo_abono.forma_pago,
     )
 
-    if forma_pago == "cafeteria":
-        logger.debug("route.py: abono processing cafeteria payment for abono codigo=%s", nuevo_abono.codigo)
-        from ..extensions import flask_merchants
+    if forma_pago in ("cafeteria", "khipu"):
+        logger.debug("route.py: abono processing %s payment for abono codigo=%s", forma_pago, nuevo_abono.codigo)
 
-        session = flask_merchants.get_client("cafeteria").payments.create_checkout(
+        payment = Payment.create(
             amount=nuevo_abono.monto,
             currency="CLP",
+            provider=forma_pago,
             success_url=url_for(
                 "apoderado_cliente.abono_detalle",
                 codigo=nuevo_abono.codigo,
                 _external=True,
             ),
-            cancel_url=url_for("apoderado_cliente.index", _external=True),
+            cancel_url=(
+                url_for("apoderado_cliente.index", _external=True)
+                if forma_pago == "cafeteria"
+                else url_for(
+                    "apoderado_cliente.abono_detalle",
+                    codigo=nuevo_abono.codigo,
+                    _external=True,
+                )
+            ),
+            email=nuevo_abono.apoderado.usuario.email,
             metadata={
                 "abono_codigo": nuevo_abono.codigo,
                 "apoderado_id": str(nuevo_abono.apoderado.id),
             },
-        )
-        flask_merchants.save_session(
-            session,
-            model_class=Payment,
-            request_payload={
+            session_id_override=nuevo_abono.codigo if forma_pago == "khipu" else None,
+            request_context={
                 "abono_codigo": nuevo_abono.codigo,
                 "monto": str(nuevo_abono.monto),
-                "currency": "CLP",
                 "apoderado_id": str(nuevo_abono.apoderado.id),
                 "forma_pago": forma_pago,
             },
         )
-        flask_merchants.update_state(nuevo_abono.codigo, "processing")
-        from ..tasks import send_notificacion_abono_creado
 
-        send_notificacion_abono_creado.delay(
-            abono_info={
-                "codigo": nuevo_abono.codigo,
-                "monto": int(nuevo_abono.monto),
-                "forma_pago": nuevo_abono.forma_pago,
-                "descripcion": nuevo_abono.descripcion,
-                "apoderado_nombre": nuevo_abono.apoderado.nombre,
-                "apoderado_email": nuevo_abono.apoderado.usuario.email,
-                "saldo_cuenta": nuevo_abono.apoderado.saldo_cuenta or 0,
-                "comprobantes_transferencia": nuevo_abono.apoderado.comprobantes_transferencia,
-                "copia_notificaciones": nuevo_abono.apoderado.copia_notificaciones,
-            }
-        )
+        if forma_pago == "cafeteria":
+            from ..tasks import send_notificacion_abono_creado
 
-    elif forma_pago == "khipu":
-        logger.debug("route.py: abono processing khipu payment for abono codigo=%s", nuevo_abono.codigo)
-        from ..extensions import flask_merchants
-
-        notify_url = flask_merchants.get_webhook_url("khipu")
-        logger.debug("route.py: abono khipu notify_url=%r", notify_url)
-        session = flask_merchants.get_client("khipu").payments.create_checkout(
-            amount=nuevo_abono.monto,
-            currency="CLP",
-            success_url=url_for(
-                "apoderado_cliente.abono_detalle",
-                codigo=nuevo_abono.codigo,
-                _external=True,
-            ),
-            cancel_url=url_for(
-                "apoderado_cliente.abono_detalle",
-                codigo=nuevo_abono.codigo,
-                _external=True,
-            ),
-            metadata={
-                "abono_codigo": nuevo_abono.codigo,
-                "apoderado_id": str(nuevo_abono.apoderado.id),
-                "notify_url": notify_url,
-            },
-        )
-        logger.debug(
-            "route.py: abono khipu session created session_id=%s redirect_url=%s",
-            session.session_id, session.redirect_url,
-        )
-        pago = Payment(
-            session_id=nuevo_abono.codigo,
-            redirect_url=session.redirect_url,
-            provider="khipu",
-            amount=nuevo_abono.monto,
-            currency="CLP",
-            state="pending",
-            metadata_json={
-                "khipu_payment_id": session.session_id,
-                "abono_codigo": nuevo_abono.codigo,
-                "apoderado_id": str(nuevo_abono.apoderado.id),
-            },
-            request_payload={
-                "abono_codigo": nuevo_abono.codigo,
-                "monto": str(nuevo_abono.monto),
-                "currency": "CLP",
-                "apoderado_id": str(nuevo_abono.apoderado.id),
-                "forma_pago": forma_pago,
-            },
-            response_payload=dict(session.raw),
-        )
-        db.session.add(pago)
-        db.session.commit()
+            send_notificacion_abono_creado.delay(
+                abono_info={
+                    "codigo": nuevo_abono.codigo,
+                    "monto": int(nuevo_abono.monto),
+                    "forma_pago": nuevo_abono.forma_pago,
+                    "descripcion": nuevo_abono.descripcion,
+                    "apoderado_nombre": nuevo_abono.apoderado.nombre,
+                    "apoderado_email": nuevo_abono.apoderado.usuario.email,
+                    "saldo_cuenta": nuevo_abono.apoderado.saldo_cuenta or 0,
+                    "comprobantes_transferencia": nuevo_abono.apoderado.comprobantes_transferencia,
+                    "copia_notificaciones": nuevo_abono.apoderado.copia_notificaciones,
+                }
+            )
 
     return redirect(
         url_for("apoderado_cliente.abono_detalle", codigo=nuevo_abono.codigo)
@@ -517,7 +470,6 @@ def ordenweb():
 @roles_accepted("apoderado", "admin")
 def pago_orden(orden):
     from types import SimpleNamespace
-    from ..extensions import flask_merchants
     from ..routes import get_casino_timelimits
 
     pedido = db.session.execute(
@@ -637,9 +589,13 @@ def pago_orden(orden):
                     )
 
                 saldo_antes = apoderado.saldo_cuenta
-                session = flask_merchants.get_client("saldo").payments.create_checkout(
+                # Deduct slider discount + saldo payment in one operation
+                apoderado.saldo_cuenta = saldo_antes - saldo_necesario
+
+                payment = Payment.create(
                     amount=monto_a_pagar,
                     currency="CLP",
+                    provider="saldo",
                     success_url=url_for(
                         "apoderado_cliente.pago_orden",
                         orden=pedido.codigo,
@@ -656,24 +612,16 @@ def pago_orden(orden):
                         "saldo_antes": saldo_antes,
                         "model_property": "saldo_cuenta",
                     },
-                )
-                # Deduct slider discount + saldo payment in one operation
-                apoderado.saldo_cuenta = saldo_antes - saldo_necesario
-                flask_merchants.save_session(
-                    session,
-                    model_class=Payment,
-                    request_payload={
+                    request_context={
                         "pedido_codigo": pedido.codigo,
-                        "monto": str(monto_a_pagar),
-                        "currency": "CLP",
                         "forma_pago": "saldo",
                         "descuento_saldo": str(descuento_saldo),
                         "saldo_antes": str(saldo_antes),
                         "model_property": "saldo_cuenta",
                     },
                 )
-                flask_merchants.update_state(session.session_id, "succeeded")
-                pedido.codigo_merchants = session.session_id
+
+                pedido.codigo_merchants = payment.session_id
                 pedido.precio_total = total
                 pedido.estado = EstadoPedido.PAGADO
                 pedido.pagado = True
@@ -681,7 +629,7 @@ def pago_orden(orden):
                 db.session.commit()
                 ctrl.process_payment_completion(pedido)
                 # Leave a note on each OrdenCasino record indicating payment via saldo
-                transaction_code = session.metadata.get("transaction_code", "")
+                transaction_code = (payment.metadata_json or {}).get("transaction_code", "")
                 total_fmt = f"{int(total):,}".replace(",", ".")
                 nota_saldo = f"Pagado con saldo de cuenta. Original: ${total_fmt}. Cod: {transaction_code}"
                 ordenes = (
@@ -701,9 +649,16 @@ def pago_orden(orden):
                     url_for("apoderado_cliente.pago_orden", orden=pedido.codigo)
                 )
 
-            session = flask_merchants.get_client(forma_pago).payments.create_checkout(
+            # External payment providers (cafeteria, khipu, etc.)
+            if descuento_saldo > 0 and apoderado:
+                apoderado.saldo_cuenta = (apoderado.saldo_cuenta or 0) - int(
+                    descuento_saldo
+                )
+
+            payment = Payment.create(
                 amount=monto_a_pagar,
                 currency="CLP",
+                provider=forma_pago,
                 success_url=url_for(
                     "apoderado_cliente.pago_orden", orden=pedido.codigo, _external=True
                 ),
@@ -711,27 +666,16 @@ def pago_orden(orden):
                     "apoderado_cliente.pago_orden", orden=pedido.codigo, _external=True
                 ),
                 metadata={"pedido_codigo": pedido.codigo},
-            )
-            if descuento_saldo > 0 and apoderado:
-                apoderado.saldo_cuenta = (apoderado.saldo_cuenta or 0) - int(
-                    descuento_saldo
-                )
-            flask_merchants.save_session(
-                session,
-                model_class=Payment,
-                request_payload={
+                request_context={
                     "pedido_codigo": pedido.codigo,
-                    "monto": str(monto_a_pagar),
-                    "currency": "CLP",
                     "forma_pago": forma_pago,
                     "descuento_saldo": str(descuento_saldo),
                 },
             )
-            pedido.codigo_merchants = session.session_id
+
+            pedido.codigo_merchants = payment.session_id
             pedido.precio_total = total
             pedido.estado = EstadoPedido.PENDIENTE
-            if forma_pago == "cafeteria":
-                flask_merchants.update_state(session.session_id, "processing")
             db.session.commit()
 
             from ..tasks import send_notificacion_pedido_pendiente
@@ -739,11 +683,11 @@ def pago_orden(orden):
             send_notificacion_pedido_pendiente.delay(
                 {
                     "pedido_codigo": pedido.codigo,
-                    "session_id": session.session_id,
+                    "session_id": payment.session_id,
                     "forma_pago": forma_pago,
                     "total": int(total),
                     "redirect_url": (
-                        session.redirect_url if forma_pago != "cafeteria" else ""
+                        payment.redirect_url if forma_pago != "cafeteria" else ""
                     ),
                     "pedido_url": url_for(
                         "apoderado_cliente.pago_orden",
@@ -781,8 +725,8 @@ def pago_orden(orden):
                     ],
                 }
             )
-            if forma_pago != "cafeteria" and session.redirect_url:
-                return redirect(session.redirect_url)
+            if forma_pago != "cafeteria" and payment.redirect_url:
+                return redirect(payment.redirect_url)
             return redirect(
                 url_for("apoderado_cliente.pago_orden", orden=pedido.codigo)
             )

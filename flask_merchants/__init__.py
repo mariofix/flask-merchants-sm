@@ -464,7 +464,55 @@ class FlaskMerchants:
         return self._get_model_classes()[0]
 
     # ------------------------------------------------------------------
-    # Payment store helpers
+    # Payment creation (preferred API)
+    # ------------------------------------------------------------------
+
+    def create_payment(
+        self,
+        *,
+        amount,
+        currency: str,
+        provider: str,
+        success_url: str,
+        cancel_url: str,
+        email: str | None = None,
+        metadata: dict | None = None,
+        extra_args: dict | None = None,
+        session_id_override: str | None = None,
+        request_context: dict | None = None,
+        model_class=None,
+    ):
+        """Create a payment via the provider and persist it.
+
+        This is a convenience wrapper around ``model_class.create()`` for
+        callers that have the extension instance but not the model class.
+
+        All arguments are forwarded to :meth:`PaymentMixin.create`.  See
+        that method's docstring for full parameter documentation.
+
+        Args:
+            model_class: The model class to use.  Defaults to the first
+                registered model (or the built-in Payment).
+
+        Returns:
+            The persisted payment instance.
+        """
+        cls = model_class if model_class is not None else self._payment_model
+        return cls.create(
+            amount=amount,
+            currency=currency,
+            provider=provider,
+            success_url=success_url,
+            cancel_url=cancel_url,
+            email=email,
+            metadata=metadata,
+            extra_args=extra_args,
+            session_id_override=session_id_override,
+            request_context=request_context,
+        )
+
+    # ------------------------------------------------------------------
+    # Payment store helpers (legacy — prefer Payment.create() / payment.refund())
     # ------------------------------------------------------------------
 
     def save_session(
@@ -475,6 +523,10 @@ class FlaskMerchants:
         request_payload: dict | None = None,
     ) -> None:
         """Persist a :class:`~merchants.CheckoutSession`.
+
+        .. deprecated::
+            Prefer :meth:`PaymentMixin.create` which handles the full
+            lifecycle (provider call + persistence) in a single step.
 
         When a SQLAlchemy *db* was provided the record is saved to the
         database; otherwise it is kept in the in-memory store.
@@ -550,6 +602,10 @@ class FlaskMerchants:
     def update_state(self, payment_id: str, state: str) -> bool:
         """Update the stored state for *payment_id*. Returns ``True`` on success.
 
+        .. deprecated::
+            Prefer ``payment.state = "..."`` with a direct commit, or
+            ``payment.refund()`` / ``payment.cancel()`` for common transitions.
+
         When multiple models are registered, all of them are searched in
         registration order; the first match is updated.
         """
@@ -579,15 +635,24 @@ class FlaskMerchants:
         return True
 
     def refund_session(self, payment_id: str) -> bool:
-        """Mark *payment_id* as refunded. Returns ``True`` on success."""
+        """Mark *payment_id* as refunded. Returns ``True`` on success.
+
+        .. deprecated:: Prefer ``payment.refund()`` on the payment instance.
+        """
         return self.update_state(payment_id, "refunded")
 
     def cancel_session(self, payment_id: str) -> bool:
-        """Mark *payment_id* as cancelled. Returns ``True`` on success."""
+        """Mark *payment_id* as cancelled. Returns ``True`` on success.
+
+        .. deprecated:: Prefer ``payment.cancel()`` on the payment instance.
+        """
         return self.update_state(payment_id, "cancelled")
 
     def sync_from_provider(self, payment_id: str) -> dict[str, Any] | None:
         """Fetch live status from the provider and update the stored state.
+
+        .. deprecated::
+            Prefer ``payment.sync_from_provider()`` on the payment instance.
 
         Returns the updated stored record, or ``None`` if *payment_id* is not
         found or the provider call fails.

@@ -102,7 +102,6 @@ def ordenweb():
 @roles_accepted("docente", "admin")
 def pago_orden(orden):
     from types import SimpleNamespace
-    from ..extensions import flask_merchants
     from ..routes import get_casino_timelimits
 
     pedido = db.session.execute(db.select(SchoolStaffPedido).filter_by(codigo=orden)).scalar_one_or_none()
@@ -150,33 +149,27 @@ def pago_orden(orden):
                 return redirect(url_for("staff.pago_orden", orden=pedido.codigo))
 
             # External payment providers (cafeteria, khipu, etc.)
-            session = flask_merchants.get_client(forma_pago).payments.create_checkout(
+            payment = Payment.create(
                 amount=total,
                 currency="CLP",
+                provider=forma_pago,
                 success_url=url_for("staff.pago_orden", orden=pedido.codigo, _external=True),
                 cancel_url=url_for("staff.pago_orden", orden=pedido.codigo, _external=True),
                 metadata={"pedido_codigo": pedido.codigo, "staff_id": str(staff.id)},
-            )
-            flask_merchants.save_session(
-                session,
-                model_class=Payment,
-                request_payload={
+                request_context={
                     "pedido_codigo": pedido.codigo,
-                    "monto": str(total),
-                    "currency": "CLP",
                     "forma_pago": forma_pago,
                     "staff_id": str(staff.id),
                 },
             )
-            pedido.codigo_merchants = session.session_id
+
+            pedido.codigo_merchants = payment.session_id
             pedido.precio_total = total
             pedido.estado = EstadoPedido.PENDIENTE
-            if forma_pago == "cafeteria":
-                flask_merchants.update_state(session.session_id, "processing")
             db.session.commit()
 
-            if forma_pago != "cafeteria" and session.redirect_url:
-                return redirect(session.redirect_url)
+            if forma_pago != "cafeteria" and payment.redirect_url:
+                return redirect(payment.redirect_url)
             return redirect(url_for("staff.pago_orden", orden=pedido.codigo))
 
         if pedido.codigo_merchants:

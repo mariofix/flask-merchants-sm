@@ -56,6 +56,7 @@ class CafeteriaProvider(Provider):
             currency=currency,
             metadata={**meta, "display_code": display_code},
             raw={"display_code": display_code},
+            initial_state=PaymentState.PROCESSING,
         )
 
     def get_payment(self, payment_id: str) -> PaymentStatus:

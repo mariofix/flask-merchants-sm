@@ -76,6 +76,7 @@ class SaldoProvider(Provider):
                 "model_property": meta.get("model_property", "saldo_cuenta"),
                 "apoderado_id": meta.get("apoderado_id"),
             },
+            initial_state=PaymentState.SUCCEEDED,
         )
 
     def get_payment(self, payment_id: str) -> PaymentStatus:
