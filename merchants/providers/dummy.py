@@ -60,6 +60,7 @@ class DummyProvider(Provider):
         success_url: str,
         cancel_url: str,
         metadata: dict[str, Any] | None = None,
+        **kwargs: Any,
     ) -> CheckoutSession:
         session_id = _rand_id("dummy_sess_")
         return CheckoutSession(

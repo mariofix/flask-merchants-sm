@@ -94,8 +94,12 @@ class Provider(ABC):
         success_url: str,
         cancel_url: str,
         metadata: dict[str, Any] | None = None,
+        **kwargs: Any,
     ) -> CheckoutSession:
         """Create a hosted-checkout session.
+
+        Args:
+            kwargs: Provider-specific keyword arguments (e.g. ``notify_url``).
 
         Returns:
             :class:`~merchants.models.CheckoutSession` with a ``redirect_url``.

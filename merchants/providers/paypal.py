@@ -60,6 +60,7 @@ class PayPalProvider(Provider):
         success_url: str,
         cancel_url: str,
         metadata: dict[str, Any] | None = None,
+        **kwargs: Any,
     ) -> CheckoutSession:
         payload: dict[str, Any] = {
             "intent": "CAPTURE",

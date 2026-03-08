@@ -65,6 +65,7 @@ class StripeProvider(Provider):
         success_url: str,
         cancel_url: str,
         metadata: dict[str, Any] | None = None,
+        **kwargs: Any,
     ) -> CheckoutSession:
         decimals = self._currency_decimals(currency)
         unit_amount = to_minor_units(amount, decimals=decimals)

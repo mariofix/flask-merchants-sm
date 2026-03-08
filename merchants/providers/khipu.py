@@ -79,6 +79,7 @@ class KhipuProvider(Provider):
         success_url: str,
         cancel_url: str,
         metadata: dict[str, Any] | None = None,
+        **kwargs: Any,
     ) -> CheckoutSession:
         logger.debug(
             "khipu.py: KhipuProvider.create_checkout called with amount=%s currency=%s",
@@ -92,7 +93,9 @@ class KhipuProvider(Provider):
             "cancel_url": cancel_url,
             "notify_api_version": "3.0",
         }
-        notify_url = (metadata or {}).get("notify_url") or self._notify_url
+        # notify_url is a provider concern — comes via extra_args (kwargs),
+        # falling back to the instance default.
+        notify_url = kwargs.get("notify_url") or self._notify_url
         if notify_url:
             params["notify_url"] = notify_url
         if metadata and metadata.get("order_id"):

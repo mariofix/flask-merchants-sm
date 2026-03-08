@@ -73,6 +73,7 @@ class FlowProvider(Provider):
         success_url: str,
         cancel_url: str,
         metadata: dict[str, Any] | None = None,
+        **kwargs: Any,
     ) -> CheckoutSession:
         # Flow expects integer amounts in CLP
         amount_int = to_minor_units(amount, decimals=0)
