@@ -100,9 +100,12 @@ def upgrade():
         sa.Column("amount", sa.Numeric(precision=19, scale=4), nullable=False),
         sa.Column("currency", sa.String(length=8), nullable=False),
         sa.Column("state", sa.String(length=32), nullable=False),
+        sa.Column("email", sa.String(length=255), nullable=True),
         sa.Column("metadata_json", sa.JSON(), nullable=False),
+        sa.Column("extra_args", sa.JSON(), server_default=sa.text("'{}'"), nullable=False),
         sa.Column("request_payload", sa.JSON(), nullable=False),
         sa.Column("response_payload", sa.JSON(), nullable=False),
+        sa.Column("provider_payment_object", sa.JSON(), server_default=sa.text("'{}'"), nullable=False),
         sa.Column(
             "created_at", sa.DateTime(timezone=True), server_default=sa.text("(CURRENT_TIMESTAMP)"), nullable=False
         ),
