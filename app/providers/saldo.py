@@ -65,6 +65,7 @@ class SaldoProvider(Provider):
         metadata: dict[str, Any] | None = None,
         *,
         codigo: str | None = None,
+        **kwargs: Any,
     ) -> CheckoutSession:
         logger.debug("saldo.py: SaldoProvider.create_checkout called with amount=%s currency=%s", amount, currency)
         meta = metadata or {}
