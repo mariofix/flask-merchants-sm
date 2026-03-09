@@ -66,6 +66,42 @@ def send_flask_mail(*args, **kwargs):
 
 
 @shared_task(bind=True, ignore_result=False)
+def send_webhook_notification_email(self, webhook_info: dict):
+    """Send webhook notification email to admin users.
+
+    ``webhook_info`` is the dict produced by
+    :meth:`FlaskMerchants._webhook_notification_handler` and contains
+    ``subject``, ``body``, ``to``, ``provider``, ``transaction``,
+    ``headers_json``, and ``body_json``.
+    """
+    with current_app.app_context():
+        from_email = _get_from_email()
+        html = render_template(
+            "core/emails/webhook_notification.html",
+            provider=webhook_info["provider"],
+            transaction=webhook_info["transaction"],
+            headers_json=webhook_info["headers_json"],
+            body_json=webhook_info["body_json"],
+        )
+        with mail.get_connection() as connection:
+            msg = EmailMultiAlternatives(
+                subject=webhook_info["subject"],
+                body=webhook_info["body"],
+                from_email=from_email,
+                to=webhook_info["to"],
+                connection=connection,
+            )
+            msg.attach_alternative(html, "text/html")
+            msg.send()
+            merchants_audit.info(
+                "webhook_notification_sent: from=%r to=%r subject=%r",
+                from_email,
+                webhook_info["to"],
+                webhook_info["subject"],
+            )
+
+
+@shared_task(bind=True, ignore_result=False)
 def send_comprobante_abono(self, abono_info: dict):
     """Envía comprobante de abono al apoderado."""
     with current_app.app_context():

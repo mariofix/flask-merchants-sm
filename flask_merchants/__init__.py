@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+import json
 import logging
-from typing import Any
+from typing import Any, Callable
 
 import merchants
 from merchants.providers.dummy import DummyProvider
@@ -404,6 +405,129 @@ class FlaskMerchants:
         """
         self._webhook_handlers.append(handler)
         return handler  # allow use as a decorator
+
+    def enable_webhook_notifications(
+        self,
+        admin_emails_fn: Callable[[], list[str]],
+        send_fn: Callable[..., Any] | None = None,
+    ) -> None:
+        """Enable automatic email notifications to admin users on webhook events.
+
+        When enabled, every incoming webhook triggers an email to the
+        addresses returned by *admin_emails_fn* containing:
+
+        * **provider** – the provider slug (e.g. ``"khipu"``)
+        * **transaction** – the ``payment_id`` from the parsed event
+        * **headers** – the full HTTP request headers (JSON)
+        * **body** – the full HTTP request body (JSON)
+
+        Args:
+            admin_emails_fn: A callable that returns a list of email
+                addresses.  Called at notification time so the list is
+                always up-to-date.  Example::
+
+                    def get_admin_emails():
+                        role = db.session.execute(
+                            db.select(Role).filter_by(name="admin")
+                        ).scalar_one_or_none()
+                        if not role:
+                            return []
+                        return [u.email for u in role.users if u.email]
+
+            send_fn: An optional callable used to deliver the email.
+                It receives a single ``dict`` argument with keys
+                ``subject``, ``body``, ``to`` (list of addresses),
+                ``provider``, ``transaction``, ``headers_json``, and
+                ``body_json``.  When omitted, the extension sends via
+                ``flask_mailman.EmailMessage`` synchronously inside the
+                request (suitable for development; production apps should
+                pass a Celery task wrapper).
+
+        Example::
+
+            flask_merchants.enable_webhook_notifications(
+                admin_emails_fn=get_admin_emails,
+                send_fn=lambda info: send_webhook_email_task.delay(info),
+            )
+        """
+        self._webhook_notify_admin_emails_fn = admin_emails_fn
+        self._webhook_notify_send_fn = send_fn
+        self.add_webhook_handler(self._webhook_notification_handler)
+
+    def _webhook_notification_handler(self, event) -> None:
+        """Built-in handler that emails admins with raw webhook data."""
+        from flask import request as flask_request
+
+        admin_emails_fn = getattr(self, "_webhook_notify_admin_emails_fn", None)
+        if admin_emails_fn is None:
+            return
+
+        admin_emails = admin_emails_fn()
+        if not admin_emails:
+            return
+
+        headers_dict = dict(flask_request.headers)
+        try:
+            headers_json = json.dumps(headers_dict, indent=2, default=str)
+        except (TypeError, ValueError):
+            headers_json = str(headers_dict)
+
+        raw_body = flask_request.get_data(as_text=True)
+        try:
+            body_parsed = json.loads(raw_body)
+            body_json = json.dumps(body_parsed, indent=2, default=str)
+        except (json.JSONDecodeError, TypeError, ValueError):
+            body_json = raw_body
+
+        provider = event.provider
+        transaction = event.payment_id or ""
+
+        subject = f"[webhook] {provider} — {transaction or 'no-id'}"
+        body_text = (
+            f"provider: {provider}\n"
+            f"transaction: {transaction}\n"
+            f"headers:\n{headers_json}\n\n"
+            f"body:\n{body_json}\n"
+        )
+
+        notification_info = {
+            "subject": subject,
+            "body": body_text,
+            "to": admin_emails,
+            "provider": provider,
+            "transaction": transaction,
+            "headers_json": headers_json,
+            "body_json": body_json,
+        }
+
+        send_fn = getattr(self, "_webhook_notify_send_fn", None)
+        if send_fn is not None:
+            send_fn(notification_info)
+        else:
+            self._send_webhook_notification_default(notification_info)
+
+    @staticmethod
+    def _send_webhook_notification_default(info: dict) -> None:
+        """Fallback email sender using Flask-Mailman (synchronous)."""
+        try:
+            from flask_mailman import EmailMessage
+        except ImportError:
+            logger.warning(
+                "flask_mailman not installed; cannot send webhook notification email"
+            )
+            return
+
+        msg = EmailMessage(
+            subject=info["subject"],
+            body=info["body"],
+            to=info["to"],
+        )
+        msg.send()
+        merchants_audit.info(
+            "webhook_notification_sent: to=%r subject=%r",
+            info["to"],
+            info["subject"],
+        )
 
     def _dispatch_webhook_event(self, event) -> None:
         """Invoke all registered webhook handlers for *event*.

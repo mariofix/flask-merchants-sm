@@ -170,6 +170,24 @@ def create_app():
 
     flask_merchants.add_webhook_handler(_khipu_abono_webhook_handler)
 
+    # Enable webhook notification emails to admin users.
+    # Every incoming webhook triggers an email containing provider, transaction,
+    # headers and body so administrators can inspect provider payloads.
+    from .tasks import send_webhook_notification_email
+
+    def _get_admin_emails() -> list[str]:
+        admin_role = db.session.execute(
+            db.select(Role).filter_by(name="admin")
+        ).scalar_one_or_none()
+        if not admin_role:
+            return []
+        return [u.email for u in admin_role.users if u.email]
+
+    flask_merchants.enable_webhook_notifications(
+        admin_emails_fn=_get_admin_emails,
+        send_fn=lambda info: send_webhook_notification_email.delay(info),
+    )
+
     # Register custom payment admin views (using PaymentAdminView with app-specific actions).
     # Replaces the default PaymentModelView that would have been auto-registered via admin=admin.
     from .extensions.admin import PaymentAdminView
