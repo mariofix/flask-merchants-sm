@@ -213,6 +213,15 @@ def create_blueprint(ext: "FlaskMerchants") -> Blueprint:
         payload: bytes = request.get_data()
         headers: dict[str, str] = dict(request.headers)
 
+        logger.info(
+            "webhook_received: provider=%r remote_addr=%r content_type=%r headers=%r body=%r",
+            provider,
+            request.remote_addr,
+            request.content_type,
+            headers,
+            payload,
+        )
+
         try:
             event = client._provider.parse_webhook(payload, headers)
         except Exception:  # noqa: BLE001
