@@ -124,6 +124,11 @@ CELERY = {
 #   sm.celery – task lifecycle, connection errors
 #   sm.audit  – payments, orders, pedidos, new users (audit trail)
 #
+# sm.audit now uses RedisLogHandler (stored in the Celery Redis DB) so that
+# payment-webhook events are reliably captured with full request context
+# (headers + body) for debugging.  Set AUDIT_REDIS_URL to override the
+# target Redis instance (defaults to CELERY.broker_url).
+#
 # To override completely, set LOGGING to a full logging.config.dictConfig
 # dict.  Individual file paths, levels, and retention can also be tuned via
 # the scalar keys below without replacing the full dict.
@@ -140,6 +145,14 @@ CELERY_LOG_BACKUP_COUNT = 14
 AUDIT_LOG_FILE = f"{BASE_DIR}/logs/audit.log"
 AUDIT_LOG_LEVEL = "INFO"
 AUDIT_LOG_BACKUP_COUNT = 30
+
+# Redis audit-log settings (sm.audit → Redis, used when LOGGING is not set):
+# AUDIT_REDIS_URL: Redis URL for sm.audit; defaults to CELERY.broker_url.
+# AUDIT_REDIS_KEY: Redis list key for audit entries; default "sm:audit:log".
+# AUDIT_REDIS_MAX_ENTRIES: max list length kept via LTRIM; default 1000.
+# AUDIT_REDIS_URL = ""          # defaults to CELERY["broker_url"]
+# AUDIT_REDIS_KEY = "sm:audit:log"
+# AUDIT_REDIS_MAX_ENTRIES = 1000
 
 # Full dictConfig example — uncomment and customise to take full control:
 # LOGGING = {
