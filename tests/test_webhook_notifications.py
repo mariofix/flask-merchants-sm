@@ -251,10 +251,12 @@ class TestDispatchTriggersNotification:
         app, ext = flask_app
         other_handler = MagicMock()
         ext.add_webhook_handler(other_handler)
-        # Notification handler will raise because no admin_emails_fn is set at first,
-        # but if we enable notifications with a failing fn, other handlers should still run
+
+        def failing_admin_emails_fn():
+            raise RuntimeError("fail")
+
         ext.enable_webhook_notifications(
-            admin_emails_fn=lambda: (_ for _ in ()).throw(RuntimeError("fail")),
+            admin_emails_fn=failing_admin_emails_fn,
             send_fn=MagicMock(),
         )
         with app.test_request_context(

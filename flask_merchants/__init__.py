@@ -462,7 +462,11 @@ class FlaskMerchants:
         if admin_emails_fn is None:
             return
 
-        admin_emails = admin_emails_fn()
+        try:
+            admin_emails = admin_emails_fn()
+        except Exception:  # noqa: BLE001
+            merchants_audit.exception("webhook_notification: failed to resolve admin emails")
+            return
         if not admin_emails:
             return
 
@@ -501,10 +505,15 @@ class FlaskMerchants:
         }
 
         send_fn = getattr(self, "_webhook_notify_send_fn", None)
-        if send_fn is not None:
-            send_fn(notification_info)
-        else:
-            self._send_webhook_notification_default(notification_info)
+        try:
+            if send_fn is not None:
+                send_fn(notification_info)
+            else:
+                self._send_webhook_notification_default(notification_info)
+        except Exception:  # noqa: BLE001
+            merchants_audit.exception(
+                "webhook_notification: failed to send notification email"
+            )
 
     @staticmethod
     def _send_webhook_notification_default(info: dict) -> None:
