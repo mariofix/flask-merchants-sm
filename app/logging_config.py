@@ -2,11 +2,11 @@
 
 Three named logging facilities are provided:
 
-* ``sm.app``    – application events: logins, settings updates, missing keys,
+* ``sm.app``    - application events: logins, settings updates, missing keys,
                   password changes, application warnings.
-* ``sm.celery`` – Celery task lifecycle: received, started, finished, retries,
+* ``sm.celery`` - Celery task lifecycle: received, started, finished, retries,
                   and connection errors (logged at ERROR so Sentry picks them up).
-* ``sm.audit``  – audit trail: payments, orders, pedidos, new users, abonos.
+* ``sm.audit``  - audit trail: payments, orders, pedidos, new users, abonos.
                   Replaces the legacy ``merchants_audit`` logger.
 
 Configuration
