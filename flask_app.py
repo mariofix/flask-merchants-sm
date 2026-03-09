@@ -1,11 +1,13 @@
+import os
+
 from dotenv import load_dotenv
 
-from app import create_app
-
 load_dotenv()
-import sentry_sdk
-from flask import Flask
-from sentry_sdk.integrations.flask import FlaskIntegration
+
+from app import create_app  # noqa: E402
+
+import sentry_sdk  # noqa: E402
+from sentry_sdk.integrations.flask import FlaskIntegration  # noqa: E402
 
 dsn = os.getenv("FLASK_SENTRY_DSN", None)
 if dsn:
