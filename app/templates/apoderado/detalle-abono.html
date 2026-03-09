@@ -22,12 +22,18 @@
       {# Columna izquierda: QR + código de pago #}
       <div class="col-md-5 col-lg-4">
         <div class="card">
-          <div class="card-status-top {% if pago and pago.state == 'succeeded' %}bg-success{% elif pago and pago.state == 'processing' %}bg-yellow{% else %}bg-secondary{% endif %}"></div>
+          <div class="card-status-top {% if pago and pago.state == 'succeeded' %}bg-success{% elif pago and pago.state == 'processing' %}bg-yellow{% elif pago and pago.state == 'pending' %}bg-info{% else %}bg-secondary{% endif %}"></div>
           <div class="card-body text-center">
             <h3 class="card-title mb-1">Información de Pago</h3>
             <p class="text-secondary small mb-3">
-              {% if pago and pago.state == 'processing' %}
+              {% if pago and pago.state == 'pending' %}
+                Tu abono está listo. Haz clic en "Pagar ahora" para completar el pago.
+              {% elif pago and pago.state == 'processing' %}
+                {% if abono and abono.forma_pago == 'cafeteria' %}
                 Presenta este código en la cafetería del colegio para completar tu pago.
+                {% else %}
+                Tu pago está siendo procesado por el proveedor. Espera la confirmación.
+                {% endif %}
               {% elif pago and pago.state == 'succeeded' %}
                 ¡Tu pago fue confirmado! El saldo ya está disponible en tu cuenta.
               {% else %}
@@ -43,8 +49,10 @@
               <div class="mb-3">
                 {% if pago.state == 'succeeded' %}
                   <span class="badge bg-success fs-4">✔ Pagado</span>
+                {% elif pago.state == 'pending' %}
+                  <span class="badge bg-info text-dark fs-5">Pendiente de pago</span>
                 {% elif pago.state == 'processing' %}
-                  <span class="badge bg-yellow text-dark fs-5">⏳ Pendiente</span>
+                  <span class="badge bg-yellow text-dark fs-5">⏳ Procesando</span>
                 {% elif pago.state == 'cancelled' %}
                   <span class="badge bg-danger fs-5">✗ Cancelado</span>
                 {% else %}
@@ -132,15 +140,18 @@
                 Aprobar Pago
               </a>
               {% elif pago and pago.state == 'pending' and (pago.response_payload or {}).get('redirect_url') %}
-              <a href="{{ (pago.response_payload or {}).get('redirect_url', '') }}" class="btn btn-primary" target="_blank" rel="noopener noreferrer">
-                <svg xmlns="http://www.w3.org/2000/svg" class="icon me-1" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                  <path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z" />
-                  <path d="M10.5 8h3a1.5 1.5 0 0 1 0 3h-3v5" />
-                  <path d="M10.5 11h4.5" />
-                </svg>
-                Pagar ahora
-              </a>
+              <form action="{{ url_for('apoderado_cliente.abono_pagar', codigo=abono.codigo) }}" method="POST" class="d-inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <button type="submit" class="btn btn-primary">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="icon me-1" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                    <path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z" />
+                    <path d="M10.5 8h3a1.5 1.5 0 0 1 0 3h-3v5" />
+                    <path d="M10.5 11h4.5" />
+                  </svg>
+                  Pagar ahora
+                </button>
+              </form>
               {% elif pago and pago.state == 'succeeded' %}
               <span class="text-success fw-bold">✔ Pago aprobado</span>
               {% endif %}

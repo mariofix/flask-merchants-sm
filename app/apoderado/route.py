@@ -301,6 +301,31 @@ def abono_detalle(codigo):
     )
 
 
+@apoderado_bp.route("/abono-pagar/<string:codigo>", methods=["POST"])
+@roles_accepted("apoderado", "admin")
+@limiter.limit("10 per minute")
+def abono_pagar(codigo):
+    """Transition payment from pending → processing and redirect to the provider."""
+    abono, pago, _ = ctrl.get_abono(codigo)
+    if not abono or not pago:
+        flash("Abono no encontrado.", "danger")
+        return redirect(url_for("apoderado_cliente.abonos"))
+
+    if pago.state != "pending":
+        return redirect(url_for("apoderado_cliente.abono_detalle", codigo=codigo))
+
+    redirect_url = (pago.response_payload or {}).get("redirect_url", "")
+    if not redirect_url:
+        flash("No se encontró la URL de pago del proveedor.", "danger")
+        return redirect(url_for("apoderado_cliente.abono_detalle", codigo=codigo))
+
+    pago.state = "processing"
+    db.session.commit()
+    logger.info("route.py: abono_pagar transitioned payment %s to processing", pago.merchants_id)
+
+    return redirect(redirect_url)
+
+
 @apoderado_bp.route("/abonos", methods=["GET"])
 @roles_accepted("apoderado", "admin")
 def abonos():

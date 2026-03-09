@@ -128,9 +128,14 @@ def create_app():
     # Register Khipu webhook handler.
     # When Khipu notifies /merchants/webhook/khipu that a payment succeeded,
     # this handler finds the matching Payment record via transaction_id,
-    # sets the state to "succeeded", and processes the associated entity:
+    # and processes the associated entity:
     #   - Abono: credits apoderado.saldo_cuenta, sends receipt emails.
     #   - Pedido: marks as paid, creates OrdenCasino rows, sends confirmation emails.
+    #
+    # Note: by the time this handler fires, views.py has already called
+    # ext.update_state() which sets pago.state = "succeeded" and commits.
+    # We use payment_object being empty as our idempotency guard: the handler
+    # populates it once, and skips on duplicate webhooks.
     def _khipu_webhook_handler(event) -> None:
         import logging as _logging
         _wh_logger = _logging.getLogger(__name__)
@@ -154,12 +159,20 @@ def create_app():
         pago = db.session.execute(
             db.select(Payment).where(
                 Payment.provider == "khipu",
-                Payment.state == "pending",
                 Payment.transaction_id == event.payment_id,
             )
         ).scalar_one_or_none()
 
-        if not pago or pago.state != "pending":
+        if not pago:
+            return
+
+        # Idempotency: if payment_object is already populated, this webhook
+        # has already been processed (duplicate delivery from Khipu).
+        if pago.payment_object:
+            _wh_logger.info(
+                "core.py: duplicate webhook skipped for payment_id=%r (already processed)",
+                event.payment_id,
+            )
             return
 
         # Store the full webhook payload for audit/reconciliation
@@ -182,14 +195,19 @@ def create_app():
             _handle_pedido_payment(pago, pedido, event, merchants_audit)
             return
 
+        # No linked entity found — still commit payment_object so the
+        # webhook data is preserved and this won't be re-processed.
+        db.session.commit()
         _wh_logger.warning(
             "core.py: no abono or pedido found for payment merchants_id=%r (khipu payment_id=%r)",
             pago.merchants_id, event.payment_id,
         )
 
     def _handle_abono_payment(pago, abono, event, merchants_audit) -> None:
-        """Process a successful Khipu payment for an abono (deposit)."""
-        pago.state = "succeeded"
+        """Process a successful Khipu payment for an abono (deposit).
+
+        State is already "succeeded" (set by ext.update_state in the webhook view).
+        """
         saldo_actual = abono.apoderado.saldo_cuenta or 0
         abono.apoderado.saldo_cuenta = saldo_actual + int(abono.monto)
         db.session.commit()
@@ -227,12 +245,14 @@ def create_app():
                 send_copia_notificaciones_abono.delay(abono_info=abono_info)
 
     def _handle_pedido_payment(pago, pedido, event, merchants_audit) -> None:
-        """Process a successful Khipu payment for a pedido (order)."""
+        """Process a successful Khipu payment for a pedido (order).
+
+        Payment state is already "succeeded" (set by ext.update_state in the webhook view).
+        """
         from datetime import datetime as _dt
         from .model import EstadoPedido
         from .apoderado.controller import ApoderadoController
 
-        pago.state = "succeeded"
         pedido.estado = EstadoPedido.PAGADO
         pedido.pagado = True
         pedido.fecha_pago = _dt.now()
