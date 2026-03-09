@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 
@@ -112,11 +113,11 @@ MERCHANTS_PROVIDER_LABELS = {
 # STORE_NAME = "Storefront"
 
 CELERY = {
-    "broker_url": "redis://10.100.254.2/10",
-    "result_backend": "redis://10.100.254.2/10",
+    "broker_url": os.getenv("CELERY_BROKER_URL", "redis://10.100.254.2/10"),
+    "result_backend": os.getenv("CELERY_RESULT_BACKEND", "redis://10.100.254.2/10"),
     "task_ignore_result": False,
-    "worker_concurrency": 1,
-    "worker_max_tasks_per_child": 1,
+    "worker_concurrency": int(os.getenv("CELERY_WORKER_CONCURRENCY", "1")),
+    "worker_max_tasks_per_child": int(os.getenv("CELERY_WORKER_MAX_TASKS_PER_CHILD", "1")),
 }
 
 # ------------------------------------------------------------------
