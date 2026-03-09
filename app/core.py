@@ -112,7 +112,12 @@ def create_app():
         # Only register Khipu when a real API key is configured.
         from merchants.providers.khipu import KhipuProvider
         khipu_subject = app.config.get("KHIPU_SUBJECT", "Pago SaborMirandiano")
-        providers.append(KhipuProvider(api_key=khipu_api_key, subject=khipu_subject))
+        khipu_webhook_secret = app.config.get("KHIPU_WEBHOOK_SECRET", "")
+        providers.append(KhipuProvider(
+            api_key=khipu_api_key,
+            subject=khipu_subject,
+            webhook_secret=khipu_webhook_secret,
+        ))
     providers.append(CafeteriaProvider())
     providers.append(SaldoProvider())
 
@@ -140,7 +145,10 @@ def create_app():
         if not event.payment_id:
             return
 
-        # Look up the payment by transaction_id (the provider's payment ID)
+        # v3.0 webhook body contains both payment_id (Khipu's ID, stored as
+        # Payment.transaction_id) and transaction_id (merchant's order ID,
+        # stored as Payment.merchants_id).  Look up by transaction_id first
+        # (Khipu's payment_id → our Payment.transaction_id).
         pago = db.session.execute(
             db.select(Payment).where(
                 Payment.provider == "khipu",
@@ -157,15 +165,18 @@ def create_app():
             ).scalar_one_or_none()
             if abono:
                 pago.state = "succeeded"
+                # Store the full webhook payload for audit/reconciliation
+                pago.payment_object = event.raw
                 saldo_actual = abono.apoderado.saldo_cuenta or 0
                 abono.apoderado.saldo_cuenta = saldo_actual + int(abono.monto)
                 db.session.commit()
                 merchants_audit.info(
-                    "abono_aprobado_khipu_webhook: codigo=%s apoderado_id=%s monto=%s nuevo_saldo=%s",
+                    "abono_aprobado_khipu_webhook: codigo=%s apoderado_id=%s monto=%s nuevo_saldo=%s khipu_payment_id=%s",
                     abono.codigo,
                     abono.apoderado.id,
                     int(abono.monto),
                     abono.apoderado.saldo_cuenta,
+                    event.payment_id,
                 )
 
     flask_merchants.add_webhook_handler(_khipu_abono_webhook_handler)

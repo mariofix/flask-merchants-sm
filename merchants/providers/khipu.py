@@ -12,6 +12,7 @@ from merchants.amount import to_decimal_string
 from merchants.auth import ApiKeyAuth
 from merchants.models import CheckoutSession, PaymentState, PaymentStatus, WebhookEvent
 from merchants.providers import Provider, UserError
+from merchants.webhooks import WebhookVerificationError, verify_khipu_signature
 
 try:
     import khipu_tools
@@ -60,6 +61,7 @@ class KhipuProvider(Provider):
         description: str | None = None,
         subject: str = "Order",
         notify_url: str = "",
+        webhook_secret: str = "",
     ) -> None:
         logger.debug("khipu.py: KhipuProvider.__init__ called")
         super().__init__(key=key, name=name, description=description)
@@ -72,6 +74,7 @@ class KhipuProvider(Provider):
         self._auth = ApiKeyAuth(api_key, header="x-api-key")
         self._subject = subject
         self._notify_url = notify_url
+        self._webhook_secret = webhook_secret
 
     def create_checkout(
         self,
@@ -145,7 +148,38 @@ class KhipuProvider(Provider):
         )
 
     def parse_webhook(self, payload: bytes, headers: dict[str, str]) -> WebhookEvent:
+        """Parse a Khipu v3.0 webhook notification.
+
+        The v3.0 API sends a JSON body with full payment data and an
+        ``x-khipu-signature`` header for HMAC-SHA256 verification.  When
+        ``webhook_secret`` is configured, the signature is verified before
+        the event is returned.
+
+        The payment state is determined by the presence of
+        ``conciliation_date`` in the body (→ SUCCEEDED).
+
+        Args:
+            payload: Raw request body bytes.
+            headers: Request headers dict.
+
+        Returns:
+            A :class:`WebhookEvent` with the parsed data.
+
+        Raises:
+            WebhookVerificationError: If signature verification is enabled
+                and fails.
+        """
         logger.debug("khipu.py: KhipuProvider.parse_webhook called")
+
+        # Verify signature when a webhook secret is configured
+        sig_header = headers.get("X-Khipu-Signature") or headers.get("x-khipu-signature", "")
+        if self._webhook_secret and sig_header:
+            verify_khipu_signature(payload, self._webhook_secret, sig_header)
+        elif self._webhook_secret and not sig_header:
+            raise WebhookVerificationError(
+                "Webhook secret is configured but x-khipu-signature header is missing."
+            )
+
         try:
             data: dict[str, Any] = json.loads(payload)
         except ValueError:
@@ -154,11 +188,24 @@ class KhipuProvider(Provider):
             data = {k: v[0] for k, v in qs.items()}
 
         payment_id = data.get("payment_id")
-        raw_state = str(data.get("payment_status", "pending"))
-        state = _KHIPU_STATE_MAP.get(raw_state.lower(), PaymentState.UNKNOWN)
+
+        # v3.0: determine state from conciliation_date presence
+        # If conciliation_date is present and non-empty, the payment is reconciled (succeeded).
+        # Otherwise fall back to payment_status for backward compatibility.
+        if data.get("conciliation_date"):
+            state = PaymentState.SUCCEEDED
+            event_type = "payment.conciliated"
+        elif "payment_status" in data:
+            raw_state = str(data["payment_status"])
+            state = _KHIPU_STATE_MAP.get(raw_state.lower(), PaymentState.UNKNOWN)
+            event_type = "payment.notification"
+        else:
+            state = PaymentState.UNKNOWN
+            event_type = "payment.notification"
+
         return WebhookEvent(
             event_id=payment_id,
-            event_type="payment.notification",
+            event_type=event_type,
             payment_id=payment_id,
             state=state,
             provider=self.key,

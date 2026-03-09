@@ -80,6 +80,9 @@ MAIL_USE_LOCALTIME = True
 # These can be overridden by environment variables prefixed with FLASK_
 # e.g. export FLASK_KHIPU_API_KEY=your-real-key
 KHIPU_API_KEY = ""
+# Merchant secret used to verify x-khipu-signature on incoming webhooks.
+# e.g. export FLASK_KHIPU_WEBHOOK_SECRET=your-merchant-secret
+KHIPU_WEBHOOK_SECRET = ""
 
 # Public base URL (scheme + domain) used to build webhook URLs sent to
 # payment providers.  Must be reachable from the internet.
