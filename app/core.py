@@ -112,7 +112,12 @@ def create_app():
         # Only register Khipu when a real API key is configured.
         from merchants.providers.khipu import KhipuProvider
         khipu_subject = app.config.get("KHIPU_SUBJECT", "Pago SaborMirandiano")
-        providers.append(KhipuProvider(api_key=khipu_api_key, subject=khipu_subject))
+        khipu_webhook_secret = app.config.get("KHIPU_WEBHOOK_SECRET", "")
+        providers.append(KhipuProvider(
+            api_key=khipu_api_key,
+            subject=khipu_subject,
+            webhook_secret=khipu_webhook_secret,
+        ))
     providers.append(CafeteriaProvider())
     providers.append(SaldoProvider())
 
@@ -120,55 +125,152 @@ def create_app():
     # separately after webhook configuration (see below)
     flask_merchants.init_app(app=app, db=db, models=[Payment], providers=providers)
 
-    # Register Khipu abono approval webhook handler.
+    # Register Khipu webhook handler.
     # When Khipu notifies /merchants/webhook/khipu that a payment succeeded,
     # this handler finds the matching Payment record via transaction_id,
-    # sets the state to "succeeded", and credits the apoderado's saldo_cuenta.
-    def _khipu_abono_webhook_handler(event) -> None:
+    # and processes the associated entity:
+    #   - Abono: credits apoderado.saldo_cuenta, sends receipt emails.
+    #   - Pedido: marks as paid, creates OrdenCasino rows, sends confirmation emails.
+    #
+    # Note: by the time this handler fires, views.py has already called
+    # ext.update_state() which sets pago.state = "succeeded" and commits.
+    # We use payment_object being empty as our idempotency guard: the handler
+    # populates it once, and skips on duplicate webhooks.
+    def _khipu_webhook_handler(event) -> None:
         import logging as _logging
         _wh_logger = _logging.getLogger(__name__)
         _wh_logger.debug(
-            "core.py: _khipu_abono_webhook_handler called with provider=%r state=%r payment_id=%r",
+            "core.py: _khipu_webhook_handler called with provider=%r state=%r payment_id=%r",
             event.provider, event.state, event.payment_id,
         )
         from merchants.models import PaymentState
         from flask_merchants import merchants_audit
-        from .model import Abono
+        from .model import Abono, Pedido, EstadoPedido
 
         if event.provider != "khipu" or event.state != PaymentState.SUCCEEDED:
             return
         if not event.payment_id:
             return
 
-        # Look up the payment by transaction_id (the provider's payment ID)
+        # v3.0 webhook body contains both payment_id (Khipu's ID, stored as
+        # Payment.transaction_id) and transaction_id (merchant's order ID,
+        # stored as Payment.merchants_id).  Look up by Khipu's payment_id
+        # → our Payment.transaction_id.
         pago = db.session.execute(
             db.select(Payment).where(
                 Payment.provider == "khipu",
-                Payment.state == "pending",
                 Payment.transaction_id == event.payment_id,
             )
         ).scalar_one_or_none()
 
-        # Re-check pago.state as an idempotency guard: a concurrent duplicate webhook
-        # could have already committed a state change after our SELECT above.
-        if pago and pago.state == "pending":
-            abono = db.session.execute(
-                db.select(Abono).filter_by(codigo=pago.merchants_id)
-            ).scalar_one_or_none()
-            if abono:
-                pago.state = "succeeded"
-                saldo_actual = abono.apoderado.saldo_cuenta or 0
-                abono.apoderado.saldo_cuenta = saldo_actual + int(abono.monto)
-                db.session.commit()
-                merchants_audit.info(
-                    "abono_aprobado_khipu_webhook: codigo=%s apoderado_id=%s monto=%s nuevo_saldo=%s",
-                    abono.codigo,
-                    abono.apoderado.id,
-                    int(abono.monto),
-                    abono.apoderado.saldo_cuenta,
-                )
+        if not pago:
+            return
 
-    flask_merchants.add_webhook_handler(_khipu_abono_webhook_handler)
+        # Idempotency: if payment_object is already populated, this webhook
+        # has already been processed (duplicate delivery from Khipu).
+        if pago.payment_object:
+            _wh_logger.info(
+                "core.py: duplicate webhook skipped for payment_id=%r (already processed)",
+                event.payment_id,
+            )
+            return
+
+        # Store the full webhook payload for audit/reconciliation
+        pago.payment_object = event.raw
+
+        # Determine whether this payment belongs to an abono or a pedido
+        abono = db.session.execute(
+            db.select(Abono).filter_by(codigo=pago.merchants_id)
+        ).scalar_one_or_none()
+
+        if abono:
+            _handle_abono_payment(pago, abono, event, merchants_audit)
+            return
+
+        pedido = db.session.execute(
+            db.select(Pedido).filter_by(codigo_merchants=pago.merchants_id)
+        ).scalar_one_or_none()
+
+        if pedido:
+            _handle_pedido_payment(pago, pedido, event, merchants_audit)
+            return
+
+        # No linked entity found — still commit payment_object so the
+        # webhook data is preserved and this won't be re-processed.
+        db.session.commit()
+        _wh_logger.warning(
+            "core.py: no abono or pedido found for payment merchants_id=%r (khipu payment_id=%r)",
+            pago.merchants_id, event.payment_id,
+        )
+
+    def _handle_abono_payment(pago, abono, event, merchants_audit) -> None:
+        """Process a successful Khipu payment for an abono (deposit).
+
+        State is already "succeeded" (set by ext.update_state in the webhook view).
+        """
+        saldo_actual = abono.apoderado.saldo_cuenta or 0
+        abono.apoderado.saldo_cuenta = saldo_actual + int(abono.monto)
+        db.session.commit()
+        merchants_audit.info(
+            "abono_aprobado_khipu_webhook: codigo=%s apoderado_id=%s monto=%s nuevo_saldo=%s khipu_payment_id=%s",
+            abono.codigo,
+            abono.apoderado.id,
+            int(abono.monto),
+            abono.apoderado.saldo_cuenta,
+            event.payment_id,
+        )
+
+        # Send receipt and admin notification emails (same pattern as POS approval)
+        from .tasks import (
+            send_comprobante_abono,
+            send_notificacion_admin_abono,
+            send_copia_notificaciones_abono,
+        )
+
+        abono_info = {
+            "id": abono.id,
+            "codigo": abono.codigo,
+            "monto": int(abono.monto),
+            "forma_pago": abono.forma_pago,
+            "descripcion": abono.descripcion,
+            "apoderado_nombre": abono.apoderado.nombre,
+            "apoderado_email": abono.apoderado.usuario.email,
+            "saldo_cuenta": abono.apoderado.saldo_cuenta,
+            "copia_notificaciones": abono.apoderado.copia_notificaciones,
+        }
+        send_notificacion_admin_abono.delay(abono_info=abono_info)
+        if abono.apoderado.comprobantes_transferencia:
+            send_comprobante_abono.delay(abono_info=abono_info)
+            if abono.apoderado.copia_notificaciones:
+                send_copia_notificaciones_abono.delay(abono_info=abono_info)
+
+    def _handle_pedido_payment(pago, pedido, event, merchants_audit) -> None:
+        """Process a successful Khipu payment for a pedido (order).
+
+        Payment state is already "succeeded" (set by ext.update_state in the webhook view).
+        """
+        from datetime import datetime as _dt
+        from .model import EstadoPedido
+        from .apoderado.controller import ApoderadoController
+
+        pedido.estado = EstadoPedido.PAGADO
+        pedido.pagado = True
+        pedido.fecha_pago = _dt.now()
+        db.session.commit()
+
+        merchants_audit.info(
+            "pedido_pagado_khipu_webhook: codigo=%s apoderado_id=%s total=%s khipu_payment_id=%s",
+            pedido.codigo,
+            pedido.apoderado_id,
+            int(pedido.precio_total),
+            event.payment_id,
+        )
+
+        # Create OrdenCasino rows and send confirmation emails
+        ctrl = ApoderadoController()
+        ctrl.process_payment_completion(pedido)
+
+    flask_merchants.add_webhook_handler(_khipu_webhook_handler)
 
     # Enable webhook notification emails to admin users.
     # Every incoming webhook triggers an email containing provider, transaction,
