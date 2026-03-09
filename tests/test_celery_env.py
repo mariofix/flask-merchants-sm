@@ -13,9 +13,10 @@ import sys
 
 def _load_settings_module():
     """Load app/settings.py directly without triggering the full app package."""
+    project_root = os.path.dirname(os.path.dirname(__file__))
     spec = importlib.util.spec_from_file_location(
         "_test_settings",
-        os.path.join(os.path.dirname(__file__), "app", "settings.py"),
+        os.path.join(project_root, "app", "settings.py"),
     )
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
