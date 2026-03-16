@@ -103,7 +103,7 @@ def _check_informe_mensual() -> None:
         return  # already ran this month
 
     from ..tasks import send_informe_mensual_staff
-    send_informe_mensual_staff.delay()
+    send_informe_mensual_staff()
     _set_last_run(_SLUG_MENSUAL, now)
     current_app.logger.info("staff_scheduler: dispatched send_informe_mensual_staff")
 
@@ -128,6 +128,6 @@ def _check_informe_semanal() -> None:
             return  # already ran this week
 
     from ..tasks import send_informe_semanal_staff
-    send_informe_semanal_staff.delay()
+    send_informe_semanal_staff()
     _set_last_run(_SLUG_SEMANAL, now)
     current_app.logger.info("staff_scheduler: dispatched send_informe_semanal_staff")

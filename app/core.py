@@ -1,7 +1,7 @@
 import os
 
 import merchants as _merchants
-import redis as _redis
+from daleks.contrib.flask_security_mail import DaleksMailUtil
 from dotenv import load_dotenv
 from flask import Flask, url_for
 from flask_admin import helpers as admin_helpers
@@ -11,11 +11,10 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 
 from .apoderado.route import apoderado_bp
 from .flyers.route import flyers_bp
-from .celery import celery_init_app
 from .docs import docs_bp
 from .database import db, migrations
-from .extensions import babel, csrf, flask_merchants, mail, limiter
-from .extensions.admin import admin, SecureRedisCli
+from .extensions import babel, csrf, flask_merchants, limiter
+from .extensions.admin import admin
 from .logging_config import configure_logging
 from .model import *  # noqa: F403
 from .pos.routes import pos_bp
@@ -23,7 +22,6 @@ from .providers.cafeteria import CafeteriaProvider
 from .providers.saldo import SaldoProvider
 from .routes import core_bp
 from .staff.route import staff_bp
-from .tasks import MyMailUtil
 from .version import __version__
 
 
@@ -55,29 +53,6 @@ def create_app():
     csrf.init_app(app)
     limiter.init_app(app)
 
-    # Redis CLI console(s); a second view is only added when broker and result backend differ
-    celery_cfg = app.config.get("CELERY", {})
-    broker_url = celery_cfg.get("broker_url", "")
-    result_backend = celery_cfg.get("result_backend", "")
-    if broker_url and broker_url.startswith("redis"):
-        admin.add_view(
-            SecureRedisCli(
-                _redis.from_url(broker_url, socket_connect_timeout=2),
-                name="Redis Cola",
-                endpoint="redis_broker",
-                category="Herramientas",
-            )
-        )
-    if result_backend and result_backend.startswith("redis") and result_backend != broker_url:
-        admin.add_view(
-            SecureRedisCli(
-                _redis.from_url(result_backend, socket_connect_timeout=2),
-                name="Redis Resultados",
-                endpoint="redis_results",
-                category="Herramientas",
-            )
-        )
-
     # Setup Flask-Security
     from .forms import ChileanPhoneUsernameUtil
 
@@ -85,12 +60,10 @@ def create_app():
     security = Security(
         app,
         user_datastore,
-        mail_util_cls=MyMailUtil,
+        mail_util_cls=DaleksMailUtil,
         username_util_cls=ChileanPhoneUsernameUtil,
     )
     app.extensions["user_datastore"] = user_datastore
-    # Flask-Mailman
-    mail.init_app(app)
 
     # Wire Flask-Login / Flask-Security signals to sm.app and sm.audit loggers
     _register_auth_signals(app)
@@ -238,11 +211,11 @@ def create_app():
             "saldo_cuenta": abono.apoderado.saldo_cuenta,
             "copia_notificaciones": abono.apoderado.copia_notificaciones,
         }
-        send_notificacion_admin_abono.delay(abono_info=abono_info)
+        send_notificacion_admin_abono(abono_info=abono_info)
         if abono.apoderado.comprobantes_transferencia:
-            send_comprobante_abono.delay(abono_info=abono_info)
+            send_comprobante_abono(abono_info=abono_info)
             if abono.apoderado.copia_notificaciones:
-                send_copia_notificaciones_abono.delay(abono_info=abono_info)
+                send_copia_notificaciones_abono(abono_info=abono_info)
 
     def _handle_pedido_payment(pago, pedido, event, merchants_audit) -> None:
         """Process a successful Khipu payment for a pedido (order).
@@ -287,7 +260,7 @@ def create_app():
 
     flask_merchants.enable_webhook_notifications(
         admin_emails_fn=_get_admin_emails,
-        send_fn=lambda info: send_webhook_notification_email.delay(info),
+        send_fn=lambda info: send_webhook_notification_email(info),
     )
 
     # Register custom payment admin views (using PaymentAdminView with app-specific actions).
@@ -349,9 +322,6 @@ def create_app():
     # Request-based scheduler for school staff periodic emails
     from .staff.scheduler import check_and_fire_staff_jobs
     app.before_request(check_and_fire_staff_jobs)
-
-    # Celery
-    celery_init_app(app)
 
     # REMOVE BEFORE PRODUCTION
     if app.debug:

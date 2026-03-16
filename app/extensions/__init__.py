@@ -1,13 +1,11 @@
 from flask_babel import Babel
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from flask_mailman import Mail
 from flask_wtf import CSRFProtect
 
 from flask_merchants import FlaskMerchants
 
 babel = Babel()
-mail = Mail()
 flask_merchants = FlaskMerchants()
 csrf = CSRFProtect()
 limiter = Limiter(

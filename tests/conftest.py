@@ -26,7 +26,7 @@ def app():
         # Silence Flask-Security password hashing cost in tests
         SECURITY_PASSWORD_HASH="plaintext",
         SECURITY_PASSWORD_SALT="test-salt",
-        CELERY={"task_always_eager": True, "broker_url": "memory://", "result_backend": "cache+memory://"},
+        DALEKS_URL="http://localhost:2525",
     )
     _db.init_app(test_app)
     with test_app.app_context():

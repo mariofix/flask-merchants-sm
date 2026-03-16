@@ -560,7 +560,7 @@ class ApoderadoController:
         if pedido.apoderado_id and email_items:
             from ..tasks import send_confirmacion_orden_pagado
 
-            send_confirmacion_orden_pagado.delay(
+            send_confirmacion_orden_pagado(
                 {
                     "apoderado_id": pedido.apoderado_id,
                     "pedido_codigo": pedido.codigo,

@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 
 
@@ -71,6 +70,9 @@ EXPLAIN_TEMPLATE_LOADING = False
 # Daleks mailer — HTTP service that delivers emails asynchronously.
 # Override with FLASK_DALEKS_URL env var in production.
 DALEKS_URL = "http://zvn-lin2.local:2525"
+# Sender address used in the From: header for application emails.
+# Override with FLASK_DALEKS_FROM_EMAIL env var in production.
+DALEKS_FROM_EMAIL = "no-reply@sabormirandiano.cl"
 
 # Payment provider authentication
 # These can be overridden by environment variables prefixed with FLASK_

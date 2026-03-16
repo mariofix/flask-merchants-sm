@@ -1,11 +1,9 @@
-from celery import shared_task
-from flask import current_app, render_template, url_for
-from flask_mailman import EmailMultiAlternatives
-from flask_security.mail_util import MailUtil
-from flask_merchants import merchants_audit
+import logging
 import re
 
-from .extensions import mail
+from daleks.contrib.client import DaleksClient
+from flask import current_app, render_template, url_for
+from flask_merchants import merchants_audit
 
 
 def _get_display_code(pago) -> str:
@@ -29,44 +27,48 @@ def _parse_copia_emails(raw: str) -> list[str]:
 
 
 def _get_from_email() -> str:
-    """Retorna el remitente configurado en MAIL_USERNAME o el valor por defecto."""
+    """Retorna el remitente configurado en DALEKS_FROM_EMAIL o el valor por defecto."""
     return current_app.config.get(
-        "MAIL_USERNAME",
-        current_app.config.get("MAIL_DEFAULT_SENDER", "no-reply@sabormirandiano.cl"),
+        "DALEKS_FROM_EMAIL",
+        "no-reply@sabormirandiano.cl",
     )
 
 
-class MyMailUtil(MailUtil):
-    def send_mail(self, template, subject, recipient, sender, body, html, **kwargs):
-        kwargs["user"] = kwargs["user"].__dict__
-        send_flask_mail.delay(
-            subject=subject,
-            from_email=sender,
-            to=[recipient],
-            body=body,
-            html=html,
-        )  # type: ignore
+def _send_daleks_email(
+    from_address: str,
+    to: str | list[str],
+    subject: str,
+    text_body: str | None = None,
+    html_body: str | None = None,
+) -> None:
+    """Envía un email a través del servicio Daleks y registra en el log de auditoría."""
+    _log = logging.getLogger("sm.app")
+    cfg = current_app.config
+    base_url: str = cfg.get("DALEKS_URL", "http://zvn-lin2.local:2525")
+    timeout: int = int(cfg.get("DALEKS_TIMEOUT", 10))
+    smtp_account: str | None = cfg.get("DALEKS_SMTP_ACCOUNT") or None
+    to_list = [to] if isinstance(to, str) else to
+    try:
+        client = DaleksClient(base_url=base_url, timeout=timeout, smtp_account=smtp_account)
+        with client:
+            client.send_email(
+                from_address=from_address,
+                to=to_list,
+                subject=subject,
+                text_body=text_body or None,
+                html_body=html_body or None,
+            )
+        merchants_audit.info(
+            "email_sent: from=%r to=%r subject=%r",
+            from_address,
+            to_list,
+            subject,
+        )
+    except Exception as exc:
+        _log.error("daleks_email_failed: to=%r subject=%r error=%r", to_list, subject, exc)
 
 
-@shared_task(bind=True, ignore_result=False)
-def send_flask_mail(*args, **kwargs):
-    with current_app.app_context():
-        with mail.get_connection() as connection:
-            html = kwargs.pop("html", None)
-            msg = EmailMultiAlternatives(**kwargs, connection=connection)
-            if html:
-                msg.attach_alternative(html, "text/html")
-                msg.send()
-                merchants_audit.info(
-                    "email_sent: from=%r to=%r subject=%r",
-                    kwargs.get("from_email"),
-                    kwargs.get("to"),
-                    kwargs.get("subject"),
-                )
-
-
-@shared_task(bind=True, ignore_result=False)
-def send_webhook_notification_email(self, webhook_info: dict):
+def send_webhook_notification_email(webhook_info: dict):
     """Send webhook notification email to admin users.
 
     ``webhook_info`` is the dict produced by
@@ -83,26 +85,22 @@ def send_webhook_notification_email(self, webhook_info: dict):
             headers_json=webhook_info["headers_json"],
             body_json=webhook_info["body_json"],
         )
-        with mail.get_connection() as connection:
-            msg = EmailMultiAlternatives(
-                subject=webhook_info["subject"],
-                body=webhook_info["body"],
-                from_email=from_email,
-                to=webhook_info["to"],
-                connection=connection,
-            )
-            msg.attach_alternative(html, "text/html")
-            msg.send()
-            merchants_audit.info(
-                "webhook_notification_sent: from=%r to=%r subject=%r",
-                from_email,
-                webhook_info["to"],
-                webhook_info["subject"],
-            )
+        _send_daleks_email(
+            from_address=from_email,
+            to=webhook_info["to"],
+            subject=webhook_info["subject"],
+            text_body=webhook_info["body"],
+            html_body=html,
+        )
+        merchants_audit.info(
+            "webhook_notification_sent: from=%r to=%r subject=%r",
+            from_email,
+            webhook_info["to"],
+            webhook_info["subject"],
+        )
 
 
-@shared_task(bind=True, ignore_result=False)
-def send_comprobante_abono(self, abono_info: dict):
+def send_comprobante_abono(abono_info: dict):
     """Envía comprobante de abono al apoderado."""
     with current_app.app_context():
         from .database import db
@@ -133,26 +131,16 @@ def send_comprobante_abono(self, abono_info: dict):
             abono_url=abono_url,
         )
         from_email = _get_from_email()
-        with mail.get_connection() as connection:
-            msg = EmailMultiAlternatives(
-                subject=subject,
-                body=body,
-                from_email=from_email,
-                to=[abono_info["apoderado_email"]],
-                connection=connection,
-            )
-            msg.attach_alternative(html, "text/html")
-            msg.send()
-            merchants_audit.info(
-                "email_sent: from=%r to=%r subject=%r",
-                from_email,
-                [abono_info["apoderado_email"]],
-                subject,
-            )
+        _send_daleks_email(
+            from_address=from_email,
+            to=[abono_info["apoderado_email"]],
+            subject=subject,
+            text_body=body,
+            html_body=html,
+        )
 
 
-@shared_task(bind=True, ignore_result=False)
-def send_notificacion_admin_abono(self, abono_info: dict):
+def send_notificacion_admin_abono(abono_info: dict):
     """Notifica a los administradores sobre un abono aprobado."""
     with current_app.app_context():
         from .database import db
@@ -204,26 +192,16 @@ def send_notificacion_admin_abono(self, abono_info: dict):
             abono_url=abono_url,
         )
         from_email = _get_from_email()
-        with mail.get_connection() as connection:
-            msg = EmailMultiAlternatives(
-                subject=subject,
-                body=body,
-                from_email=from_email,
-                to=admin_emails,
-                connection=connection,
-            )
-            msg.attach_alternative(html, "text/html")
-            msg.send()
-            merchants_audit.info(
-                "email_sent: from=%r to=%r subject=%r",
-                from_email,
-                admin_emails,
-                subject,
-            )
+        _send_daleks_email(
+            from_address=from_email,
+            to=admin_emails,
+            subject=subject,
+            text_body=body,
+            html_body=html,
+        )
 
 
-@shared_task(bind=True, ignore_result=False)
-def send_copia_notificaciones_abono(self, abono_info: dict):
+def send_copia_notificaciones_abono(abono_info: dict):
     """Envía copia del comprobante de abono a los correos de copia_notificaciones."""
     copia_raw = abono_info.get("copia_notificaciones") or ""
     copia_emails = _parse_copia_emails(copia_raw)
@@ -258,27 +236,17 @@ def send_copia_notificaciones_abono(self, abono_info: dict):
             abono_url=abono_url,
         )
         from_email = _get_from_email()
-        with mail.get_connection() as connection:
-            for email in copia_emails:
-                msg = EmailMultiAlternatives(
-                    subject=subject,
-                    body=body,
-                    from_email=from_email,
-                    to=[email],
-                    connection=connection,
-                )
-                msg.attach_alternative(html, "text/html")
-                msg.send()
-                merchants_audit.info(
-                    "email_sent: from=%r to=%r subject=%r",
-                    from_email,
-                    [email],
-                    subject,
-                )
+        for email in copia_emails:
+            _send_daleks_email(
+                from_address=from_email,
+                to=[email],
+                subject=subject,
+                text_body=body,
+                html_body=html,
+            )
 
 
-@shared_task(bind=True, ignore_result=False)
-def send_notificacion_abono_creado(self, abono_info: dict):
+def send_notificacion_abono_creado(abono_info: dict):
     """Notifica al apoderado que su abono fue recibido y le entrega el código de pago
     (sólo si comprobantes_transferencia es True). También envía copia a copia_notificaciones.
     Además notifica a todos los usuarios de los grupos admin y pos que alguien viene a pagar."""
@@ -324,23 +292,14 @@ def send_notificacion_abono_creado(self, abono_info: dict):
             recipients = [abono_info["apoderado_email"]]
             copia_emails = _parse_copia_emails(abono_info.get("copia_notificaciones") or "")
             recipients.extend(copia_emails)
-            with mail.get_connection() as connection:
-                for recipient in recipients:
-                    msg = EmailMultiAlternatives(
-                        subject=subject_apoderado,
-                        body=body_apoderado,
-                        from_email=from_email,
-                        to=[recipient],
-                        connection=connection,
-                    )
-                    msg.attach_alternative(html_apoderado, "text/html")
-                    msg.send()
-                    merchants_audit.info(
-                        "email_sent: from=%r to=%r subject=%r",
-                        from_email,
-                        [recipient],
-                        subject_apoderado,
-                    )
+            for recipient in recipients:
+                _send_daleks_email(
+                    from_address=from_email,
+                    to=[recipient],
+                    subject=subject_apoderado,
+                    text_body=body_apoderado,
+                    html_body=html_apoderado,
+                )
 
         # --- Email a los administradores y usuarios pos (aviso de pago presencial, sin QR) ---
         admin_role = db.session.execute(db.select(Role).filter_by(name="admin")).scalar_one_or_none()
@@ -378,26 +337,16 @@ def send_notificacion_abono_creado(self, abono_info: dict):
                 abono_url=abono_url,
                 admin_abono_url=admin_abono_url,
             )
-            with mail.get_connection() as connection:
-                msg = EmailMultiAlternatives(
-                    subject=subject_admin,
-                    body=body_admin,
-                    from_email=from_email,
-                    to=staff_emails,
-                    connection=connection,
-                )
-                msg.attach_alternative(html_admin, "text/html")
-                msg.send()
-                merchants_audit.info(
-                    "email_sent: from=%r to=%r subject=%r",
-                    from_email,
-                    staff_emails,
-                    subject_admin,
-                )
+            _send_daleks_email(
+                from_address=from_email,
+                to=staff_emails,
+                subject=subject_admin,
+                text_body=body_admin,
+                html_body=html_admin,
+            )
 
 
-@shared_task(bind=True, ignore_result=False)
-def send_notificacion_pedido_pendiente(self, pedido_info: dict):
+def send_notificacion_pedido_pendiente(pedido_info: dict):
     """Notifica al apoderado que su pedido fue recibido y está pendiente de pago.
 
     Si la forma de pago es cafetería se incluyen instrucciones y el código QR.
@@ -488,67 +437,39 @@ def send_notificacion_pedido_pendiente(self, pedido_info: dict):
             last_html = html
 
             if apoderado.notificacion_compra and email:
-                with mail.get_connection() as connection:
-                    msg = EmailMultiAlternatives(
-                        subject=subject,
-                        body=body,
-                        from_email=from_email,
-                        to=[email],
-                        connection=connection,
-                    )
-                    msg.attach_alternative(html, "text/html")
-                    msg.send()
-                    merchants_audit.info(
-                        "email_sent: from=%r to=%r subject=%r",
-                        from_email,
-                        [email],
-                        subject,
-                    )
+                _send_daleks_email(
+                    from_address=from_email,
+                    to=[email],
+                    subject=subject,
+                    text_body=body,
+                    html_body=html,
+                )
                 copia_emails = _parse_copia_emails(apoderado.copia_notificaciones or "")
                 for copia_email in copia_emails:
-                    with mail.get_connection() as connection:
-                        msg = EmailMultiAlternatives(
-                            subject=subject,
-                            body=body,
-                            from_email=from_email,
-                            to=[copia_email],
-                            connection=connection,
-                        )
-                        msg.attach_alternative(html, "text/html")
-                        msg.send()
-                        merchants_audit.info(
-                            "email_sent: from=%r to=%r subject=%r",
-                            from_email,
-                            [copia_email],
-                            subject,
-                        )
+                    _send_daleks_email(
+                        from_address=from_email,
+                        to=[copia_email],
+                        subject=subject,
+                        text_body=body,
+                        html_body=html,
+                    )
 
         if admin_emails and last_subject:
             admin_subject = f"[ADMIN] {last_subject}"
-            with mail.get_connection() as connection:
-                msg = EmailMultiAlternatives(
-                    subject=admin_subject,
-                    body=last_body,
-                    from_email=from_email,
-                    to=admin_emails,
-                    connection=connection,
-                )
-                msg.attach_alternative(last_html, "text/html")
-                msg.send()
-                merchants_audit.info(
-                    "email_sent: from=%r to=%r subject=%r",
-                    from_email,
-                    admin_emails,
-                    admin_subject,
-                )
+            _send_daleks_email(
+                from_address=from_email,
+                to=admin_emails,
+                subject=admin_subject,
+                text_body=last_body,
+                html_body=last_html,
+            )
 
 
 
 _MESES_ES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
 
 
-@shared_task(bind=True, ignore_result=False)
-def send_confirmacion_orden_pagado(self, pedido_info: dict):
+def send_confirmacion_orden_pagado(pedido_info: dict):
     """Notifica al apoderado la confirmación de sus almuerzos tras pagar el pedido.
 
     Sends to the Apoderado when notificacion_compra=True, to
@@ -609,40 +530,22 @@ def send_confirmacion_orden_pagado(self, pedido_info: dict):
         if apoderado.notificacion_compra:
             email = apoderado.usuario.email if apoderado.usuario else None
             if email:
-                with mail.get_connection() as connection:
-                    msg = EmailMultiAlternatives(
-                        subject=subject,
-                        body=body,
-                        from_email=from_email,
-                        to=[email],
-                        connection=connection,
-                    )
-                    msg.attach_alternative(html, "text/html")
-                    msg.send()
-                    merchants_audit.info(
-                        "email_sent: from=%r to=%r subject=%r",
-                        from_email,
-                        [email],
-                        subject,
-                    )
+                _send_daleks_email(
+                    from_address=from_email,
+                    to=[email],
+                    subject=subject,
+                    text_body=body,
+                    html_body=html,
+                )
             copia_emails = _parse_copia_emails(apoderado.copia_notificaciones or "")
             for copia_email in copia_emails:
-                with mail.get_connection() as connection:
-                    msg = EmailMultiAlternatives(
-                        subject=subject,
-                        body=body,
-                        from_email=from_email,
-                        to=[copia_email],
-                        connection=connection,
-                    )
-                    msg.attach_alternative(html, "text/html")
-                    msg.send()
-                    merchants_audit.info(
-                        "email_sent: from=%r to=%r subject=%r",
-                        from_email,
-                        [copia_email],
-                        subject,
-                    )
+                _send_daleks_email(
+                    from_address=from_email,
+                    to=[copia_email],
+                    subject=subject,
+                    text_body=body,
+                    html_body=html,
+                )
 
         admin_role = db.session.execute(
             db.select(Role).filter_by(name="admin")
@@ -650,26 +553,16 @@ def send_confirmacion_orden_pagado(self, pedido_info: dict):
         admin_emails = [u.email for u in admin_role.users if u.email] if admin_role else []
         if admin_emails:
             admin_subject = f"[ADMIN] {subject}"
-            with mail.get_connection() as connection:
-                msg = EmailMultiAlternatives(
-                    subject=admin_subject,
-                    body=body,
-                    from_email=from_email,
-                    to=admin_emails,
-                    connection=connection,
-                )
-                msg.attach_alternative(html, "text/html")
-                msg.send()
-                merchants_audit.info(
-                    "email_sent: from=%r to=%r subject=%r",
-                    from_email,
-                    admin_emails,
-                    admin_subject,
-                )
+            _send_daleks_email(
+                from_address=from_email,
+                to=admin_emails,
+                subject=admin_subject,
+                text_body=body,
+                html_body=html,
+            )
 
 
-@shared_task(bind=True, ignore_result=False)
-def send_notificacion_admin_nuevo_apoderado(self, apoderado_info: dict):
+def send_notificacion_admin_nuevo_apoderado(apoderado_info: dict):
     """Notifica a los administradores sobre un nuevo apoderado registrado."""
     with current_app.app_context():
         from .database import db
@@ -699,26 +592,16 @@ def send_notificacion_admin_nuevo_apoderado(self, apoderado_info: dict):
             alumnos=apoderado_info.get("alumnos", []),
         )
         from_email = _get_from_email()
-        with mail.get_connection() as connection:
-            msg = EmailMultiAlternatives(
-                subject=subject,
-                body=body,
-                from_email=from_email,
-                to=admin_emails,
-                connection=connection,
-            )
-            msg.attach_alternative(html, "text/html")
-            msg.send()
-            merchants_audit.info(
-                "email_sent: from=%r to=%r subject=%r",
-                from_email,
-                admin_emails,
-                subject,
-            )
+        _send_daleks_email(
+            from_address=from_email,
+            to=admin_emails,
+            subject=subject,
+            text_body=body,
+            html_body=html,
+        )
 
 
-@shared_task(bind=True, ignore_result=False)
-def send_confirmacion_staff_pedido_pagado(self, pedido_info: dict):
+def send_confirmacion_staff_pedido_pagado(pedido_info: dict):
     """Notifica al personal del colegio la confirmación de su pedido pagado."""
     with current_app.app_context():
         from .database import db
@@ -755,26 +638,16 @@ def send_confirmacion_staff_pedido_pagado(self, pedido_info: dict):
             total=total,
         )
         from_email = _get_from_email()
-        with mail.get_connection() as connection:
-            msg = EmailMultiAlternatives(
-                subject=subject,
-                body=body,
-                from_email=from_email,
-                to=[email],
-                connection=connection,
-            )
-            msg.attach_alternative(html, "text/html")
-            msg.send()
-            merchants_audit.info(
-                "email_sent: from=%r to=%r subject=%r",
-                from_email,
-                [email],
-                subject,
-            )
+        _send_daleks_email(
+            from_address=from_email,
+            to=[email],
+            subject=subject,
+            text_body=body,
+            html_body=html,
+        )
 
 
-@shared_task(bind=True, ignore_result=False)
-def send_informe_mensual_staff(self):
+def send_informe_mensual_staff():
     """Envía a cada miembro del personal su deuda del mes al final de cada mes.
 
     Disparado automáticamente por el scheduler de solicitudes (``app/staff/scheduler.py``).
@@ -827,26 +700,16 @@ def send_informe_mensual_staff(self):
                 deuda=int(deuda),
                 mes=today.strftime("%B %Y"),
             )
-            with mail.get_connection() as connection:
-                msg = EmailMultiAlternatives(
-                    subject=subject,
-                    body=body,
-                    from_email=from_email,
-                    to=[email],
-                    connection=connection,
-                )
-                msg.attach_alternative(html, "text/html")
-                msg.send()
-                merchants_audit.info(
-                    "email_sent: from=%r to=%r subject=%r",
-                    from_email,
-                    [email],
-                    subject,
-                )
+            _send_daleks_email(
+                from_address=from_email,
+                to=[email],
+                subject=subject,
+                text_body=body,
+                html_body=html,
+            )
 
 
-@shared_task(bind=True, ignore_result=False)
-def send_informe_semanal_staff(self):
+def send_informe_semanal_staff():
     """Envía el resumen semanal de deuda a los miembros del personal que lo soliciten.
 
     Disparado automáticamente por el scheduler de solicitudes (``app/staff/scheduler.py``).
@@ -890,19 +753,10 @@ def send_informe_semanal_staff(self):
                 nombre_staff=staff.nombre,
                 deuda=int(deuda),
             )
-            with mail.get_connection() as connection:
-                msg = EmailMultiAlternatives(
-                    subject=subject,
-                    body=body,
-                    from_email=from_email,
-                    to=[email],
-                    connection=connection,
-                )
-                msg.attach_alternative(html, "text/html")
-                msg.send()
-                merchants_audit.info(
-                    "email_sent: from=%r to=%r subject=%r",
-                    from_email,
-                    [email],
-                    subject,
-                )
+            _send_daleks_email(
+                from_address=from_email,
+                to=[email],
+                subject=subject,
+                text_body=body,
+                html_body=html,
+            )

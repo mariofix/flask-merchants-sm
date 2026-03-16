@@ -1,14 +1,13 @@
-"""Test that CELERY config in settings.py honors environment variables.
+"""Test that Daleks mailer configuration in settings.py is correct.
 
-This validates the fix: when environment variables like CELERY_BROKER_URL are
-set (e.g., via a .env file loaded by load_dotenv()), settings.py picks them up
-instead of using the hardcoded defaults.
+Validates that DALEKS_URL and DALEKS_FROM_EMAIL are present with expected
+defaults, and that the DaleksMailUtil integration is properly wired.
 """
 
+import ast
 import importlib
 import importlib.util
 import os
-import sys
 
 
 def _load_settings_module():
@@ -23,54 +22,53 @@ def _load_settings_module():
     return mod
 
 
-def test_celery_settings_honor_env_vars(monkeypatch):
-    """CELERY dict in settings.py should read broker_url from env."""
-    monkeypatch.setenv("CELERY_BROKER_URL", "redis://custom-host:6379/5")
-    monkeypatch.setenv("CELERY_RESULT_BACKEND", "redis://custom-host:6379/6")
-    monkeypatch.setenv("CELERY_WORKER_CONCURRENCY", "4")
-    monkeypatch.setenv("CELERY_WORKER_MAX_TASKS_PER_CHILD", "10")
-
+def test_daleks_url_default():
+    """DALEKS_URL should default to the local daleks service."""
     settings = _load_settings_module()
-
-    assert settings.CELERY["broker_url"] == "redis://custom-host:6379/5"
-    assert settings.CELERY["result_backend"] == "redis://custom-host:6379/6"
-    assert settings.CELERY["worker_concurrency"] == 4
-    assert settings.CELERY["worker_max_tasks_per_child"] == 10
+    assert settings.DALEKS_URL == "http://zvn-lin2.local:2525"
 
 
-def test_celery_settings_use_defaults_without_env(monkeypatch):
-    """Without env vars, CELERY dict should use the hardcoded defaults."""
-    monkeypatch.delenv("CELERY_BROKER_URL", raising=False)
-    monkeypatch.delenv("CELERY_RESULT_BACKEND", raising=False)
-    monkeypatch.delenv("CELERY_WORKER_CONCURRENCY", raising=False)
-    monkeypatch.delenv("CELERY_WORKER_MAX_TASKS_PER_CHILD", raising=False)
-
+def test_daleks_from_email_default():
+    """DALEKS_FROM_EMAIL should have a sensible default sender address."""
     settings = _load_settings_module()
-
-    assert settings.CELERY["broker_url"] == "redis://10.100.254.2/10"
-    assert settings.CELERY["result_backend"] == "redis://10.100.254.2/10"
-    assert settings.CELERY["worker_concurrency"] == 1
-    assert settings.CELERY["worker_max_tasks_per_child"] == 1
+    assert "@" in settings.DALEKS_FROM_EMAIL
 
 
-def test_celery_settings_partial_override(monkeypatch):
-    """Only the env vars that are set should override; others keep defaults."""
-    monkeypatch.setenv("CELERY_BROKER_URL", "redis://override-host:6379/0")
-    monkeypatch.delenv("CELERY_RESULT_BACKEND", raising=False)
-    monkeypatch.delenv("CELERY_WORKER_CONCURRENCY", raising=False)
-    monkeypatch.delenv("CELERY_WORKER_MAX_TASKS_PER_CHILD", raising=False)
+def test_daleks_mail_util_is_importable():
+    """DaleksMailUtil should be importable from daleks.contrib."""
+    from daleks.contrib.flask_security_mail import DaleksMailUtil
+    from flask_security.mail_util import MailUtil
 
-    settings = _load_settings_module()
+    assert issubclass(DaleksMailUtil, MailUtil)
 
-    assert settings.CELERY["broker_url"] == "redis://override-host:6379/0"
-    assert settings.CELERY["result_backend"] == "redis://10.100.254.2/10"
-    assert settings.CELERY["worker_concurrency"] == 1
+
+def test_daleks_client_is_importable():
+    """DaleksClient should be importable from daleks.contrib.client."""
+    from daleks.contrib.client import DaleksClient
+
+    client = DaleksClient("http://localhost:2525")
+    assert client.base_url == "http://localhost:2525"
+    assert client.timeout == 10
+
+
+def test_send_daleks_email_helper_exists():
+    """_send_daleks_email helper should be importable from app.tasks."""
+    import ast
+
+    with open(os.path.join(os.path.dirname(os.path.dirname(__file__)), "app", "tasks.py")) as f:
+        tree = ast.parse(f.read())
+
+    function_names = {
+        node.name for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)
+    }
+    assert "_send_daleks_email" in function_names
+    assert "send_webhook_notification_email" in function_names
+    assert "send_comprobante_abono" in function_names
+    assert "send_notificacion_admin_abono" in function_names
 
 
 def test_load_dotenv_runs_before_create_app():
     """Verify load_dotenv() is called before importing create_app in celery_app.py."""
-    import ast
-
     with open("celery_app.py") as f:
         source = f.read()
 
@@ -98,3 +96,4 @@ def test_load_dotenv_runs_before_create_app():
         f"load_dotenv() (line {load_dotenv_line}) must come before "
         f"'from app import create_app' (line {create_app_import_line})"
     )
+

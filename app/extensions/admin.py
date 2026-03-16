@@ -406,11 +406,11 @@ class AbonoAdminView(SecureModelView):
             }
             # Admins are notified at code creation for cafeteria; only notify on approval for other providers.
             if abono.forma_pago != "cafeteria":
-                send_notificacion_admin_abono.delay(abono_info=abono_info)
+                send_notificacion_admin_abono(abono_info=abono_info)
             if abono.apoderado.comprobantes_transferencia:
-                send_comprobante_abono.delay(abono_info=abono_info)
+                send_comprobante_abono(abono_info=abono_info)
                 if abono.apoderado.copia_notificaciones:
-                    send_copia_notificaciones_abono.delay(abono_info=abono_info)
+                    send_copia_notificaciones_abono(abono_info=abono_info)
             count += 1
         flash(f"{count} abono(s) aprobado(s) exitosamente.")
 
@@ -437,10 +437,10 @@ class AbonoAdminView(SecureModelView):
                     "saldo_cuenta": abono.apoderado.saldo_cuenta or 0,
                     "copia_notificaciones": abono.apoderado.copia_notificaciones,
                 }
-                send_comprobante_abono.delay(abono_info=abono_info)
-                send_notificacion_admin_abono.delay(abono_info=abono_info)
+                send_comprobante_abono(abono_info=abono_info)
+                send_notificacion_admin_abono(abono_info=abono_info)
                 if abono.apoderado.comprobantes_transferencia and abono.apoderado.copia_notificaciones:
-                    send_copia_notificaciones_abono.delay(abono_info=abono_info)
+                    send_copia_notificaciones_abono(abono_info=abono_info)
                 count += 1
         flash(f"Comprobante encolado para {count} abono(s).")
 
@@ -865,11 +865,11 @@ class PaymentAdminView(SecureModelView):
                 "copia_notificaciones": abono.apoderado.copia_notificaciones,
             }
             if abono.forma_pago != "cafeteria":
-                send_notificacion_admin_abono.delay(abono_info=abono_info)
+                send_notificacion_admin_abono(abono_info=abono_info)
             if abono.apoderado.comprobantes_transferencia:
-                send_comprobante_abono.delay(abono_info=abono_info)
+                send_comprobante_abono(abono_info=abono_info)
                 if abono.apoderado.copia_notificaciones:
-                    send_copia_notificaciones_abono.delay(abono_info=abono_info)
+                    send_copia_notificaciones_abono(abono_info=abono_info)
             return
 
         # --- Pedido (Apoderado): create OrdenCasino records and notify ---
