@@ -15,8 +15,7 @@ dependencies = [
     "python-multipart (>=0.0.20,<0.0.21)",
     "flask-admin[images,sqlalchemy-with-utils,translation] (>=2.0.2,<3.0.0)",
     "flask-babel (>=4.0.0,<5.0.0)",
-    "celery[redis,sqlalchemy] (>=5.6.0,<6.0.0)",
-    "flask-mailman (>=1.1.1,<2.0.0)",
+    "daleks[contrib] @ git+https://github.com/mariofix/daleks.git",
     "gunicorn",
     "wtforms-sqlalchemy (>=0.4.2,<0.5.0)",
     "flask-debugtoolbar",
@@ -27,7 +26,7 @@ dependencies = [
     "pydantic (>=2.12.5,<3.0.0)",
     "faker (>=33.0.0,<41.0.0)",
     "qrcode (>=8.0,<9.0)",
-    "flower (>=2.0.0,<3.0.0)",
+
     "black (>=26.3.0,<27.0.0)",
 ]
 
