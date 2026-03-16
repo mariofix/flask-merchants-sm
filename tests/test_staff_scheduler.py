@@ -67,7 +67,7 @@ class TestCheckInformeMensual:
                 mock_dt.now.return_value = now
                 from app.staff.scheduler import _check_informe_mensual
                 _check_informe_mensual()
-                mock_task.delay.assert_not_called()
+                mock_task.assert_not_called()
 
     def test_does_not_fire_before_target_hour(self, app):
         with app.app_context():
@@ -79,7 +79,7 @@ class TestCheckInformeMensual:
                 mock_dt.now.return_value = now
                 from app.staff.scheduler import _check_informe_mensual
                 _check_informe_mensual()
-                mock_task.delay.assert_not_called()
+                mock_task.assert_not_called()
 
     def test_fires_on_correct_day_and_hour(self, db_session, app):
         with app.app_context():
@@ -93,7 +93,7 @@ class TestCheckInformeMensual:
                 mock_dt.now.return_value = now
                 from app.staff.scheduler import _check_informe_mensual
                 _check_informe_mensual()
-                mock_task.delay.assert_called_once()
+                mock_task.assert_called_once()
                 mock_set.assert_called_once()
 
     def test_does_not_fire_twice_in_same_month(self, db_session, app):
@@ -109,7 +109,7 @@ class TestCheckInformeMensual:
                 mock_dt.now.return_value = now
                 from app.staff.scheduler import _check_informe_mensual
                 _check_informe_mensual()
-                mock_task.delay.assert_not_called()
+                mock_task.assert_not_called()
 
     def test_last_day_of_month_default(self, db_session, app):
         """With DIA=0, should fire on the last day of the month."""
@@ -124,7 +124,7 @@ class TestCheckInformeMensual:
                 mock_dt.now.return_value = now
                 from app.staff.scheduler import _check_informe_mensual
                 _check_informe_mensual()
-                mock_task.delay.assert_called_once()
+                mock_task.assert_called_once()
 
 
 # ---------------------------------------------------------------------------
@@ -143,7 +143,7 @@ class TestCheckInformeSemanal:
                 mock_dt.now.return_value = now
                 from app.staff.scheduler import _check_informe_semanal
                 _check_informe_semanal()
-                mock_task.delay.assert_not_called()
+                mock_task.assert_not_called()
 
     def test_fires_on_correct_weekday_and_hour(self, db_session, app):
         with app.app_context():
@@ -158,7 +158,7 @@ class TestCheckInformeSemanal:
                 mock_dt.now.return_value = now
                 from app.staff.scheduler import _check_informe_semanal
                 _check_informe_semanal()
-                mock_task.delay.assert_called_once()
+                mock_task.assert_called_once()
                 mock_set.assert_called_once()
 
     def test_does_not_fire_within_7_days_of_last_run(self, db_session, app):
@@ -173,7 +173,7 @@ class TestCheckInformeSemanal:
                 mock_dt.now.return_value = now
                 from app.staff.scheduler import _check_informe_semanal
                 _check_informe_semanal()
-                mock_task.delay.assert_not_called()
+                mock_task.assert_not_called()
 
     def test_fires_after_7_days_since_last_run(self, db_session, app):
         with app.app_context():
@@ -188,7 +188,7 @@ class TestCheckInformeSemanal:
                 mock_dt.now.return_value = now
                 from app.staff.scheduler import _check_informe_semanal
                 _check_informe_semanal()
-                mock_task.delay.assert_called_once()
+                mock_task.assert_called_once()
 
 
 # ---------------------------------------------------------------------------

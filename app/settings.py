@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 
 
@@ -68,14 +67,12 @@ TEMPLATES_AUTO_RELOAD = True
 EXPLAIN_TEMPLATE_LOADING = False
 
 
-# Flask-Mailman
-MAIL_SERVER = ""
-MAIL_PORT = 587
-MAIL_USE_TLS = True
-MAIL_USERNAME = ""
-MAIL_PASSWORD = ""
-MAIL_TIMEOUT = 5
-MAIL_USE_LOCALTIME = True
+# Daleks mailer — HTTP service that delivers emails asynchronously.
+# Override with FLASK_DALEKS_URL env var in production.
+DALEKS_URL = "http://zvn-lin2.local:2525"
+# Sender address used in the From: header for application emails.
+# Override with FLASK_DALEKS_FROM_EMAIL env var in production.
+DALEKS_FROM_EMAIL = "no-reply@sabormirandiano.cl"
 
 # Payment provider authentication
 # These can be overridden by environment variables prefixed with FLASK_
@@ -111,14 +108,6 @@ MERCHANTS_PROVIDER_LABELS = {
 # }
 # STORE_BRAND_ICON = "bi bi-shop"
 # STORE_NAME = "Storefront"
-
-CELERY = {
-    "broker_url": os.getenv("CELERY_BROKER_URL", "redis://10.100.254.2/10"),
-    "result_backend": os.getenv("CELERY_RESULT_BACKEND", "redis://10.100.254.2/10"),
-    "task_ignore_result": False,
-    "worker_concurrency": int(os.getenv("CELERY_WORKER_CONCURRENCY", "1")),
-    "worker_max_tasks_per_child": int(os.getenv("CELERY_WORKER_MAX_TASKS_PER_CHILD", "1")),
-}
 
 # ------------------------------------------------------------------
 # Logging configuration

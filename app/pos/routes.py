@@ -334,11 +334,11 @@ def completa_abono(codigo):
                 "copia_notificaciones": abono.apoderado.copia_notificaciones,
             }
             if abono.forma_pago != "cafeteria":
-                send_notificacion_admin_abono.delay(abono_info=abono_info)
+                send_notificacion_admin_abono(abono_info=abono_info)
             if abono.apoderado.comprobantes_transferencia:
-                send_comprobante_abono.delay(abono_info=abono_info)
+                send_comprobante_abono(abono_info=abono_info)
                 if abono.apoderado.copia_notificaciones:
-                    send_copia_notificaciones_abono.delay(abono_info=abono_info)
+                    send_copia_notificaciones_abono(abono_info=abono_info)
 
     return redirect(url_for("apoderado_cliente.abono_detalle", codigo=codigo))
 

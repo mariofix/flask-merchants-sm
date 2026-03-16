@@ -133,7 +133,7 @@ class SchoolStaffController:
         pedido.fecha_pago = datetime.now()
         db.session.commit()
 
-        send_confirmacion_staff_pedido_pagado.delay({
+        send_confirmacion_staff_pedido_pagado({
             "staff_id": pedido.staff_id,
             "pedido_codigo": pedido.codigo,
             "total": int(pedido.precio_total),

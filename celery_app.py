@@ -20,4 +20,3 @@ if dsn:
         traces_sample_rate=0.2,
     )
 app = create_app()
-celery_app = app.extensions["celery"]

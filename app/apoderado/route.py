@@ -154,7 +154,7 @@ def wizp3():
                     {"nombre": a.nombre, "curso": a.curso} for a in apoderado.alumnos
                 ],
             }
-            send_notificacion_admin_nuevo_apoderado.delay(payload)
+            send_notificacion_admin_nuevo_apoderado(payload)
             merchants_audit.info(
                 "nuevo_apoderado_creado: id=%s nombre=%r email=%r alumnos=%d",
                 apoderado.id,
@@ -269,7 +269,7 @@ def abono():
         if forma_pago == "cafeteria":
             from ..tasks import send_notificacion_abono_creado
 
-            send_notificacion_abono_creado.delay(
+            send_notificacion_abono_creado(
                 abono_info={
                     "codigo": nuevo_abono.codigo,
                     "monto": int(nuevo_abono.monto),
@@ -744,7 +744,7 @@ def pago_orden(orden):
 
             from ..tasks import send_notificacion_pedido_pendiente
 
-            send_notificacion_pedido_pendiente.delay(
+            send_notificacion_pedido_pendiente(
                 {
                     "pedido_codigo": pedido.codigo,
                     "merchants_id": payment.merchants_id,
