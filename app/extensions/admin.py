@@ -1106,6 +1106,250 @@ class OrdenAdminView(BaseView):
             flash(str(exc), "danger")
         return redirect(url_for("orden_admin.index"))
 
+class GenerarDatosView(BaseView):
+    """Flask-Admin view for generating and clearing test data using Faker.
+
+    Provides two POST endpoints:
+    - ``generar``: creates fake records for a chosen model using context-aware
+      Spanish-locale data.
+    - ``vaciar``: deletes all rows for a chosen model (Users and Roles are
+      always left untouched).
+    """
+
+    def is_accessible(self):
+        return (
+            current_user.is_active
+            and current_user.is_authenticated
+            and current_user.has_role("admin")
+        )
+
+    def _handle_view(self, name, **kwargs):
+        if not self.is_accessible():
+            if current_user.is_authenticated:
+                abort(403)
+            else:
+                return redirect(url_for("security.login", next=request.url))
+
+    def _get_conteos(self) -> dict:
+        from sqlalchemy import func as sa_func
+        return {
+            "Usuarios": db.session.execute(db.select(sa_func.count()).select_from(User)).scalar() or 0,
+            "Apoderados": db.session.execute(db.select(sa_func.count()).select_from(Apoderado)).scalar() or 0,
+            "Alumnos": db.session.execute(db.select(sa_func.count()).select_from(Alumno)).scalar() or 0,
+            "Abonos": db.session.execute(db.select(sa_func.count()).select_from(Abono)).scalar() or 0,
+            "Pedidos": db.session.execute(db.select(sa_func.count()).select_from(Pedido)).scalar() or 0,
+            "Platos": db.session.execute(db.select(sa_func.count()).select_from(Plato)).scalar() or 0,
+            "Menús Diarios": db.session.execute(db.select(sa_func.count()).select_from(MenuDiario)).scalar() or 0,
+            "Órdenes Casino": db.session.execute(db.select(sa_func.count()).select_from(OrdenCasino)).scalar() or 0,
+            "Pagos": db.session.execute(db.select(sa_func.count()).select_from(Payment)).scalar() or 0,
+        }
+
+    @expose("/", methods=["GET"])
+    def index(self):
+        return self.render("admin/generar_datos.html", conteos=self._get_conteos())
+
+    @expose("/generar", methods=["POST"])
+    def generar(self):
+        """Generate fake records for the selected model."""
+        from faker import Faker
+        import random
+        import uuid as _uuid
+        from datetime import datetime as _dt, timedelta
+
+        fake = Faker("es_CL")
+        modelo = request.form.get("modelo", "plato")
+        try:
+            cantidad = min(max(int(request.form.get("cantidad", 10)), 1), 100)
+        except (ValueError, TypeError):
+            cantidad = 10
+
+        cursos = ["1A", "1B", "2A", "2B", "3A", "3B", "4A", "4B", "5A", "5B", "6A", "6B",
+                  "7A", "7B", "8A", "8B", "I-A", "I-B", "II-A", "II-B", "III-A", "III-B", "IV-A", "IV-B"]
+
+        try:
+            if modelo == "plato":
+                ingredientes = [
+                    "Pollo al horno", "Filete de merluza", "Lomo a lo pobre", "Cerdo asado",
+                    "Salmón grillado", "Cazuela de vacuno", "Charquicán", "Porotos con riendas",
+                    "Lentejas guisadas", "Garbanzos en salsa", "Arroz con leche", "Flan de vainilla",
+                    "Ensalada de temporada", "Sopa de fideos", "Crema de zapallo",
+                ]
+                # Business rule: carnivore dishes are never marked as vegan
+                carnivore_keywords = {"pollo", "filete", "lomo", "cerdo", "salmón", "vacuno", "merluza"}
+                for _ in range(cantidad):
+                    nombre = random.choice(ingredientes) + f" {fake.word()}"
+                    nombre_lower = nombre.lower()
+                    es_carnico = any(k in nombre_lower for k in carnivore_keywords)
+                    plato = Plato()
+                    plato.nombre = nombre[:255]
+                    plato.activo = random.random() > 0.1
+                    plato.es_vegano = False if es_carnico else random.random() > 0.8
+                    plato.es_vegetariano = False if es_carnico else random.random() > 0.6
+                    plato.es_hipocalorico = random.random() > 0.7
+                    plato.contiene_gluten = random.random() > 0.3
+                    plato.contiene_alergenos = random.random() > 0.6
+                    db.session.add(plato)
+                db.session.commit()
+                flash(f"Se generaron {cantidad} plato(s).", "success")
+
+            elif modelo == "apoderado":
+                for _ in range(cantidad):
+                    apellido = fake.last_name()
+                    nombre_completo = f"{fake.first_name()} {apellido}"
+                    email = f"{slugify(nombre_completo)}.{fake.numerify('###')}@{fake.free_email_domain()}"
+                    user = User()
+                    user.email = email
+                    user.username = f"+569{fake.numerify('########')}"
+                    user.password = fake.password()
+                    user.active = True
+                    user.fs_uniquifier = str(_uuid.uuid4())
+                    db.session.add(user)
+                    db.session.flush()
+
+                    apoderado = Apoderado()
+                    apoderado.nombre = nombre_completo
+                    apoderado.alumnos_registro = random.randint(1, 3)
+                    apoderado.usuario = user
+                    apoderado.saldo_cuenta = random.choice([0, 5000, 10000, 15000, 20000])
+                    db.session.add(apoderado)
+                    db.session.flush()
+
+                    # 1-3 alumnos sharing the same surname
+                    for i in range(apoderado.alumnos_registro):
+                        alumno = Alumno()
+                        alumno.nombre = f"{fake.first_name()} {apellido}"
+                        curso = random.choice(cursos)
+                        alumno.curso = curso
+                        alumno.slug = slugify(f"{alumno.nombre}-{curso}-{fake.numerify('###')}")
+                        alumno.apoderado = apoderado
+                        alumno.activo = True
+                        alumno.restricciones = []
+                        db.session.add(alumno)
+
+                    # 1-3 abonos (can be at any time)
+                    for _ in range(random.randint(1, 3)):
+                        abono = Abono()
+                        abono.monto = random.choice([5000, 10000, 15000, 20000, 25000])
+                        abono.apoderado = apoderado
+                        abono.descripcion = "Abono generado"
+                        abono.forma_pago = random.choice(["transferencia", "efectivo"])
+                        db.session.add(abono)
+
+                db.session.commit()
+                flash(f"Se generaron {cantidad} apoderado(s) con sus alumnos y abonos.", "success")
+
+            elif modelo == "alumno":
+                apoderados = db.session.execute(db.select(Apoderado)).scalars().all()
+                if not apoderados:
+                    flash("No existen apoderados. Genera algunos primero.", "warning")
+                else:
+                    for _ in range(cantidad):
+                        apoderado = random.choice(apoderados)
+                        alumno = Alumno()
+                        alumno.nombre = f"{fake.first_name()} {fake.last_name()}"
+                        curso = random.choice(cursos)
+                        alumno.curso = curso
+                        alumno.slug = slugify(f"{alumno.nombre}-{curso}-{fake.numerify('###')}")
+                        alumno.apoderado = apoderado
+                        alumno.activo = True
+                        alumno.restricciones = []
+                        db.session.add(alumno)
+                    db.session.commit()
+                    flash(f"Se generaron {cantidad} alumno(s).", "success")
+
+            elif modelo == "menu_diario":
+                platos = db.session.execute(db.select(Plato).filter_by(activo=True)).scalars().all()
+                if not platos:
+                    flash("No existen platos activos. Genera algunos primero.", "warning")
+                else:
+                    from datetime import date as _date
+                    for i in range(cantidad):
+                        fecha = _date.today() + timedelta(days=i + 1)
+                        menu = MenuDiario()
+                        menu.dia = fecha
+                        menu.slug = slugify(f"menu-{fecha.isoformat()}-{fake.numerify('###')}")
+                        menu.descripcion = f"Menú {fecha.strftime('%A %d/%m')}"
+                        menu.precio = random.choice([3500, 4000, 4500, 5000])
+                        menu.activo = True
+                        menu.fuera_stock = False
+                        menu.es_permanente = False
+                        db.session.add(menu)
+                        db.session.flush()
+
+                        for tipo in TipoCurso:
+                            disponibles = [p for p in platos]
+                            if disponibles:
+                                opcion = OpcionMenuDia()
+                                opcion.menu = menu
+                                opcion.plato = random.choice(disponibles)
+                                opcion.tipo_curso = tipo
+                                db.session.add(opcion)
+
+                    db.session.commit()
+                    flash(f"Se generaron {cantidad} menú(s) diario(s).", "success")
+
+            else:
+                flash(f"Modelo desconocido: {modelo!r}", "warning")
+
+        except Exception as exc:
+            db.session.rollback()
+            flash(f"Error al generar datos: {exc}", "error")
+
+        return redirect(url_for("generar_datos.index"))
+
+    @expose("/vaciar", methods=["POST"])
+    def vaciar(self):
+        """Delete all records for the selected model."""
+        modelo = request.form.get("modelo", "")
+        try:
+            if modelo == "plato":
+                db.session.execute(db.delete(OpcionMenuDia))
+                count = db.session.execute(db.delete(Plato)).rowcount
+                db.session.commit()
+                flash(f"Se eliminaron {count} plato(s) y sus asignaciones.", "success")
+
+            elif modelo == "menu_diario":
+                count = db.session.execute(db.delete(MenuDiario)).rowcount
+                db.session.commit()
+                flash(f"Se eliminaron {count} menú(s) diario(s) y sus opciones.", "success")
+
+            elif modelo == "apoderado":
+                db.session.execute(db.delete(OrdenCasino))
+                db.session.execute(db.delete(Payment))
+                db.session.execute(db.delete(Abono))
+                db.session.execute(db.delete(Pedido))
+                db.session.execute(db.delete(Alumno))
+                count = db.session.execute(db.delete(Apoderado)).rowcount
+                db.session.commit()
+                flash(f"Se eliminaron {count} apoderado(s) con alumnos, abonos y pagos.", "success")
+
+            elif modelo == "alumno":
+                db.session.execute(db.delete(OrdenCasino))
+                count = db.session.execute(db.delete(Alumno)).rowcount
+                db.session.commit()
+                flash(f"Se eliminaron {count} alumno(s) y sus órdenes de casino.", "success")
+
+            elif modelo == "abono":
+                count = db.session.execute(db.delete(Abono)).rowcount
+                db.session.commit()
+                flash(f"Se eliminaron {count} abono(s).", "success")
+
+            elif modelo == "pedido":
+                db.session.execute(db.delete(OrdenCasino))
+                count = db.session.execute(db.delete(Pedido)).rowcount
+                db.session.commit()
+                flash(f"Se eliminaron {count} pedido(s) y sus órdenes de casino.", "success")
+
+            else:
+                flash(f"Modelo desconocido: {modelo!r}", "warning")
+
+        except Exception as exc:
+            db.session.rollback()
+            flash(f"Error al vaciar: {exc}", "error")
+
+        return redirect(url_for("generar_datos.index"))
+
+
 admin.add_view(PlatoAdminView(Plato, db.session, category="Casino"))
 admin.add_view(
     FileView(
@@ -1136,6 +1380,7 @@ admin.add_view(SchoolStaffAdminView(SchoolStaff, db.session, category="Usuarios 
 
 
 admin.add_view(SecureModelView(Settings, db.session, name="Configuracion"))
+admin.add_view(GenerarDatosView(name="Generar Datos de Prueba", endpoint="generar_datos"))
 
 admin.add_link(MenuLink(name="Sitio Web", endpoint="core.index", icon_type="glyph", icon_value="glyphicon-home"))
 admin.add_link(MenuLink(name="POS", endpoint="pos.index", icon_type="glyph", icon_value="glyphicon-shopping-cart"))
