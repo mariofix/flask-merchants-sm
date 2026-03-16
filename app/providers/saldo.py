@@ -18,6 +18,7 @@ handled by the ``cuenta`` payment method instead.
 """
 from __future__ import annotations
 
+import copy
 import json
 import logging
 import random
@@ -73,8 +74,25 @@ class SaldoProvider(Provider):
         # Falls back to saldo_ + 6 random chars.
         session_id = codigo or f"saldo_{_rand_code(6)}"
 
-        saldo_actual = int(meta.get("saldo_actual", 0))
-        nuevo_saldo = saldo_actual - int(amount)
+        # 8-char audit code stored in both metadata and raw
+        transaction_code = _rand_code(8)
+
+        saldo_antes = int(meta.get("saldo_antes", 0))
+        saldo_despues = saldo_antes - int(amount)
+
+        # Build output metadata: deep-copy all input meta then add computed fields
+        out_metadata: dict[str, Any] = copy.deepcopy(meta)
+        out_metadata["transaction_code"] = transaction_code
+        out_metadata["saldo_antes"] = saldo_antes
+        out_metadata["saldo_despues"] = saldo_despues
+
+        # Build raw: model_property, apoderado_id (from input), and transaction_code
+        raw: dict[str, Any] = {
+            "transaction_code": transaction_code,
+            "model_property": meta.get("model_property", "saldo_cuenta"),
+        }
+        if "apoderado_id" in meta:
+            raw["apoderado_id"] = meta["apoderado_id"]
 
         return CheckoutSession(
             session_id=session_id,
@@ -82,12 +100,8 @@ class SaldoProvider(Provider):
             provider=self.key,
             amount=amount,
             currency=currency,
-            metadata={},
-            raw={
-                "pedido_codigo": meta.get("pedido_codigo", ""),
-                "saldo_actual": saldo_actual,
-                "nuevo_saldo": nuevo_saldo,
-            },
+            metadata=out_metadata,
+            raw=raw,
             initial_state=PaymentState.SUCCEEDED,
         )
 
