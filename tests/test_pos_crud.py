@@ -425,12 +425,12 @@ class TestApproveAbono:
 
         abono = ApoderadoController().create_abono(apoderado, Decimal("8000"), "cafeteria")
         pago = Payment()
-        pago.session_id = abono.codigo
+        pago.merchants_id = abono.codigo
+        pago.transaction_id = abono.codigo
         pago.provider = "cafeteria"
         pago.state = state
         pago.amount = 8000
         pago.currency = "CLP"
-        pago.redirect_url = "https://example.com/redirect"
         db_session.add(pago)
         db_session.commit()
         return abono, pago
@@ -468,12 +468,12 @@ class TestApprovePedido:
         pedido = db_session.execute(db.select(Pedido).filter_by(codigo=codigo_pedido)).scalar_one()
         session_id = str(uuid.uuid4())
         pago = Payment()
-        pago.session_id = session_id
+        pago.merchants_id = session_id
+        pago.transaction_id = session_id
         pago.provider = "cafeteria"
         pago.state = state
         pago.amount = 5000
         pago.currency = "CLP"
-        pago.redirect_url = "https://example.com/redirect"
         db_session.add(pago)
         pedido.codigo_merchants = session_id
         db_session.commit()

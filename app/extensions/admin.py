@@ -1106,6 +1106,7 @@ class OrdenAdminView(BaseView):
             flash(str(exc), "danger")
         return redirect(url_for("orden_admin.index"))
 
+
 admin.add_view(PlatoAdminView(Plato, db.session, category="Casino"))
 admin.add_view(
     FileView(

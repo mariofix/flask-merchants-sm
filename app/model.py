@@ -211,7 +211,7 @@ class SchoolStaff(db.Model, Timestamp):
     usuario_id: Mapped[int] = mapped_column(ForeignKey("user.id"), unique=True)
     usuario: Mapped["User"] = relationship(back_populates="school_staff")
 
-    # Monthly credit limit set by admin.  None = not configured (no purchases allowed).
+    # Monthly credit limit set by admin.  None = unlimited (no purchase restriction).
     limite_cuenta: Mapped[int | None] = mapped_column(default=None, nullable=True)
 
     # Notification preferences
