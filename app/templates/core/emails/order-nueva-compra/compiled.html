@@ -287,6 +287,37 @@ img {
             }
         }
     </style>
+    <script type="application/ld+json">
+    {
+      "@context": "http://schema.org",
+      "@type": "Order",
+      "merchant": {
+        "@type": "Organization",
+        "name": "Cafetería Sabor Mirandiano"
+      },
+      "orderNumber": "{{ pedido_codigo }}",
+      "orderStatus": "http://schema.org/OrderPaymentDue",
+      "priceCurrency": "CLP",
+      "price": "{{ total|int }}",
+      "acceptedOffer": [
+        {% for item in items %}
+        {
+          "@type": "Offer",
+          "itemOffered": {
+            "@type": "Service",
+            "name": "{{ item.descripcion }} ({{ item.fecha }})"
+          },
+          "price": "{{ item.precio|int }}",
+          "priceCurrency": "CLP"
+        }{% if not loop.last %},{% endif %}
+        {% endfor %}
+      ],
+      "potentialAction": {
+        "@type": "ViewAction",
+        "url": "{{ pedido_url }}"
+      }
+    }
+    </script>
 </head>
 
 <body class="bg-body" style="font-size: 15px; line-height: 160%; mso-line-height-rule: exactly; color: #4b5563; width: 100%; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; -webkit-font-feature-settings: &quot;cv02&quot;, &quot;cv03&quot;, &quot;cv04&quot;, &quot;cv11&quot;; font-feature-settings: &quot;cv02&quot;, &quot;cv03&quot;, &quot;cv04&quot;, &quot;cv11&quot;; font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; margin: 0; padding: 0;" bgcolor="#f9fafb">

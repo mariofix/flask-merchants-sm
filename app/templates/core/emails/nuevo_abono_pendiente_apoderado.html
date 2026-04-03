@@ -54,6 +54,33 @@
             h1 { font-size: 24px !important; }
         }
     </style>
+    <script type="application/ld+json">
+    {
+      "@context": "http://schema.org",
+      "@type": "Order",
+      "merchant": {
+        "@type": "Organization",
+        "name": "Cafetería Sabor Mirandiano"
+      },
+      "orderNumber": "{{ codigo }}",
+      "orderStatus": "http://schema.org/OrderPaymentDue",
+      "priceCurrency": "CLP",
+      "price": "{{ monto|int }}",
+      "acceptedOffer": [
+        {
+          "@type": "Offer",
+          "itemOffered": {
+            "@type": "Service",
+            "name": "Abono Cafetería - {{ forma_pago }}"
+          }
+        }
+      ],
+      "potentialAction": {
+        "@type": "ViewAction",
+        "url": "{{ abono_url }}"
+      }
+    }
+    </script>
 </head>
 
 <body style="font-size: 15px; line-height: 160%; mso-line-height-rule: exactly; color: #4b5563; width: 100%; font-family: Inter, -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; margin: 0; padding: 0;" bgcolor="#f9fafb">
